@@ -1,0 +1,24 @@
+---
+/**
+ * One page per generator.
+ *
+ * The preview is rendered in the browser rather than inlined here. Measured on
+ * the heaviest case — a 10x10 compartment tray — the engine takes about 7 ms,
+ * so shipping a pre-rendered copy would roughly double the page weight to save
+ * less than a frame. The gallery still uses build-time rendering, where the
+ * thumbnails have to work with no JavaScript at all.
+ */
+import Base from '../../layouts/Base.astro';
+import App from '../../components/App';
+import { listGenerators } from '../../lib/generators/registry';
+
+export function getStaticPaths() {
+  return listGenerators().map((g) => ({ params: { id: g.meta.id }, props: { gen: g.meta } }));
+}
+
+const { gen } = Astro.props;
+---
+
+<Base title={`${gen.name} — boxesjs`} description={gen.summary}>
+  <App client:load generator={gen.id} name={gen.name} summary={gen.summary} />
+</Base>

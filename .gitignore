@@ -1,0 +1,9 @@
+node_modules/
+dist/
+.astro/
+
+# Machine-local Claude Code permission grants
+.claude/settings.local.json
+
+# Python venv used only to regenerate the boxes.py reference SVGs
+.venv-ref/

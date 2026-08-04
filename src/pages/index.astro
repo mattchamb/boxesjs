@@ -1,0 +1,71 @@
+---
+/**
+ * Gallery. Thumbnails are the real generator output at default parameters,
+ * rendered at build time — so every card is accurate and nothing has to be
+ * photographed or kept in sync by hand.
+ */
+import Base from '../layouts/Base.astro';
+import { defaultsFor, generatorsByGroup } from '../lib/generators/registry';
+import { renderPreview } from '../lib/preview';
+import { withBase } from '../lib/base';
+
+const groups = generatorsByGroup().map(({ group, items }) => ({
+  group,
+  items: items.map((g) => {
+    try {
+      const preview = renderPreview(g.meta.id, defaultsFor(g.meta.id));
+      return {
+        meta: g.meta,
+        d: preview.layers.cut,
+        viewBox: `0 0 ${preview.bbox.width} ${preview.bbox.height}`,
+      };
+    } catch {
+      return { meta: g.meta, d: '', viewBox: '0 0 1 1' };
+    }
+  }),
+}));
+---
+
+<Base title="boxesjs — parametric laser-cut boxes">
+  <main class="gallery">
+    <p class="intro">
+      Parametric box generators that run entirely in your browser. Change a parameter and the
+      preview updates as you type — there is no Generate button and nothing is sent to a server.
+      Export a native <code>.lbrn2</code> file with layers, speed and power already set from your
+      material preset, or a plain SVG at true millimetre scale.
+    </p>
+
+    {
+      groups.map(({ group, items }) => (
+        <section>
+          <h2>{group}</h2>
+          <div class="cards">
+            {items.map(({ meta, d, viewBox }) => (
+              <a class="card" href={withBase(`/b/${meta.id}`)}>
+                <div class="thumb">
+                  {d ? (
+                    <svg viewBox={viewBox} preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+                      <path d={d} />
+                    </svg>
+                  ) : null}
+                </div>
+                <h3>{meta.name}</h3>
+                <p>{meta.summary}</p>
+              </a>
+            ))}
+          </div>
+        </section>
+      ))
+    }
+
+    <p class="notice">
+      <strong>A reimplementation of boxes.py.</strong> The geometry engine is a TypeScript port of
+      Florian Festi's <a href="https://github.com/florianfesti/boxes">Boxes.py</a>, verified
+      coordinate-for-coordinate against the original. This build covers a subset of its 188
+      generators. It is a modified work, not endorsed by or affiliated with that project, and is
+      free software under
+      <a href="https://www.gnu.org/licenses/gpl-3.0.html">GPL-3.0-or-later</a> — the same licence
+      as Boxes.py.
+    </p>
+  </main>
+</Base>

@@ -1,0 +1,18 @@
+{
+  "extends": "astro/tsconfigs/strict",
+  "compilerOptions": {
+    "jsx": "react-jsx",
+    "jsxImportSource": "preact",
+    // Setting `types` at all drops the default lookup, so astro/client (which
+    // declares import.meta.env) has to be listed explicitly.
+    "types": ["vitest/globals", "astro/client"],
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["src/*"]
+    },
+    "noEmit": true,
+    "noUncheckedIndexedAccess": false
+  },
+  "include": ["src/**/*", "test/**/*", "*.config.mjs", "*.config.ts"],
+  "exclude": ["dist", "node_modules"]
+}

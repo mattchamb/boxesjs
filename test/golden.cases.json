@@ -1,0 +1,554 @@
+[
+  {
+    "name": "ref_closedbox",
+    "generator": "closedbox",
+    "pythonClass": "ClosedBox",
+    "params": {
+      "x": 100,
+      "y": 80,
+      "h": 60,
+      "outside": false,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_closedbox_thick",
+    "generator": "closedbox",
+    "pythonClass": "ClosedBox",
+    "params": {
+      "x": 120,
+      "y": 120,
+      "h": 40,
+      "outside": true,
+      "thickness": 6,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_openbox",
+    "generator": "openbox",
+    "pythonClass": "OpenBox",
+    "params": {
+      "x": 120,
+      "y": 90,
+      "h": 70,
+      "outside": false,
+      "edgetype": "F",
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_openbox_h",
+    "generator": "openbox",
+    "pythonClass": "OpenBox",
+    "params": {
+      "x": 100,
+      "y": 100,
+      "h": 50,
+      "outside": true,
+      "edgetype": "h",
+      "thickness": 4,
+      "burn": 0.05
+    }
+  },
+  {
+    "name": "ref_typetray",
+    "generator": "typetray",
+    "pythonClass": "TypeTray",
+    "params": {
+      "sx": "50*3",
+      "sy": "50*2",
+      "h": 60,
+      "hi": 0,
+      "outside": false,
+      "bottom_edge": "h",
+      "top_edge": "e",
+      "fingerholes": "none",
+      "gripwidth": 0,
+      "gripheight": 30,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_typetray_scoops",
+    "generator": "typetray",
+    "pythonClass": "TypeTray",
+    "params": {
+      "sx": "40*2",
+      "sy": "60*2",
+      "h": 50,
+      "hi": 0,
+      "outside": true,
+      "bottom_edge": "h",
+      "top_edge": "e",
+      "fingerholes": "inside-only",
+      "gripwidth": 0,
+      "gripheight": 30,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_abox",
+    "generator": "abox",
+    "pythonClass": "ABox",
+    "params": {
+      "x": 120,
+      "y": 80,
+      "h": 60,
+      "outside": false,
+      "bottom_edge": "h",
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_abox_lid",
+    "generator": "abox",
+    "pythonClass": "ABox",
+    "params": {
+      "x": 100,
+      "y": 100,
+      "h": 50,
+      "outside": true,
+      "bottom_edge": "F",
+      "lid_style": "flat",
+      "lid_handle": "long_rounded",
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_abox_stackable",
+    "generator": "abox",
+    "pythonClass": "ABox",
+    "params": {
+      "x": 90,
+      "y": 90,
+      "h": 70,
+      "outside": false,
+      "bottom_edge": "s",
+      "thickness": 4,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_rectwall",
+    "generator": "rectangularwall",
+    "pythonClass": "RectangularWall",
+    "pythonModule": "rectangularWall",
+    "params": {
+      "x": 150,
+      "h": 100,
+      "bottom_edge": "f",
+      "right_edge": "F",
+      "top_edge": "e",
+      "left_edge": "h",
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_typetray_lid",
+    "generator": "typetray",
+    "pythonClass": "TypeTray",
+    "params": {
+      "sx": "60*2",
+      "sy": "40*3",
+      "h": 70,
+      "hi": 40,
+      "outside": false,
+      "bottom_edge": "h",
+      "top_edge": "f",
+      "fingerholes": "front-and-back",
+      "gripwidth": 0,
+      "gripheight": 30,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_cardbox",
+    "generator": "cardbox",
+    "pythonClass": "CardBox",
+    "params": {
+      "sx": "65*2",
+      "y": 68,
+      "h": 92,
+      "outside": false,
+      "openingdirection": "front",
+      "fingerhole": "regular",
+      "fingerhole_depth": 20,
+      "add_lidtopper": false,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_cardbox_right_thick",
+    "generator": "cardbox",
+    "pythonClass": "CardBox",
+    "params": {
+      "sx": "65*3",
+      "y": 90,
+      "h": 100,
+      "outside": true,
+      "openingdirection": "right",
+      "fingerhole": "deep",
+      "fingerhole_depth": 20,
+      "add_lidtopper": true,
+      "thickness": 5,
+      "burn": 0.2
+    }
+  },
+  {
+    "name": "ref_cardbox_custom",
+    "generator": "cardbox",
+    "pythonClass": "CardBox",
+    "params": {
+      "sx": "40:70",
+      "y": 60,
+      "h": 80,
+      "outside": false,
+      "openingdirection": "front",
+      "fingerhole": "custom",
+      "fingerhole_depth": 45,
+      "add_lidtopper": true,
+      "thickness": 4,
+      "burn": 0.05
+    }
+  },
+  {
+    "name": "ref_cardbox_labelled",
+    "generator": "cardbox",
+    "pythonClass": "CardBox",
+    "params": {
+      "sx": "65*2",
+      "y": 68,
+      "h": 92,
+      "outside": false,
+      "openingdirection": "right",
+      "fingerhole": "regular",
+      "fingerhole_depth": 20,
+      "add_lidtopper": false,
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_console2",
+    "generator": "console2",
+    "pythonClass": "Console2",
+    "params": {
+      "x": 100,
+      "y": 100,
+      "h": 100,
+      "outside": false,
+      "bottom_edge": "s",
+      "front_height": 30,
+      "angle": 50,
+      "removable_backwall": true,
+      "removable_panel": true,
+      "glued_panel": true,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_console2_fixed_thick",
+    "generator": "console2",
+    "pythonClass": "Console2",
+    "params": {
+      "x": 140,
+      "y": 120,
+      "h": 90,
+      "outside": true,
+      "bottom_edge": "F",
+      "front_height": 25,
+      "angle": 65,
+      "removable_backwall": false,
+      "removable_panel": false,
+      "glued_panel": false,
+      "thickness": 5,
+      "burn": 0.2
+    }
+  },
+  {
+    "name": "ref_console2_no_top",
+    "generator": "console2",
+    "pythonClass": "Console2",
+    "params": {
+      "x": 120,
+      "y": 100,
+      "h": 200,
+      "outside": false,
+      "bottom_edge": "h",
+      "front_height": 30,
+      "angle": 50,
+      "removable_backwall": true,
+      "removable_panel": true,
+      "glued_panel": false,
+      "thickness": 4,
+      "burn": 0.05
+    }
+  },
+  {
+    "name": "ref_console2_labelled",
+    "generator": "console2",
+    "pythonClass": "Console2",
+    "params": {
+      "x": 100,
+      "y": 100,
+      "h": 100,
+      "outside": false,
+      "bottom_edge": "s",
+      "front_height": 30,
+      "angle": 50,
+      "removable_backwall": true,
+      "removable_panel": true,
+      "glued_panel": true,
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_universalbox",
+    "generator": "universalbox",
+    "pythonClass": "UniversalBox",
+    "params": {
+      "x": 100,
+      "y": 100,
+      "h": 100,
+      "outside": true,
+      "bottom_edge": "h",
+      "top_edge": "e",
+      "vertical_edges": "finger joints",
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_universalbox_top_f_thick",
+    "generator": "universalbox",
+    "pythonClass": "UniversalBox",
+    "params": {
+      "x": 120,
+      "y": 90,
+      "h": 70,
+      "outside": false,
+      "bottom_edge": "F",
+      "top_edge": "f",
+      "vertical_edges": "finger holes",
+      "thickness": 5,
+      "burn": 0.2
+    }
+  },
+  {
+    "name": "ref_universalbox_handle",
+    "generator": "universalbox",
+    "pythonClass": "UniversalBox",
+    "params": {
+      "x": 110,
+      "y": 80,
+      "h": 60,
+      "outside": false,
+      "bottom_edge": "s",
+      "top_edge": "t",
+      "vertical_edges": "finger joints",
+      "rt_height": 40,
+      "rt_radius": 25,
+      "rt_r_hole": 3,
+      "rt_outset": 1,
+      "thickness": 4,
+      "burn": 0.05
+    }
+  },
+  {
+    "name": "ref_universalbox_labelled",
+    "generator": "universalbox",
+    "pythonClass": "UniversalBox",
+    "params": {
+      "x": 100,
+      "y": 100,
+      "h": 80,
+      "outside": true,
+      "bottom_edge": "h",
+      "top_edge": "F",
+      "vertical_edges": "finger joints",
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_drillbox",
+    "generator": "drillbox",
+    "pythonClass": "DrillBox",
+    "params": {
+      "sx": "25*3",
+      "sy": "60*4",
+      "sh": "5:25:10",
+      "bottom_edge": "h",
+      "top_edge": "e",
+      "holes": 3,
+      "firsthole": 1.0,
+      "holeincrement": 0.5,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_drillbox_stackable_thick",
+    "generator": "drillbox",
+    "pythonClass": "DrillBox",
+    "params": {
+      "sx": "30*2",
+      "sy": "50*3",
+      "sh": "8:20:20:12",
+      "bottom_edge": "s",
+      "top_edge": "S",
+      "holes": 2,
+      "firsthole": 2.0,
+      "holeincrement": 1.0,
+      "thickness": 5,
+      "burn": 0.2
+    }
+  },
+  {
+    "name": "ref_drillbox_handle",
+    "generator": "drillbox",
+    "pythonClass": "DrillBox",
+    "params": {
+      "sx": "20:30",
+      "sy": "40*2",
+      "sh": "6:18",
+      "bottom_edge": "F",
+      "top_edge": "t",
+      "holes": 4,
+      "firsthole": 1.5,
+      "holeincrement": 0.25,
+      "rt_height": 35,
+      "rt_outset": 1,
+      "thickness": 4,
+      "burn": 0.05
+    }
+  },
+  {
+    "name": "ref_drillbox_labelled",
+    "generator": "drillbox",
+    "pythonClass": "DrillBox",
+    "params": {
+      "sx": "25*3",
+      "sy": "60*4",
+      "sh": "5:25:10",
+      "bottom_edge": "h",
+      "top_edge": "e",
+      "holes": 3,
+      "firsthole": 1.0,
+      "holeincrement": 0.5,
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_notesholder",
+    "generator": "notesholder",
+    "pythonClass": "NotesHolder",
+    "params": {
+      "sx": "78*1",
+      "y": 78,
+      "h": 35,
+      "bottom_edge": "s",
+      "opening": 40,
+      "back_openings": false,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_notesholder_back_thick",
+    "generator": "notesholder",
+    "pythonClass": "NotesHolder",
+    "params": {
+      "sx": "60*3",
+      "y": 90,
+      "h": 45,
+      "bottom_edge": "h",
+      "opening": 60,
+      "back_openings": true,
+      "thickness": 5,
+      "burn": 0.2
+    }
+  },
+  {
+    "name": "ref_notesholder_f_bottom",
+    "generator": "notesholder",
+    "pythonClass": "NotesHolder",
+    "params": {
+      "sx": "50:70",
+      "y": 60,
+      "h": 30,
+      "bottom_edge": "f",
+      "opening": 25,
+      "back_openings": false,
+      "thickness": 4,
+      "burn": 0.05
+    }
+  },
+  {
+    "name": "ref_notesholder_labelled",
+    "generator": "notesholder",
+    "pythonClass": "NotesHolder",
+    "params": {
+      "sx": "78*2",
+      "y": 78,
+      "h": 35,
+      "bottom_edge": "s",
+      "opening": 10,
+      "back_openings": true,
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_closedbox_labelled",
+    "generator": "closedbox",
+    "pythonClass": "ClosedBox",
+    "params": {
+      "x": 100,
+      "y": 80,
+      "h": 60,
+      "outside": false,
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_typetray_labelled",
+    "generator": "typetray",
+    "pythonClass": "TypeTray",
+    "params": {
+      "sx": "50*3",
+      "sy": "50*2",
+      "h": 60,
+      "hi": 0,
+      "outside": false,
+      "bottom_edge": "h",
+      "top_edge": "e",
+      "fingerholes": "none",
+      "gripwidth": 0,
+      "gripheight": 30,
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
+  }
+]

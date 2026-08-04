@@ -1,0 +1,36 @@
+---
+import '../styles/app.css';
+import { withBase } from '../lib/base';
+
+interface Props {
+  title: string;
+  description?: string;
+}
+
+const { title, description = 'Parametric laser-cut box generator with LightBurn export' } =
+  Astro.props;
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="description" content={description} />
+    <title>{title}</title>
+  </head>
+  <body>
+    <header class="site-header">
+      <a class="home" href={withBase('/')}>
+        <h1>boxesjs</h1>
+      </a>
+      <span class="tagline">Parametric laser-cut boxes, built for LightBurn</span>
+      <div class="spacer"></div>
+      {/* The engine is conveyed to every visitor's browser, so the offer of
+          source belongs in the app itself, not only in the repo. */}
+      <a class="legal" href="https://github.com/mattchamb/boxesjs">GPL-3.0 · Source</a>
+      <slot name="header" />
+    </header>
+    <slot />
+  </body>
+</html>
