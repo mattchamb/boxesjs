@@ -233,6 +233,77 @@ export const HANDLE_PARAMS: ParamSpec[] = [
 ];
 
 /**
+ * Stackable foot options, for generators whose proportions depend on them.
+ *
+ * Spread into a generator's own params rather than added globally: most
+ * generators that offer an `s` bottom edge only pass it through, but a design
+ * built around stacking — where the foot height is subtracted from the usable
+ * interior — needs these reachable.
+ */
+export const STACKABLE_PARAMS: ParamSpec[] = [
+  {
+    key: 'st_height',
+    kind: 'number',
+    label: 'Foot height',
+    unit: '× thickness',
+    default: 2.0,
+    min: 0.5,
+    max: 6,
+    step: 0.1,
+    group: 'joints',
+    help: 'How far the feet stand proud of the bottom edge, and how deep the box above sits onto them.',
+  },
+  {
+    key: 'st_width',
+    kind: 'number',
+    label: 'Foot width',
+    unit: '× thickness',
+    default: 4.0,
+    min: 1,
+    max: 12,
+    step: 0.5,
+    group: 'joints',
+    help: 'Flat length at each end of the edge, outside the feet.',
+  },
+  {
+    key: 'st_holedistance',
+    kind: 'number',
+    label: 'Foot slot inset',
+    unit: '× thickness',
+    default: 1.0,
+    min: 0,
+    max: 3,
+    step: 0.1,
+    group: 'joints',
+    help: 'Material between the feet and the slots the bottom panel sits in.',
+  },
+  {
+    key: 'st_angle',
+    kind: 'number',
+    label: 'Foot angle',
+    unit: '°',
+    default: 60,
+    // Outside 20–260 the arcs cannot close; StackableSettings rejects them.
+    min: 20,
+    max: 259,
+    step: 5,
+    group: 'joints',
+  },
+  {
+    key: 'st_bottom_stabilizers',
+    kind: 'number',
+    label: 'Stabiliser width',
+    unit: '× thickness',
+    default: 0.0,
+    min: 0,
+    max: 10,
+    step: 0.5,
+    group: 'joints',
+    help: 'Adds a separate strip under each foot to spread the load. Zero leaves them off.',
+  },
+];
+
+/**
  * Lid options, for generators that support one. Spread into a generator's own
  * params rather than added globally, since most generators have no lid.
  */
@@ -322,6 +393,19 @@ export function toBoxesConfig(values: ParamValues): BoxesConfig {
     if (v !== undefined && typeof v !== 'boolean') lid[settingKey] = v;
   }
 
+  const stackable: Record<string, number | string> = {};
+  const stackableMap: Record<string, string> = {
+    st_height: 'height',
+    st_width: 'width',
+    st_holedistance: 'holedistance',
+    st_angle: 'angle',
+    st_bottom_stabilizers: 'bottom_stabilizers',
+  };
+  for (const [formKey, settingKey] of Object.entries(stackableMap)) {
+    const v = values[formKey];
+    if (v !== undefined && typeof v !== 'boolean') stackable[settingKey] = v;
+  }
+
   const handle: Record<string, number | string> = {};
   const handleMap: Record<string, string> = {
     rt_height: 'height',
@@ -345,6 +429,11 @@ export function toBoxesConfig(values: ParamValues): BoxesConfig {
     tabs: num('tabs', 0),
     innerCorners: str('inner_corners', 'loop') as BoxesConfig['innerCorners'],
     debug: false,
-    edgeSettings: { FingerJoint: fingerJoint, Lid: lid, RoundedTriangleEdge: handle },
+    edgeSettings: {
+      FingerJoint: fingerJoint,
+      Lid: lid,
+      RoundedTriangleEdge: handle,
+      Stackable: stackable,
+    },
   };
 }

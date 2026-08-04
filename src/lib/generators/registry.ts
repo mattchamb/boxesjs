@@ -13,6 +13,7 @@ import { console2 } from './console2';
 import { drillBox } from './drillbox';
 import { notesHolder } from './notesholder';
 import { openBox } from './openbox';
+import { paintStorage } from './paintstorage';
 import { rectangularWall } from './rectangularwall';
 import { typeTray } from './typetray';
 import { universalBox } from './universalbox';
@@ -27,6 +28,7 @@ const DEFS: GeneratorDef[] = [
   notesHolder,
   typeTray,
   drillBox,
+  paintStorage,
   rectangularWall,
 ];
 

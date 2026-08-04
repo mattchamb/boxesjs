@@ -19,6 +19,7 @@ import { GripSettings } from './edges/grip';
 import { RoundedTriangleEdgeSettings } from './edges/roundedtriangle';
 import { MountingSettings } from './edges/mounting';
 import { Lid, LidSettings } from './lids';
+import { HexHolesSettings, type HexHoleSkip } from './hexholes';
 import type { SettingsOverrides } from './edges/settings';
 
 const DEG = Math.PI / 180;
@@ -84,6 +85,7 @@ export abstract class Boxes {
   fingerHolesObj!: FingerHoles;
   lidSettings!: LidSettings;
   lidObj!: Lid;
+  hexHolesSettings!: HexHolesSettings;
 
   /** [d, d_nut, h_nut, l, l1] */
   bedBoltSettings: readonly number[] = [3, 5.5, 2, 20, 15];
@@ -182,6 +184,8 @@ export abstract class Boxes {
 
     this.lidSettings = new LidSettings(t, true, this.settingsFor('Lid'));
     this.lidObj = new Lid(this, this.lidSettings);
+
+    this.hexHolesSettings = new HexHolesSettings(t, true, this.settingsFor('HexHoles'));
   }
 
   /** Draw the configured lid. Returns false when the lid style is "none". */
@@ -731,6 +735,44 @@ export abstract class Boxes {
       this.fingerHolesAt(-dx / 2 + d / 2, -dy / 2, dy - d, 90);
       this.fingerHolesAt(dx / 2 - d / 2, -dy / 2, dy - d, 90);
     });
+  }
+
+  /**
+   * A staggered grid of round holes filling an `x` by `y` area.
+   *
+   * boxes.py has no `@restore` on this one, so it leaves the cursor where the
+   * last hole put it — callers that care wrap it themselves.
+   */
+  hexHolesRectangle(
+    x: number,
+    y: number,
+    settings?: HexHolesSettings,
+    skip?: HexHoleSkip,
+  ): void {
+    const s = settings ?? this.hexHolesSettings;
+    const r = s.diameter / 2;
+    const b = s.distance;
+
+    const w = r + b / 2.0;
+    const dist = w * Math.cos(Math.PI / 6.0);
+
+    // How many half circles fit, plus the two that hang over the edges.
+    const cx = Math.floor((x - 2 * r) / w) + 2;
+    const cy = Math.floor((y - 2 * r) / dist) + 2;
+
+    // What is left over at the sides, so the grid ends up centred.
+    const lx = (x - (2 * r + (cx - 2) * w)) / 2.0;
+    const ly = (y - (2 * r + Math.floor(cy / 2) * 2 * dist - 2 * dist)) / 2.0;
+
+    for (let i = 0; i < Math.floor(cy / 2); i++) {
+      for (let j = 0; j < Math.floor((cx - (i % 2)) / 2); j++) {
+        let px = 2 * j * w + r + lx;
+        const py = i * 2 * dist + r + ly;
+        if (i % 2) px += w;
+        if (skip && skip(x, y, r, b, px, py)) continue;
+        this.hole(px, py, r);
+      }
+    }
   }
 
   /**

@@ -77,10 +77,13 @@ settings arguments:
 | `fj_*` | `--FingerJoint_*` |
 | `lid_*` | `--Lid_*` |
 | `rt_*` | `--RoundedTriangleEdge_*` |
+| `st_*` | `--Stackable_*` |
 | everything else | `--<key>` verbatim |
 
-If you expose a new settings family in the UI (say `StackableSettings`), add its
-prefix to that map or the golden run will pass an argument boxes.py rejects.
+If you expose a new settings family in the UI, add its prefix to that map or the
+golden run will pass an argument boxes.py rejects. That is three parallel edits:
+a `xx_*` block in `common.ts`, an entry in `toBoxesConfig`'s `edgeSettings`, and
+the prefix here. `st_*` was added this way for PaintStorage.
 
 ### What to cover
 
@@ -409,8 +412,14 @@ this reason).
 ## 9. Remaining generators
 
 CardBox, Console2, UniversalBox, DrillBox and NotesHolder are **done** — four
-golden cases each, all matching boxes.py. Two remain: **DisplayShelf** and
-**RegularBox**.
+golden cases each, all matching boxes.py. PaintStorage (`paintbox.py`) is done
+too, with five. Two remain: **DisplayShelf** and **RegularBox**.
+
+PaintStorage brought two pieces of shared machinery with it: `hexHolesRectangle`
+and `HexHolesSettings` (`src/lib/hexholes.ts`), and the `st_*` parameter block
+that exposes `StackableSettings`. Note that its module is `paintbox.py` while
+its class is `PaintStorage`, so its golden cases need an explicit
+`"pythonModule": "paintbox"`.
 
 ### `polygonWall` blocks both of them
 
@@ -498,7 +507,11 @@ back, which means changing its UI choices and regenerating its goldens.
 
 Flex / living hinge, `CabinetHinge`, `ChestHinge`, `Click`, `SlideOnLid`,
 `DoveTail`, `Grooved`, `HandleEdge`, gears, pulleys, servos, wall edges, QR
-codes, `hexHoles*`, `fillHoles`, DXF and PostScript output.
+codes, `fillHoles`, DXF and PostScript output.
+
+`hexHolesRectangle` is ported; `hexHolesPlate`, `hexHolesCircle` and
+`hexHolesHex` are not, and neither is `rectangularWall`'s `holesMargin`
+argument, which is the only caller of `hexHolesRectangle` inside the engine.
 
 ---
 

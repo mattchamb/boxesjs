@@ -51,6 +51,8 @@ def main() -> int:
                 key = "Lid_" + key[4:]
             elif key.startswith("rt_"):
                 key = "RoundedTriangleEdge_" + key[3:]
+            elif key.startswith("st_"):
+                key = "Stackable_" + key[3:]
             argv += [f"--{key}", str(value)]
         # Keep the reference geometry pure unless the case says otherwise.
         argv += ["--reference", "0"]

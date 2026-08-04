@@ -550,5 +550,87 @@
       "burn": 0.1,
       "labels": true
     }
+  },
+  {
+    "name": "ref_paintstorage",
+    "generator": "paintstorage",
+    "pythonClass": "PaintStorage",
+    "pythonModule": "paintbox",
+    "params": {
+      "x": 100,
+      "y": 300,
+      "canheight": 50,
+      "candiameter": 30,
+      "minspace": 10,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_paintstorage_floors_thick",
+    "generator": "paintstorage",
+    "pythonClass": "PaintStorage",
+    "pythonModule": "paintbox",
+    "params": {
+      "x": 120,
+      "y": 240,
+      "canheight": 60,
+      "candiameter": 25,
+      "minspace": 8,
+      "additional_bottom": true,
+      "additional_top": true,
+      "thickness": 6,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_paintstorage_hex",
+    "generator": "paintstorage",
+    "pythonClass": "PaintStorage",
+    "pythonModule": "paintbox",
+    "params": {
+      "x": 110,
+      "y": 200,
+      "canheight": 45,
+      "candiameter": 20,
+      "minspace": 6,
+      "hexpattern": true,
+      "st_height": 3,
+      "st_holedistance": 1.5,
+      "thickness": 4,
+      "burn": 0.05
+    }
+  },
+  {
+    "name": "ref_paintstorage_drawer",
+    "generator": "paintstorage",
+    "pythonClass": "PaintStorage",
+    "pythonModule": "paintbox",
+    "params": {
+      "x": 100,
+      "y": 180,
+      "canheight": 40,
+      "candiameter": 30,
+      "minspace": 10,
+      "drawer": true,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_paintstorage_labelled",
+    "generator": "paintstorage",
+    "pythonClass": "PaintStorage",
+    "pythonModule": "paintbox",
+    "params": {
+      "x": 100,
+      "y": 200,
+      "canheight": 50,
+      "candiameter": 30,
+      "minspace": 10,
+      "labels": true,
+      "thickness": 6,
+      "burn": 0.1
+    }
   }
 ]
