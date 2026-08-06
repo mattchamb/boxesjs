@@ -51,20 +51,6 @@ export function decodeParams(generator: string, hash: string): ParamValues {
   return values;
 }
 
-/**
- * The keys a link names outright. A shared link only carries what differs from
- * the defaults, so this is how a caller tells "the sender chose this value" from
- * "nobody said" — the material preset may fill in the latter but not the former.
- */
-export function pinnedKeys(hash: string): Set<string> {
-  const keys = new Set<string>();
-  for (const pair of hash.replace(/^#/, '').split('&')) {
-    const idx = pair.indexOf('=');
-    if (idx > 0) keys.add(decodeURIComponent(pair.slice(0, idx)));
-  }
-  return keys;
-}
-
 export function permalinkFor(generator: string, values: ParamValues, origin?: string): string {
   const base =
     origin ?? (typeof location !== 'undefined' ? `${location.origin}${location.pathname}` : '');

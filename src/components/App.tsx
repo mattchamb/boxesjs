@@ -10,7 +10,7 @@ import { LAYERS, LAYER_INFO, type Layer } from '../lib/geom/colors';
 import { GROUPS_OPEN_BY_DEFAULT, GROUP_LABELS, type ParamGroup, type ParamSpec, type ParamValue, type ParamValues } from '../lib/params/schema';
 import { paramsFor } from '../lib/generators/registry';
 import { RenderClient } from '../lib/render-client';
-import { decodeParams, encodeParams, permalinkFor, pinnedKeys } from '../lib/permalink';
+import { decodeParams, encodeParams, permalinkFor } from '../lib/permalink';
 import {
   findMaterial,
   formatDuration,
@@ -74,17 +74,11 @@ export default function App({ generator, name, summary, initial }: Props) {
 
     // The preset drives the geometry, so the one selected on arrival has to
     // reach the parameters too — otherwise the panel would show a preset whose
-    // thickness the model is not using. A permalink that names thickness or
-    // kerf outright still wins: that was a deliberate choice by whoever shared
-    // it, not a value waiting to be filled in.
+    // thickness the model is not using. It wins over whatever the hash carried:
+    // the preset is the single source of truth for stock, and a thickness typed
+    // by hand is one edit away from being typed again.
     const m = all.find((x) => x.id === id);
-    if (!m) return;
-    const pinned = pinnedKeys(typeof location !== 'undefined' ? location.hash : '');
-    setValues((prev) => ({
-      ...prev,
-      ...(pinned.has('thickness') ? {} : { thickness: m.thickness }),
-      ...(pinned.has('burn') ? {} : { burn: m.kerf }),
-    }));
+    if (m) setValues((prev) => ({ ...prev, thickness: m.thickness, burn: m.kerf }));
   }, []);
 
   // Every parameter change re-renders. The client coalesces, so this is safe
