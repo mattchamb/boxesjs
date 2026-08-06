@@ -73,40 +73,58 @@ function makeLayers(
 }
 
 /**
- * Starting points, not gospel — every machine differs. These assume a mid-range
- * 50-60 W CO2 tube; dial them in on scrap and save your own preset.
+ * Starting points, not gospel — every machine differs. These assume a 40 W
+ * optical diode (Creality Falcon2 Pro 40W and friends): a 450 nm beam, so cuts
+ * run near full power at low feed rates and thick stock needs multiple passes.
+ * Dial them in on scrap and save your own preset.
+ *
+ * No clear acrylic preset: a blue diode passes straight through transparent
+ * acrylic and will not cut it at any speed, so only the opaque grade is listed.
+ *
+ * The first entry is what a fresh browser starts on, so it is the stock most
+ * jobs here are actually cut from.
  */
 export const BUILTIN_MATERIALS: Material[] = [
+  {
+    // Measured on the owner's machine: 500 mm/min at 100% clears 7mm in one
+    // pass, so this one is not a starting point — it is a known-good setting.
+    id: 'ply-7',
+    name: '7mm Plywood',
+    thickness: 7.0,
+    kerf: 0.1,
+    layers: makeLayers(cut(8.33, 100), cut(7, 100), engrave(150, 20), engrave(60, 45)),
+    builtin: true,
+  },
   {
     id: 'ply-3',
     name: '3mm Birch Ply',
     thickness: 3.0,
-    kerf: 0.1,
-    layers: makeLayers(cut(12, 85), cut(14, 80), engrave(280, 20), engrave(120, 40)),
+    kerf: 0.09,
+    layers: makeLayers(cut(12, 100), cut(10, 100), engrave(150, 20), engrave(60, 45)),
     builtin: true,
   },
   {
     id: 'mdf-6',
     name: '6mm MDF',
     thickness: 6.0,
-    kerf: 0.12,
-    layers: makeLayers(cut(5, 95, 2), cut(6, 90, 2), engrave(250, 25), engrave(100, 45)),
+    kerf: 0.1,
+    layers: makeLayers(cut(5, 100, 3), cut(4, 100, 3), engrave(120, 25), engrave(50, 50)),
     builtin: true,
   },
   {
     id: 'acrylic-3',
-    name: '3mm Acrylic',
+    name: '3mm Black Acrylic',
     thickness: 3.0,
-    kerf: 0.08,
-    layers: makeLayers(cut(10, 70), cut(11, 68), engrave(300, 18), engrave(140, 35)),
+    kerf: 0.07,
+    layers: makeLayers(cut(6, 100, 2), cut(5, 100, 2), engrave(100, 15), engrave(40, 40)),
     builtin: true,
   },
   {
     id: 'card-2',
     name: '2mm Greyboard',
     thickness: 2.0,
-    kerf: 0.06,
-    layers: makeLayers(cut(35, 45), cut(38, 42), engrave(400, 12), engrave(200, 22)),
+    kerf: 0.05,
+    layers: makeLayers(cut(25, 70), cut(22, 70), engrave(200, 12), engrave(100, 25)),
     builtin: true,
   },
 ];
