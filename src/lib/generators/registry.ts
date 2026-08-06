@@ -7,6 +7,7 @@ import { defaultValues, type ParamSpec, type ParamValues } from '../params/schem
 import type { GeneratorDef } from './types';
 
 import { aBox } from './abox';
+import { bayonetBox } from './bayonetbox';
 import { cardBox } from './cardbox';
 import { closedBox } from './closedbox';
 import { console2 } from './console2';
@@ -28,6 +29,7 @@ const DEFS: GeneratorDef[] = [
   console2,
   universalBox,
   regularBox,
+  bayonetBox,
   notesHolder,
   typeTray,
   drillBox,

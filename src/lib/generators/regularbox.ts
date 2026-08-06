@@ -7,9 +7,11 @@
  * walls then meet at an angle that depends on the taper, and each of the three
  * joints in the box needs finger joints cut for its own angle.
  *
- * boxes.py's `bayonet mount` top style is not offered here — it needs the
- * `BayonetBox` base class, which is not ported.
+ * The `bayonet mount` top adds a twist-lock lid, built from the shared
+ * `Bayonet` helper rather than by inheritance — boxes.py subclasses
+ * `BayonetBox` but calls `Boxes.__init__`, so it inherits the methods only.
  */
+import { Bayonet } from '../bayonet';
 import { Boxes, type BoxesConfig, type PolygonBorder } from '../boxes';
 import type { FingerJointSettings } from '../edges/fingerjoint';
 import type { ParamValues } from '../params/schema';
@@ -17,8 +19,12 @@ import { b, n as num, s, type GeneratorDef } from './types';
 
 const DEG = Math.PI / 180;
 
-/** Styles whose top or bottom panel is joined to the walls with fingers. */
+/** Styles whose panel is joined to the walls with fingers. */
 const FINGERED = ['closed', 'hole', 'angled hole', 'round lid', 'angled lid2'];
+const FINGERED_TOP = [...FINGERED, 'bayonet mount'];
+
+/** boxes.py fixes the lug count for the bayonet lid rather than exposing it. */
+const BAYONET_LUGS = 6;
 
 interface RegularBoxOptions {
   h: number;
@@ -28,6 +34,7 @@ interface RegularBoxOptions {
   n: number;
   top: string;
   bottom: string;
+  alignmentPins: number;
 }
 
 class RegularBox extends Boxes {
@@ -92,6 +99,8 @@ class RegularBox extends Boxes {
     topSettings.setValues(t, true, { angle: 90 - beta });
     topSettings.edgeObjects(this, 'zZH');
 
+    const bayonet = new Bayonet(this, 0, BAYONET_LUGS, this.o.alignmentPins);
+
     const drawTop = (r: number, sh: number, style: string, joint: string, label: string): void => {
       const panel = joint[1]!;
       if (style === 'closed') {
@@ -116,6 +125,24 @@ class RegularBox extends Boxes {
       if (style === 'round lid') {
         this.parts.disc(sh * 2, { move: 'right', label: 'Lid' });
       }
+      // Keyed off the box's top style, not this end's — boxes.py does the same,
+      // so a bayonet top emits its hardware twice, once sized to each end.
+      if (this.o.top === 'bayonet mount') {
+        bayonet.diameter = 2 * sh;
+        this.parts.disc(sh * 2 - 0.1 * t, {
+          callback: () => bayonet.lowerCB(),
+          move: 'right',
+          label: 'Lock lower',
+        });
+        this.regularPolygonWall(n, {
+          r,
+          edges: 'F',
+          callback: [() => bayonet.upperCB()],
+          move: 'right',
+          label: 'Lock upper',
+        });
+        this.parts.disc(sh * 2, { move: 'right', label: 'Lid' });
+      }
     };
 
     this.savedContext(() => {
@@ -128,7 +155,7 @@ class RegularBox extends Boxes {
     this.regularPolygonWall(n, { r: Math.max(r0, r1), edges: 'F', move: 'up only' });
 
     const bottomEdge = FINGERED.includes(bottom) ? 'y' : 'e';
-    const topEdge = FINGERED.includes(top) ? 'z' : 'e';
+    const topEdge = FINGERED_TOP.includes(top) ? 'z' : 'e';
 
     // Width of the angled counterpart edge, used to inset the wall where the
     // taper makes one end overhang the other.
@@ -179,7 +206,6 @@ class RegularBox extends Boxes {
   }
 }
 
-/** Same seven styles at both ends; boxes.py only differs in which it defaults to. */
 const PANEL_CHOICES = [
   { value: 'none', label: 'Open' },
   { value: 'closed', label: 'Closed panel' },
@@ -190,6 +216,12 @@ const PANEL_CHOICES = [
   { value: 'round lid', label: 'Round hole with disc lid' },
 ];
 
+/** The bayonet lid is a top-only style; boxes.py never offers it as a bottom. */
+const TOP_CHOICES = [
+  ...PANEL_CHOICES,
+  { value: 'bayonet mount', label: 'Bayonet twist lid' },
+];
+
 export const regularBox: GeneratorDef = {
   meta: {
     id: 'regularbox',
@@ -198,10 +230,10 @@ export const regularBox: GeneratorDef = {
     summary: 'Box with a regular polygon base, straight or tapered',
     description:
       'A box built on a regular polygon. Setting different top and bottom radii ' +
-      'tapers the sides. Lids are a friction fit and need gluing. Short side ' +
-      'walls may not fit a connecting finger — reduce the edge margin and finger ' +
-      'width in the joint settings if that happens. boxes.py’s bayonet mount ' +
-      'lid is not offered, as it needs machinery this port does not have.',
+      'tapers the sides. Lids are a friction fit and need gluing — for the ' +
+      'bayonet lid, glue all the outside rings to the bottom and all the inside ' +
+      'rings to the top. Short side walls may not fit a connecting finger; ' +
+      'reduce the edge margin and finger width in the joint settings if so.',
   },
   // Side walls here are narrow; the library edge margin would leave many of them
   // with no fingers at all, so boxes.py starts this generator with a smaller one.
@@ -254,10 +286,22 @@ export const regularBox: GeneratorDef = {
     },
     { key: 'outside', kind: 'bool', label: 'Outside measurements', default: true, group: 'dimensions' },
     {
+      key: 'alignment_pins',
+      kind: 'length',
+      label: 'Alignment pin diameter',
+      unit: 'mm',
+      default: 1.0,
+      min: 0.5,
+      max: 5,
+      step: 0.1,
+      group: 'top',
+      help: 'Bayonet lid only: holes for pins that keep the glued layers concentric.',
+    },
+    {
       key: 'top',
       kind: 'enum',
       label: 'Top style',
-      choices: PANEL_CHOICES,
+      choices: TOP_CHOICES,
       default: 'none',
       group: 'top',
     },
@@ -280,6 +324,7 @@ export const regularBox: GeneratorDef = {
         n: num(v, 'n', 5),
         top: s(v, 'top', 'none'),
         bottom: s(v, 'bottom', 'closed'),
+        alignmentPins: num(v, 'alignment_pins', 1.0),
       },
       config,
     ),

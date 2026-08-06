@@ -388,6 +388,93 @@
     }
   },
   {
+    "name": "ref_bayonetbox",
+    "generator": "bayonetbox",
+    "pythonClass": "BayonetBox",
+    "params": {
+      "diameter": 50,
+      "lugs": 10,
+      "alignment_pins": 1.0,
+      "outside": true,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_bayonetbox_thick",
+    "generator": "bayonetbox",
+    "pythonClass": "BayonetBox",
+    "params": {
+      "diameter": 90,
+      "lugs": 6,
+      "alignment_pins": 2,
+      "outside": true,
+      "thickness": 6,
+      "burn": 0.05
+    }
+  },
+  {
+    "name": "ref_bayonetbox_inside",
+    "generator": "bayonetbox",
+    "pythonClass": "BayonetBox",
+    "params": {
+      "diameter": 70,
+      "lugs": 14,
+      "alignment_pins": 1.0,
+      "outside": false,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_bayonetbox_labelled",
+    "generator": "bayonetbox",
+    "pythonClass": "BayonetBox",
+    "params": {
+      "diameter": 50,
+      "lugs": 10,
+      "alignment_pins": 1.0,
+      "outside": true,
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_regularbox_bayonet",
+    "generator": "regularbox",
+    "pythonClass": "RegularBox",
+    "params": {
+      "n": 5,
+      "radius_bottom": 50,
+      "radius_top": 50,
+      "h": 100,
+      "outside": true,
+      "top": "bayonet mount",
+      "bottom": "closed",
+      "alignment_pins": 1.0,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_regularbox_bayonet_thick",
+    "generator": "regularbox",
+    "pythonClass": "RegularBox",
+    "params": {
+      "n": 6,
+      "radius_bottom": 60,
+      "radius_top": 60,
+      "h": 100,
+      "outside": true,
+      "top": "bayonet mount",
+      "bottom": "hole",
+      "alignment_pins": 2,
+      "thickness": 5,
+      "burn": 0.05
+    }
+  },
+  {
     "name": "ref_rectwall",
     "generator": "rectangularwall",
     "pythonClass": "RectangularWall",

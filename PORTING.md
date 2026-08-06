@@ -412,10 +412,20 @@ this reason).
 
 ## 9. State of the port
 
-**Every generator on the list is done.** Twelve are registered: ABox, ClosedBox,
-OpenBox, CardBox, Console2, UniversalBox, RegularBox, NotesHolder, TypeTray,
-DrillBox, PaintStorage, DisplayShelf, and the RectangularWall part. All of them
-match boxes.py coordinate-for-coordinate across 51 golden cases.
+**Every generator on the list is done.** Thirteen generators are registered —
+ABox, ClosedBox, OpenBox, CardBox, Console2, UniversalBox, RegularBox,
+BayonetBox, NotesHolder, TypeTray, DrillBox, PaintStorage, DisplayShelf — plus
+the RectangularWall part. All of them match boxes.py coordinate-for-coordinate
+across 57 golden cases.
+
+boxes.py has 173 further generators. **56 of them need no new engine
+machinery at all** — every method, settings family and edge they touch is
+already here (`basedbox`, `two_piece`, `crate`, `slantedtray`, `angledbox`,
+`storagerack`, `spicesrack`, `discrack`, `penholderbox`, `halfbox` and more).
+Of the rest, the biggest single blocker is `FlexSettings` (living hinge, 19
+generators), then the `_WallMountedBox` base class (14) and `DoveTailSettings`
+(10). Note that a generator referencing `edges.BaseEdge` is *not* blocked — that
+is the generator-local edge pattern of §7, which already works.
 
 If you are adding a *new* generator from boxes.py, §§1-8 are what you need; this
 section is a record of what the engine now has and where the sharp edges were.
@@ -429,7 +439,8 @@ section is a record of what the engine now has and where the sharp edges were.
 | `_polygonWallExtend` | `__init__.py:2795` | `boxes.ts` `polygonWallExtend`, private |
 | `regularPolygonAt` | `__init__.py:1041` | `boxes.ts` — RegularBox `angled hole` / `angled lid2` |
 | `regularPolygonWall`, `regularPolygon` | `__init__.py:1019` | `boxes.ts` |
-| `parts.disc` | `parts.py:34` | `src/lib/parts.ts` — RegularBox `round lid` |
+| `parts.disc` | `parts.py:34` | `src/lib/parts.ts` — RegularBox `round lid`, every BayonetBox part |
+| `BayonetBox` lug geometry | `generators/bayonetbox.py` | `src/lib/bayonet.ts` — BayonetBox, RegularBox `bayonet mount` |
 | `Settings.clone()` | `copy.deepcopy` | `src/lib/edges/settings.ts` — RegularBox |
 | `hexHolesRectangle`, `HexHolesSettings` | | `src/lib/hexholes.ts` — PaintStorage |
 
@@ -468,12 +479,8 @@ state, not local values, and anything drawn afterwards sees the redefinition.
 
 ### Deliberate divergences
 
-Two, both recorded at the site:
+One, recorded at the site:
 
-- **RegularBox has no `bayonet mount` top style.** It needs the `BayonetBox`
-  base class for `lowerCB`/`upperCB`, which is not ported. Under §8 the choice
-  is removed rather than substituted, and the generator's help text says so.
-  `--alignment_pins` is dropped with it, since nothing else reads it.
 - **DisplayShelf with `slope_top` and `angle = 0`.** boxes.py sizes the sloped
   cut by dividing by `sin(angle)` and emits NaN coordinates. With flat floors
   there is nothing to slope, so the port warns on the `angle` field and draws the
@@ -488,7 +495,7 @@ conditional are truthy. The float is discarded. The port passes a literal `true`
 ### Not ported, and nothing above needs it
 
 Flex / living hinge, `CabinetHinge`, `ChestHinge`, `Click`, `SlideOnLid`,
-`DoveTail`, `Grooved`, `HandleEdge`, `BayonetBox`, gears, pulleys, servos, wall
+`DoveTail`, `Grooved`, `HandleEdge`, gears, pulleys, servos, wall
 edges, QR codes, `fillHoles`, DXF and PostScript output.
 
 `polygonWalls` (plural) is not ported. `hexHolesRectangle` is; `hexHolesPlate`,
