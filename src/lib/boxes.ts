@@ -20,11 +20,22 @@ import { RoundedTriangleEdgeSettings } from './edges/roundedtriangle';
 import { MountingSettings } from './edges/mounting';
 import { Lid, LidSettings } from './lids';
 import { HexHolesSettings, type HexHoleSkip } from './hexholes';
+import { Parts } from './parts';
 import type { SettingsOverrides } from './edges/settings';
 
 const DEG = Math.PI / 180;
 
+/** Python's `%` on a positive modulus is never negative; JS's can be. */
+const mod360 = (v: number): number => ((v % 360) + 360) % 360;
+
 export type EdgeSpec = string | BaseEdge;
+
+/**
+ * One entry of a `polygonWall` border list, which alternates leg lengths and
+ * corner angles. A corner may be `[angle, radius]` to sweep an arc instead of
+ * turning on the spot.
+ */
+export type PolygonBorder = number | [number, number];
 export type Callback =
   | ((n: number) => void)
   | Array<((n?: number) => void) | null | undefined>
@@ -86,6 +97,8 @@ export abstract class Boxes {
   lidSettings!: LidSettings;
   lidObj!: Lid;
   hexHolesSettings!: HexHolesSettings;
+  /** Standalone part shapes; boxes.py hangs these off the box the same way. */
+  parts: Parts = new Parts(this);
 
   /** [d, d_nut, h_nut, l, l1] */
   bedBoltSettings: readonly number[] = [3, 5.5, 2, 20, 15];
@@ -1047,6 +1060,251 @@ export abstract class Boxes {
     }
 
     this.move(tw, th, move, false, label);
+  }
+
+  /** Regular polygon drawn about a point. boxes.py decorates this with `@restore`. */
+  regularPolygonAt(
+    x: number,
+    y: number,
+    corners: number,
+    opts: { angle?: number; r?: number; h?: number; side?: number } = {},
+  ): void {
+    const { angle = 0, r: rIn, h: hIn, side: sideIn } = opts;
+    this.withRestore(() => {
+      this.moveTo(x, y, angle);
+      const [, h, side] = this.regularPolygon(corners, rIn, hIn, sideIn);
+      this.moveTo(-side / 2.0, -h - this.burn);
+      for (let i = 0; i < corners; i++) {
+        this.edge(side);
+        this.corner(360.0 / corners);
+      }
+    });
+  }
+
+  // ==========================================================================
+  // polygonWall and friends
+  // ==========================================================================
+
+  /**
+   * Bounding box of a border list, in the coordinate system the path starts in.
+   *
+   * Ported literally from boxes.py `_polygonWallExtend`, which is the awkward
+   * part of `polygonWall`: it has to size the part before drawing it, so it
+   * walks the list twice — once expanding every edge's `margin()` into a
+   * detour, so the box covers material the edge sits proud of, and once tracing
+   * the result for extremes.
+   *
+   * `ext` starts at zero on all four sides, so the origin is always inside the
+   * box. That is the original's behaviour and callers rely on it.
+   *
+   * boxes.py also takes an unused `close` argument here; it is dropped.
+   */
+  private polygonWallExtend(
+    borders: PolygonBorder[],
+    edges: BaseEdge[],
+  ): [number, number, number, number] {
+    let posx = 0;
+    let posy = 0;
+    let angle = 0;
+    const ext: [number, number, number, number] = [0, 0, 0, 0];
+
+    /** Does turning by `sweep` from `start` pass `target` on the way? */
+    const angleInSweep = (start: number, sweep: number, target: number): boolean => {
+      if (Math.abs(sweep) >= 360) return true;
+      const s = mod360(start);
+      const t = mod360(target);
+      if (sweep >= 0) return mod360(t - s) <= sweep;
+      return mod360(s - t) <= -sweep;
+    };
+
+    const checkpoint = (x: number, y: number): void => {
+      ext[0] = Math.min(ext[0], x);
+      ext[1] = Math.min(ext[1], y);
+      ext[2] = Math.max(ext[2], x);
+      ext[3] = Math.max(ext[3], y);
+    };
+
+    // Replace each leg with a detour out to its edge's margin and back, so the
+    // trace below sees the widest point rather than the nominal outline.
+    const nborders: PolygonBorder[] = [];
+    borders.forEach((val, i) => {
+      if (i % 2) {
+        nborders.push(val);
+        return;
+      }
+      const margin = edges[Math.floor(i / 2) % edges.length]!.margin();
+      // A leg may carry a tab count alongside its length; only the length matters.
+      const l = Array.isArray(val) ? val[0] : val;
+      if (margin) nborders.push(0.0, -90, margin, 90, l, 90, margin, -90, 0.0);
+      else nborders.push(val);
+    });
+
+    for (let i = 0; i < nborders.length; i++) {
+      const val = nborders[i]!;
+      if (i % 2) {
+        if (!Array.isArray(val)) {
+          angle = mod360(angle + val);
+          continue;
+        }
+        const [a, r] = val;
+        let centerx: number;
+        let centery: number;
+        if (a > 0) {
+          centerx = posx + r * Math.cos((angle + 90) * DEG);
+          centery = posy + r * Math.sin((angle + 90) * DEG);
+        } else {
+          centerx = posx + r * Math.cos((angle - 90) * DEG);
+          centery = posy + r * Math.sin((angle - 90) * DEG);
+        }
+
+        // The arc point's angle about the centre is rotated ±90° from the
+        // heading, depending on which way the sweep goes.
+        const start = a > 0 ? angle - 90 : angle + 90;
+        for (const direction of [0, 90, 180, 270]) {
+          if (angleInSweep(start, a, direction)) {
+            checkpoint(
+              centerx + r * Math.cos(direction * DEG),
+              centery + r * Math.sin(direction * DEG),
+            );
+          }
+        }
+
+        angle = mod360(angle + a);
+        if (a > 0) {
+          posx = centerx + r * Math.cos((angle - 90) * DEG);
+          posy = centery + r * Math.sin((angle - 90) * DEG);
+        } else {
+          posx = centerx + r * Math.cos((angle + 90) * DEG);
+          posy = centery + r * Math.sin((angle + 90) * DEG);
+        }
+      } else {
+        const l = Array.isArray(val) ? val[0] : val;
+        posx += l * Math.cos(angle * DEG);
+        posy += l * Math.sin(angle * DEG);
+      }
+      checkpoint(posx, posy);
+    }
+
+    return ext;
+  }
+
+  /**
+   * Close an open border list, ported from boxes.py `_closePolygon`.
+   *
+   * Only a list ending in `null` is open; anything else is returned untouched.
+   * boxes.py appends to a slice copy, so the caller's array is never mutated —
+   * kept that way here.
+   */
+  private closePolygon(borders: Array<PolygonBorder | null>): PolygonBorder[] {
+    if (borders.length && borders[borders.length - 1] !== null) {
+      return borders as PolygonBorder[];
+    }
+
+    const out = borders.slice(0, -1) as PolygonBorder[];
+
+    let posx = 0;
+    let posy = 0;
+    let angle = 0;
+
+    for (let i = 0; i < out.length; i++) {
+      const val = out[i]!;
+      if (i % 2) {
+        if (!Array.isArray(val)) {
+          angle = mod360(angle + val);
+          continue;
+        }
+        const [a, r] = val;
+        let centerx: number;
+        let centery: number;
+        if (a > 0) {
+          centerx = posx + r * Math.cos((angle + 90) * DEG);
+          centery = posy + r * Math.sin((angle + 90) * DEG);
+        } else {
+          centerx = posx + r * Math.cos((angle - 90) * DEG);
+          centery = posy + r * Math.sin((angle - 90) * DEG);
+        }
+        angle = mod360(angle + a);
+        if (a > 0) {
+          posx = centerx + r * Math.cos((angle - 90) * DEG);
+          posy = centery + r * Math.sin((angle - 90) * DEG);
+        } else {
+          posx = centerx + r * Math.cos((angle + 90) * DEG);
+          posy = centery + r * Math.sin((angle + 90) * DEG);
+        }
+      } else {
+        const l = val as number;
+        posx += l * Math.cos(angle * DEG);
+        posy += l * Math.sin(angle * DEG);
+      }
+    }
+
+    if (out.length % 2 === 0) out.push(0.0);
+
+    // Turn to face the origin, walk back to it, then turn to the start heading.
+    const a = Math.atan2(-posy, -posx) / DEG;
+    out.push(mod360(a - angle));
+    out.push(Math.sqrt(posx ** 2 + posy ** 2));
+    out.push(-a);
+    return out;
+  }
+
+  /**
+   * Wall for multi-edged objects: `borders` alternates leg length and corner
+   * angle, and `edge` supplies one edge per leg, wrapping if it is shorter.
+   * A trailing `null` closes the polygon.
+   */
+  polygonWall(
+    borders: Array<PolygonBorder | null>,
+    opts: {
+      edge?: EdgeSpec | EdgeSpec[];
+      turtle?: boolean;
+      correctCorners?: boolean;
+      callback?: Callback;
+      move?: string | null;
+      label?: string;
+    } = {},
+  ): void {
+    const { edge = 'f', turtle = false, correctCorners = true, callback, move, label = '' } = opts;
+
+    let specs: EdgeSpec[];
+    if (Array.isArray(edge)) specs = edge;
+    else if (typeof edge === 'string') specs = Array.from(edge);
+    else specs = [edge];
+    const e = specs.map((s) => this.getEdge(s));
+
+    const t = this.thickness;
+
+    const closed = this.closePolygon(borders);
+    const [minx, miny, maxx, maxy] = this.polygonWallExtend(closed, e);
+    const tw = maxx - minx;
+    const th = maxy - miny;
+
+    if (!turtle) {
+      if (this.move(tw, th, move, true)) return;
+      this.moveTo(-minx, -miny);
+    }
+
+    // An inside corner needs the leg shortened by however far the material
+    // overshoots the turn, split between the legs either side of it.
+    let lengthCorrection = 0.0;
+    for (let i = 0; i < closed.length; i += 2) {
+      this.cc(callback, Math.floor(i / 2));
+      this.edge(lengthCorrection);
+      let l = (closed[i] as number) - lengthCorrection;
+      const nextAngle = closed[i + 1]!;
+
+      if (correctCorners && !Array.isArray(nextAngle) && nextAngle < 0) {
+        lengthCorrection = t * Math.tan((-nextAngle / 2) * DEG);
+      } else {
+        lengthCorrection = 0.0;
+      }
+      l -= lengthCorrection;
+      e[Math.floor(i / 2) % e.length]!.call(l);
+      this.edge(lengthCorrection);
+      this.corner(nextAngle, 0, 1);
+    }
+
+    if (!turtle) this.move(tw, th, move, false, label);
   }
 
   /** Right triangle, used for brackets and shelf supports. */

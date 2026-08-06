@@ -3,9 +3,10 @@
 How to continue porting Boxes.py generators into this codebase, written for
 whoever picks this up next.
 
-The engine port is done and verified. What remains is mostly mechanical:
-translating one generator file at a time and proving each one matches the
-original. This document is about doing that faithfully.
+The engine port is done and verified, and so is every generator that was on the
+list — see §9 for what the engine now has. Adding another generator from
+boxes.py is mechanical: translate one file, then prove it matches the original.
+This document is about doing that faithfully.
 
 ---
 
@@ -409,109 +410,92 @@ this reason).
 
 ---
 
-## 9. Remaining generators
+## 9. State of the port
 
-CardBox, Console2, UniversalBox, DrillBox and NotesHolder are **done** — four
-golden cases each, all matching boxes.py. PaintStorage (`paintbox.py`) is done
-too, with five. Two remain: **DisplayShelf** and **RegularBox**.
+**Every generator on the list is done.** Twelve are registered: ABox, ClosedBox,
+OpenBox, CardBox, Console2, UniversalBox, RegularBox, NotesHolder, TypeTray,
+DrillBox, PaintStorage, DisplayShelf, and the RectangularWall part. All of them
+match boxes.py coordinate-for-coordinate across 51 golden cases.
 
-PaintStorage brought two pieces of shared machinery with it: `hexHolesRectangle`
-and `HexHolesSettings` (`src/lib/hexholes.ts`), and the `st_*` parameter block
-that exposes `StackableSettings`. Note that its module is `paintbox.py` while
-its class is `PaintStorage`, so its golden cases need an explicit
-`"pythonModule": "paintbox"`.
+If you are adding a *new* generator from boxes.py, §§1-8 are what you need; this
+section is a record of what the engine now has and where the sharp edges were.
 
-### `polygonWall` blocks both of them
+### Engine machinery, and which generator brought it
 
-This is the thing to understand before planning anything else, and an earlier
-version of this document got it wrong.
-
-`polygonWall` is not a DisplayShelf-only concern. **RegularBox draws every one
-of its side walls through it** — both the `n % 2` branch and the even-`n`
-branch, `regularbox.py:145-165`. There is no configuration of RegularBox that
-avoids it. DisplayShelf needs it only for `slope_top`
-(`displayshelf.py:generate_sloped_sides`); everything else in that file is
-`rectangularWall`, angled `fingerHolesAt` and `CompoundEdge`, all of which
-already work.
-
-So `polygonWall` is the shared prerequisite for the rest of the port, not an
-optional extra.
-
-| Piece | Python | Status |
+| Piece | Python | Here |
 | --- | --- | --- |
-| `polygonWall` | `__init__.py:2917`, ~40 lines | **missing** |
-| `_closePolygon` | `__init__.py:2872`, ~45 lines | **missing** |
-| `_polygonWallExtend` | `__init__.py:2795`, ~75 lines | **missing** — the awkward one |
-| `parts.disc` | `parts.py:34` | **missing** (`disc` at `boxes.ts:589` is only a comment on `circle()`) |
-| `regularPolygonAt` | | **missing** |
-| `regularPolygonWall`, `regularPolygon` | | ported |
-| `FingerJointSettings` cloned at an angle | | **ported — see below** |
+| `polygonWall` | `__init__.py:2916` | `boxes.ts` — DisplayShelf `slope_top`, every RegularBox side wall |
+| `_closePolygon` | `__init__.py:2872` | `boxes.ts` `closePolygon`, private |
+| `_polygonWallExtend` | `__init__.py:2795` | `boxes.ts` `polygonWallExtend`, private |
+| `regularPolygonAt` | `__init__.py:1041` | `boxes.ts` — RegularBox `angled hole` / `angled lid2` |
+| `regularPolygonWall`, `regularPolygon` | `__init__.py:1019` | `boxes.ts` |
+| `parts.disc` | `parts.py:34` | `src/lib/parts.ts` — RegularBox `round lid` |
+| `Settings.clone()` | `copy.deepcopy` | `src/lib/edges/settings.ts` — RegularBox |
+| `hexHolesRectangle`, `HexHolesSettings` | | `src/lib/hexholes.ts` — PaintStorage |
 
-`_polygonWallExtend` is where the difficulty is. It computes the part's bounding
-box before drawing, which means walking the border list twice: once to expand
-each edge's `margin()` into extra segments, and once to trace the path. It has
-to handle borders whose angle entry is an `(angle, radius)` tuple rather than a
-plain number, and for those it works out which of the four compass directions
-the arc sweeps past (`_angle_in_sweep`) to find the extremes. Port it literally;
-it is not a good candidate for improvement.
+`_polygonWallExtend` was the awkward one and is worth knowing about if you touch
+it. It sizes the part before drawing it, so it walks the border list twice: once
+expanding each edge's `margin()` into a nine-element detour, once tracing for
+extremes. Borders may carry an `(angle, radius)` arc instead of a plain angle,
+and for those it works out which of the four compass directions the sweep passes
+(`_angle_in_sweep`) to find the extremes. It is ported literally and should stay
+that way. Note `ext` starts at zero on all four sides, so the origin is always
+inside the box — callers depend on that.
 
-### What RegularBox does *not* need
+### `Settings.clone()`
 
-This document previously called the per-angle finger-joint settings RegularBox's
-hard part. It is not — that already works. `FingerJointSettings` carries an
-`angle` (`fingerjoint.ts:59`), `fingerLength()` computes from it
-(`fingerjoint.ts:119`), and `setValues` and `edgeObjects` are both ported. The
-Python
+RegularBox needs three finger-joint settings at three different angles, which
+boxes.py gets with `copy.deepcopy`. `Settings.clone()` is that: it copies the
+prototype *and* gives the copy its own `values` object. Both halves matter —
+`structuredClone` drops the prototype (and with it the getters and
+`edgeObjects`), and a shallow copy that aliased `values` would let the three
+angles overwrite each other.
 
-```python
-fingerJointSettings = copy.deepcopy(self.edges["f"].settings)
-fingerJointSettings.setValues(self.thickness, angle=phi)
-fingerJointSettings.edgeObjects(self, chars="gGH")
-```
+Everything else the per-angle joints need was already in place:
+`FingerJointSettings.angle` (`fingerjoint.ts:59`), `fingerLength()`
+(`fingerjoint.ts:119`), `setValues` and `edgeObjects(boxes, chars, add)`
+(`fingerjoint.ts:77`). Python's `setValues(t, angle=phi)` becomes
+`setValues(t, true, { angle: phi })` — the keyword lands in the `name in this`
+branch at `settings.ts:55`, because `angle` is a plain class field, not a
+declared param.
 
-should translate directly: `FingerJointSettings.edgeObjects(boxes, chars, add)`
-takes the same `chars` argument (`fingerjoint.ts:77`).
+RegularBox registers new edge characters on the box mid-render: `gGH`, then
+`yYH`, then `zZH`. `addPart` overwrites `this.edges[char]` unconditionally,
+exactly as boxes.py does (its guard is commented out at `__init__.py:655`), so
+`H` is bound three times and only the last survives. Harmless there, because its
+border strings only reference `g`, `G`, `y` and `z` — but these edges are box
+state, not local values, and anything drawn afterwards sees the redefinition.
 
-It registers new edge characters on the box mid-render — `gGH`, then `yYH`,
-then `zZH`. `addPart` overwrites `this.edges[char]` unconditionally, exactly as
-boxes.py does (its guard is commented out at `__init__.py:655`), so `H` ends up
-bound three times and only the last survives. That is harmless here because
-RegularBox's border strings only ever reference `g`, `G`, `y` and `z` — but it
-does mean these edges are box state, not local values, and anything drawn after
-them sees the redefinition.
+### Deliberate divergences
 
-The one thing to get right is `copy.deepcopy`. Each clone must be an independent
-settings object; sharing one would make the three angles overwrite each other.
+Two, both recorded at the site:
 
-### RegularBox scope
+- **RegularBox has no `bayonet mount` top style.** It needs the `BayonetBox`
+  base class for `lowerCB`/`upperCB`, which is not ported. Under §8 the choice
+  is removed rather than substituted, and the generator's help text says so.
+  `--alignment_pins` is dropped with it, since nothing else reads it.
+- **DisplayShelf with `slope_top` and `angle = 0`.** boxes.py sizes the sloped
+  cut by dividing by `sin(angle)` and emits NaN coordinates. With flat floors
+  there is nothing to slope, so the port warns on the `angle` field and draws the
+  plain rectangular sides. There is no golden for this — boxes.py cannot render
+  it — so the invariant tests are the only cover.
 
-`top` has eight styles and `bottom` seven. `bayonet mount` additionally needs
-the `BayonetBox` base class for `lowerCB`/`upperCB` — under §8's
-no-silent-degradation rule, leave it out of the choices rather than substituting
-something else, and say so in the generator's help text.
+DisplayShelf also carries a quirk worth not "fixing": `displayshelf.py:200`
+computes `thickness + self.edges["h"].startWidth()` and passes it to
+`adjustSize`, which reads only truthiness — and *both* branches of its
+conditional are truthy. The float is discarded. The port passes a literal `true`.
 
-### Suggested order
-
-1. `polygonWall` + `_closePolygon` + `_polygonWallExtend` as engine work, with
-   its own golden coverage. Easiest way to test it in isolation is a generator
-   that already uses it in boxes.py — or add cases once DisplayShelf lands.
-2. DisplayShelf, complete, including `slope_top`. It is otherwise pure
-   transcription, so it should go quickly once step 1 is in.
-3. RegularBox: `parts.disc`, `regularPolygonAt`, then the `top`/`bottom` matrix.
-
-Doing DisplayShelf first *without* `slope_top` is possible and carries no engine
-risk, but it ships a generator with an option removed that you would then add
-back, which means changing its UI choices and regenerating its goldens.
-
-### Not ported, and not needed by the above
+### Not ported, and nothing above needs it
 
 Flex / living hinge, `CabinetHinge`, `ChestHinge`, `Click`, `SlideOnLid`,
-`DoveTail`, `Grooved`, `HandleEdge`, gears, pulleys, servos, wall edges, QR
-codes, `fillHoles`, DXF and PostScript output.
+`DoveTail`, `Grooved`, `HandleEdge`, `BayonetBox`, gears, pulleys, servos, wall
+edges, QR codes, `fillHoles`, DXF and PostScript output.
 
-`hexHolesRectangle` is ported; `hexHolesPlate`, `hexHolesCircle` and
-`hexHolesHex` are not, and neither is `rectangularWall`'s `holesMargin`
-argument, which is the only caller of `hexHolesRectangle` inside the engine.
+`polygonWalls` (plural) is not ported. `hexHolesRectangle` is; `hexHolesPlate`,
+`hexHolesCircle` and `hexHolesHex` are not, and neither is `rectangularWall`'s
+`holesMargin` argument, which is the only caller of `hexHolesRectangle` inside
+the engine. Of `parts.py` only `disc` is ported — `wavyKnob` and `roundKnob`
+would go in `src/lib/parts.ts` beside it.
 
 ---
 

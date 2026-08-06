@@ -10,11 +10,13 @@ import { aBox } from './abox';
 import { cardBox } from './cardbox';
 import { closedBox } from './closedbox';
 import { console2 } from './console2';
+import { displayShelf } from './displayshelf';
 import { drillBox } from './drillbox';
 import { notesHolder } from './notesholder';
 import { openBox } from './openbox';
 import { paintStorage } from './paintstorage';
 import { rectangularWall } from './rectangularwall';
+import { regularBox } from './regularbox';
 import { typeTray } from './typetray';
 import { universalBox } from './universalbox';
 
@@ -25,10 +27,12 @@ const DEFS: GeneratorDef[] = [
   cardBox,
   console2,
   universalBox,
+  regularBox,
   notesHolder,
   typeTray,
   drillBox,
   paintStorage,
+  displayShelf,
   rectangularWall,
 ];
 

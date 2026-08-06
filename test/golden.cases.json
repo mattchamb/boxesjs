@@ -136,6 +136,258 @@
     }
   },
   {
+    "name": "ref_displayshelf",
+    "generator": "displayshelf",
+    "pythonClass": "DisplayShelf",
+    "params": {
+      "sx": "120*3",
+      "y": 100,
+      "h": 300,
+      "outside": true,
+      "num": 3,
+      "front_wall_height": 20,
+      "angle": 30,
+      "include_back": false,
+      "include_front": false,
+      "include_bottom": false,
+      "slope_top": false,
+      "divider_wall_height": 20,
+      "bottom_distance": 0,
+      "top_distance": 0,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_displayshelf_thick",
+    "generator": "displayshelf",
+    "pythonClass": "DisplayShelf",
+    "params": {
+      "sx": "150*2",
+      "y": 120,
+      "h": 400,
+      "outside": true,
+      "num": 4,
+      "front_wall_height": 20,
+      "angle": 30,
+      "include_back": false,
+      "include_front": false,
+      "include_bottom": false,
+      "slope_top": false,
+      "divider_wall_height": 20,
+      "bottom_distance": 0,
+      "top_distance": 0,
+      "thickness": 6,
+      "burn": 0.05
+    }
+  },
+  {
+    "name": "ref_displayshelf_sloped",
+    "generator": "displayshelf",
+    "pythonClass": "DisplayShelf",
+    "params": {
+      "sx": "100*3",
+      "y": 100,
+      "h": 300,
+      "outside": true,
+      "num": 3,
+      "front_wall_height": 20,
+      "angle": 30,
+      "include_back": true,
+      "include_front": true,
+      "include_bottom": true,
+      "slope_top": true,
+      "divider_wall_height": 20,
+      "bottom_distance": 0,
+      "top_distance": 0,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_displayshelf_dividers",
+    "generator": "displayshelf",
+    "pythonClass": "DisplayShelf",
+    "params": {
+      "sx": "80*4",
+      "y": 100,
+      "h": 300,
+      "outside": true,
+      "num": 3,
+      "front_wall_height": 15,
+      "angle": 30,
+      "include_back": false,
+      "include_front": false,
+      "include_bottom": false,
+      "slope_top": false,
+      "divider_wall_height": 40,
+      "bottom_distance": 0,
+      "top_distance": 0,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_displayshelf_nolip",
+    "generator": "displayshelf",
+    "pythonClass": "DisplayShelf",
+    "params": {
+      "sx": "120*2",
+      "y": 100,
+      "h": 300,
+      "outside": true,
+      "num": 3,
+      "front_wall_height": 0,
+      "angle": 30,
+      "include_back": false,
+      "include_front": false,
+      "include_bottom": false,
+      "slope_top": false,
+      "divider_wall_height": 20,
+      "bottom_distance": 0,
+      "top_distance": 0,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_displayshelf_labelled",
+    "generator": "displayshelf",
+    "pythonClass": "DisplayShelf",
+    "params": {
+      "sx": "120*3",
+      "y": 100,
+      "h": 300,
+      "outside": true,
+      "num": 3,
+      "front_wall_height": 20,
+      "angle": 30,
+      "include_back": false,
+      "include_front": false,
+      "include_bottom": false,
+      "slope_top": false,
+      "divider_wall_height": 20,
+      "bottom_distance": 0,
+      "top_distance": 0,
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_regularbox",
+    "generator": "regularbox",
+    "pythonClass": "RegularBox",
+    "params": {
+      "n": 5,
+      "radius_bottom": 50,
+      "radius_top": 50,
+      "h": 100,
+      "outside": true,
+      "top": "none",
+      "bottom": "closed",
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_regularbox_even",
+    "generator": "regularbox",
+    "pythonClass": "RegularBox",
+    "params": {
+      "n": 6,
+      "radius_bottom": 50,
+      "radius_top": 50,
+      "h": 100,
+      "outside": true,
+      "top": "none",
+      "bottom": "closed",
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_regularbox_taper_thick",
+    "generator": "regularbox",
+    "pythonClass": "RegularBox",
+    "params": {
+      "n": 4,
+      "radius_bottom": 40,
+      "radius_top": 70,
+      "h": 120,
+      "outside": true,
+      "top": "none",
+      "bottom": "closed",
+      "thickness": 6,
+      "burn": 0.05
+    }
+  },
+  {
+    "name": "ref_regularbox_lids",
+    "generator": "regularbox",
+    "pythonClass": "RegularBox",
+    "params": {
+      "n": 6,
+      "radius_bottom": 50,
+      "radius_top": 50,
+      "h": 100,
+      "outside": true,
+      "top": "round lid",
+      "bottom": "angled lid2",
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_regularbox_holes",
+    "generator": "regularbox",
+    "pythonClass": "RegularBox",
+    "params": {
+      "n": 7,
+      "radius_bottom": 50,
+      "radius_top": 50,
+      "h": 100,
+      "outside": true,
+      "top": "angled hole",
+      "bottom": "hole",
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_regularbox_angled_lid",
+    "generator": "regularbox",
+    "pythonClass": "RegularBox",
+    "params": {
+      "n": 5,
+      "radius_bottom": 50,
+      "radius_top": 50,
+      "h": 100,
+      "outside": true,
+      "top": "angled lid",
+      "bottom": "none",
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_regularbox_labelled",
+    "generator": "regularbox",
+    "pythonClass": "RegularBox",
+    "params": {
+      "n": 5,
+      "radius_bottom": 80,
+      "radius_top": 80,
+      "h": 100,
+      "outside": true,
+      "top": "none",
+      "bottom": "closed",
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
+  },
+  {
     "name": "ref_rectwall",
     "generator": "rectangularwall",
     "pythonClass": "RectangularWall",

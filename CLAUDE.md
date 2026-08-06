@@ -6,11 +6,14 @@ checked out at `~/src/boxes` and is the specification for all engine behaviour.
 
 Everything runs client-side. There is no backend.
 
-## Continuing the port
+## Porting
+
+Every generator on the original list is ported. Adding another from boxes.py, or
+changing an existing one, follows the same loop.
 
 **Read `PORTING.md` before touching `src/lib/`.** It covers the verification
 loop, the Python→TypeScript translation reference, the mistakes that have
-already been made, and what each remaining generator needs.
+already been made, and what the engine does and does not have (§9).
 
 The rule that matters: a generator is not done until its geometry matches
 boxes.py coordinate-for-coordinate. Add a case to `test/golden.cases.json`, run
@@ -33,6 +36,7 @@ npm run build            # static site into dist/
 - `src/lib/geom/` — affine, extents, path recording, colour→layer mapping
 - `src/lib/boxes.ts` — `Boxes` base class: turtle ops, part layout, walls, holes
 - `src/lib/edges/` — one file per edge family
+- `src/lib/parts.ts` — standalone part shapes (`disc`), hung off the box as `parts`
 - `src/lib/generators/` — one file per generator, plus `registry.ts`
 - `src/lib/params/` — parameter schema and the shared parameter set
 - `src/lib/export/` — SVG and LightBurn `.lbrn2` writers

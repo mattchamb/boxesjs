@@ -62,6 +62,19 @@ export class Settings {
     this.checkValues();
   }
 
+  /**
+   * Independent copy, standing in for boxes.py's `copy.deepcopy`. RegularBox
+   * clones one settings object three times and retunes each to a different
+   * joint angle; sharing `values` between them would make the last angle win
+   * everywhere. `structuredClone` is no use here — it drops the prototype, and
+   * with it the getters and `edgeObjects`.
+   */
+  clone(): this {
+    const copy = Object.assign(Object.create(Object.getPrototypeOf(this)), this) as this;
+    copy.values = { ...this.values };
+    return copy;
+  }
+
   /** Override to reject value combinations that cannot produce valid geometry. */
   checkValues(): void {}
 
