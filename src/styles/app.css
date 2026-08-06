@@ -63,6 +63,14 @@ html, body {
   -webkit-font-smoothing: antialiased;
 }
 
+/* Header then app, so the app takes exactly what the header leaves. Measuring
+   the header in CSS instead of assuming a height keeps a sliver of page from
+   showing under the app when the two disagree. */
+body {
+  display: flex;
+  flex-direction: column;
+}
+
 a { color: var(--accent); }
 
 button, input, select, textarea {
@@ -112,7 +120,7 @@ button, input, select, textarea {
 .app {
   display: grid;
   grid-template-columns: var(--panel-w) 1fr;
-  height: calc(100vh - 45px);
+  flex: 1;
   min-height: 0;
 }
 
@@ -120,6 +128,8 @@ button, input, select, textarea {
   .app {
     grid-template-columns: 1fr;
     grid-template-rows: 45vh 1fr;
+    /* Narrow layout scrolls the page instead of filling it. */
+    flex: none;
     height: auto;
   }
 }
@@ -264,6 +274,10 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   align-items: center;
   gap: 9px;
   cursor: pointer;
+  /* Contains the hidden checkbox below. Without this the input resolves against
+     the initial containing block, which puts it outside the panel's scroll
+     clipping and stretches the page by however far down the panel it sits. */
+  position: relative;
 }
 
 .switch input { position: absolute; opacity: 0; pointer-events: none; }
