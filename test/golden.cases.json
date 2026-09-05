@@ -1036,5 +1036,71 @@
       "thickness": 3,
       "burn": 0.1
     }
+  },
+  {
+    "name": "ref_storagerack",
+    "generator": "storagerack",
+    "pythonClass": "StorageRack",
+    "params": {
+      "x": 100,
+      "depth": 200,
+      "sh": "50*3",
+      "rail": 30,
+      "outside": false,
+      "bottom_edge": "h",
+      "top_edge": "F",
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_storagerack_stackable",
+    "generator": "storagerack",
+    "pythonClass": "StorageRack",
+    "params": {
+      "x": 120,
+      "depth": 250,
+      "sh": "60:80:100",
+      "rail": 40,
+      "outside": true,
+      "bottom_edge": "s",
+      "top_edge": "S",
+      "st_height": 2.5,
+      "thickness": 5,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_storagerack_open",
+    "generator": "storagerack",
+    "pythonClass": "StorageRack",
+    "params": {
+      "x": 140,
+      "depth": 180,
+      "sh": "40*4",
+      "rail": 25,
+      "outside": false,
+      "bottom_edge": "e",
+      "top_edge": "e",
+      "thickness": 4,
+      "burn": 0.05
+    }
+  },
+  {
+    "name": "ref_storagerack_labelled",
+    "generator": "storagerack",
+    "pythonClass": "StorageRack",
+    "params": {
+      "x": 110,
+      "depth": 220,
+      "sh": "45:55",
+      "rail": 35,
+      "outside": true,
+      "bottom_edge": "F",
+      "top_edge": "\u0160",
+      "labels": true,
+      "thickness": 3,
+      "burn": 0.1
+    }
   }
 ]
