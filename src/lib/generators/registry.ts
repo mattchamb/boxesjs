@@ -18,6 +18,7 @@ import { openBox } from './openbox';
 import { paintStorage } from './paintstorage';
 import { rectangularWall } from './rectangularwall';
 import { regularBox } from './regularbox';
+import { trayInsert } from './trayinsert';
 import { typeTray } from './typetray';
 import { universalBox } from './universalbox';
 
@@ -32,6 +33,7 @@ const DEFS: GeneratorDef[] = [
   bayonetBox,
   notesHolder,
   typeTray,
+  trayInsert,
   drillBox,
   paintStorage,
   displayShelf,

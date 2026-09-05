@@ -1,0 +1,88 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg height="160.90mm" viewBox="0.0 0.0 200.30 160.90" width="200.30mm" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<!--
+TrayInsert - Tray insert without floor and outer walls - allows only continuous walls
+
+
+## Tray/Box insert dividers.
+Tray insert with extra margin for that perfect fit.
+
+You can specify the grid sizes with the standard `(sx, sy)` format, which allows nice
+variable rows and columns.  If you  check the `outside` box, the full outside of the
+tray insert ends up being the sum of all the sx/sy values.  However, if you want a
+consistent cell size, and uncheck outside, then the overall dimensions end up
+larger by `(n-1)*thickness`, to make space for your walls.
+
+You can specify the `x` and `y` parameters if you like, just make them larger than
+what the sum of `(sx, sy)` would end up with, and the walls be automatically extended to
+to exactly fill the inside of your tray or box.
+
+So, for example, if you're fitting `30mm x 40mm` items and want them to
+fit inside a `250mm x 300mm` box, you can specify
+
+    sx = 30*8
+    sy = 40*7
+    uncheck outside
+    x=250
+    y=300
+
+This frees your mind into separately thinking about the cell size vs the overall box size.
+
+![Tray Extra](static/samples/TrayInsert-3.jpg)
+    
+
+
+Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
+Creation date: 2026-09-06 08:37:10
+Command line (remove spaces between dashes): boxes TrayInsert - -sx - -sy - -h - -x - -y - -thickness - -burn - -reference - -labels
+-->
+<title>TrayInsert</title>
+<metadata>
+<rdf:RDF><cc:Work>
+<dc:title>Tray - TrayInsert</dc:title>
+<dc:date>2026-09-06 08:37:10</dc:date>
+<dc:source>boxes TrayInsert --sx '40*2' --sy '60*3' --h 45 --outside 1 --x 0 --y 0 --draft_angle 0 --thickness 5 --burn 0.15 --reference 0 --labels 0</dc:source>
+<dc:description>Tray insert without floor and outer walls - allows only continuous walls
+
+## Tray/Box insert dividers.
+Tray insert with extra margin for that perfect fit.
+
+You can specify the grid sizes with the standard `(sx, sy)` format, which allows nice
+variable rows and columns.  If you  check the `outside` box, the full outside of the
+tray insert ends up being the sum of all the sx/sy values.  However, if you want a
+consistent cell size, and uncheck outside, then the overall dimensions end up
+larger by `(n-1)*thickness`, to make space for your walls.
+
+You can specify the `x` and `y` parameters if you like, just make them larger than
+what the sum of `(sx, sy)` would end up with, and the walls be automatically extended to
+to exactly fill the inside of your tray or box.
+
+So, for example, if you're fitting `30mm x 40mm` items and want them to
+fit inside a `250mm x 300mm` box, you can specify
+
+    sx = 30*8
+    sy = 40*7
+    uncheck outside
+    x=250
+    y=300
+
+This frees your mind into separately thinking about the cell size vs the overall box size.
+
+![Tray Extra](static/samples/TrayInsert-3.jpg)
+    
+
+Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
+Command line: boxes TrayInsert --sx '40*2' --sy '60*3' --h 45 --outside 1 --x 0 --y 0 --draft_angle 0 --thickness 5 --burn 0.15 --reference 0 --labels 0
+Command line short: boxes TrayInsert --sx --sy --h --x --y --thickness --burn --reference --labels
+</dc:description>
+</cc:Work></rdf:RDF></metadata>
+<g id="p-0" style="fill:none;stroke-linecap:round;stroke-linejoin:round;">
+  <path d="M 10.150 150.900 H 66.817 C 66.900 150.900 66.967 150.833 66.967 150.750 V 128.400 C 66.967 128.250 66.817 128.400 66.967 128.400 H 71.667 C 71.817 128.400 71.667 128.250 71.667 128.400 V 150.750 C 71.667 150.833 71.734 150.900 71.817 150.900 H 128.483 C 128.566 150.900 128.633 150.833 128.633 150.750 V 128.400 C 128.633 128.250 128.483 128.400 128.633 128.400 H 133.333 C 133.483 128.400 133.333 128.250 133.333 128.400 V 150.750 C 133.333 150.833 133.400 150.900 133.483 150.900 H 190.150 C 190.233 150.900 190.300 150.833 190.300 150.750 V 105.750 C 190.300 105.667 190.233 105.600 190.150 105.600 H 10.150 C 10.067 105.600 10.000 105.667 10.000 105.750 V 150.750 C 10.000 150.833 10.067 150.900 10.150 150.900 Z" stroke="rgb(0,0,0)" stroke-width="0.30" />
+</g>
+<g id="p-1" style="fill:none;stroke-linecap:round;stroke-linejoin:round;">
+  <path d="M 10.150 103.100 H 90.150 C 90.233 103.100 90.300 103.033 90.300 102.950 V 57.950 C 90.300 57.867 90.233 57.800 90.150 57.800 H 52.650 C 52.567 57.800 52.500 57.867 52.500 57.950 V 80.300 C 52.500 80.450 52.650 80.300 52.500 80.300 H 47.800 C 47.650 80.300 47.800 80.450 47.800 80.300 V 57.950 C 47.800 57.867 47.733 57.800 47.650 57.800 H 10.150 C 10.067 57.800 10.000 57.867 10.000 57.950 V 102.950 C 10.000 103.033 10.067 103.100 10.150 103.100 Z" stroke="rgb(0,0,0)" stroke-width="0.30" />
+</g>
+<g id="p-2" style="fill:none;stroke-linecap:round;stroke-linejoin:round;">
+  <path d="M 10.150 55.300 H 90.150 C 90.233 55.300 90.300 55.233 90.300 55.150 V 10.150 C 90.300 10.067 90.233 10.000 90.150 10.000 H 52.650 C 52.567 10.000 52.500 10.067 52.500 10.150 V 32.500 C 52.500 32.650 52.650 32.500 52.500 32.500 H 47.800 C 47.650 32.500 47.800 32.650 47.800 32.500 V 10.150 C 47.800 10.067 47.733 10.000 47.650 10.000 H 10.150 C 10.067 10.000 10.000 10.067 10.000 10.150 V 55.150 C 10.000 55.233 10.067 55.300 10.150 55.300 Z" stroke="rgb(0,0,0)" stroke-width="0.30" />
+</g>
+</svg>

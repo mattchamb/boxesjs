@@ -412,13 +412,13 @@ this reason).
 
 ## 9. State of the port
 
-**Every generator on the list is done.** Thirteen generators are registered —
+**Every generator on the list is done.** Fourteen generators are registered —
 ABox, ClosedBox, OpenBox, CardBox, Console2, UniversalBox, RegularBox,
-BayonetBox, NotesHolder, TypeTray, DrillBox, PaintStorage, DisplayShelf — plus
-the RectangularWall part. All of them match boxes.py coordinate-for-coordinate
-across 57 golden cases.
+BayonetBox, NotesHolder, TypeTray, TrayInsert, DrillBox, PaintStorage,
+DisplayShelf — plus the RectangularWall part. All of them match boxes.py
+coordinate-for-coordinate across 61 golden cases.
 
-boxes.py has 173 further generators. **56 of them need no new engine
+boxes.py has 172 further generators. **55 of them need no new engine
 machinery at all** — every method, settings family and edge they touch is
 already here (`basedbox`, `two_piece`, `crate`, `slantedtray`, `angledbox`,
 `storagerack`, `spicesrack`, `discrack`, `penholderbox`, `halfbox` and more).

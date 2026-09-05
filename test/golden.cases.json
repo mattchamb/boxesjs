@@ -971,5 +971,70 @@
       "thickness": 6,
       "burn": 0.1
     }
+  },
+  {
+    "name": "ref_trayinsert",
+    "generator": "trayinsert",
+    "pythonClass": "TrayInsert",
+    "params": {
+      "sx": "50*3",
+      "sy": "50*2",
+      "h": 60,
+      "outside": false,
+      "x": 0,
+      "y": 0,
+      "draft_angle": 0,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_trayinsert_outside",
+    "generator": "trayinsert",
+    "pythonClass": "TrayInsert",
+    "params": {
+      "sx": "40*2",
+      "sy": "60*3",
+      "h": 45,
+      "outside": true,
+      "x": 0,
+      "y": 0,
+      "draft_angle": 0,
+      "thickness": 5,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_trayinsert_fitted",
+    "generator": "trayinsert",
+    "pythonClass": "TrayInsert",
+    "params": {
+      "sx": "30*4",
+      "sy": "40*3",
+      "h": 50,
+      "outside": false,
+      "x": 250,
+      "y": 130,
+      "draft_angle": 3,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_trayinsert_labelled",
+    "generator": "trayinsert",
+    "pythonClass": "TrayInsert",
+    "params": {
+      "sx": "50*2",
+      "sy": "50*2",
+      "h": 40,
+      "outside": false,
+      "x": 0,
+      "y": 0,
+      "draft_angle": 0,
+      "labels": true,
+      "thickness": 3,
+      "burn": 0.1
+    }
   }
 ]
