@@ -412,16 +412,20 @@ this reason).
 
 ## 9. State of the port
 
-**Every generator on the list is done.** Fourteen generators are registered —
+**Every generator on the list is done.** Seventeen generators are registered —
 ABox, ClosedBox, OpenBox, CardBox, Console2, UniversalBox, RegularBox,
-BayonetBox, NotesHolder, TypeTray, TrayInsert, DrillBox, PaintStorage,
-DisplayShelf — plus the RectangularWall part. All of them match boxes.py
-coordinate-for-coordinate across 61 golden cases.
+BayonetBox, NotesHolder, TypeTray, TrayLayout, TrayInsert, CompartmentBox,
+DrillBox, DisplayShelf, StorageRack, PaintStorage — plus the RectangularWall
+part. All of them match boxes.py coordinate-for-coordinate across 73 golden
+cases.
 
-boxes.py has 172 further generators. **55 of them need no new engine
+boxes.py has 169 further generators. **53 of them need no new engine
 machinery at all** — every method, settings family and edge they touch is
 already here (`basedbox`, `two_piece`, `crate`, `slantedtray`, `angledbox`,
-`storagerack`, `spicesrack`, `discrack`, `penholderbox`, `halfbox` and more).
+`spicesrack`, `discrack`, `penholderbox`, `halfbox` and more). That count is
+the original survey minus the ones since ported, not a fresh one; re-survey
+before relying on it.
+
 Of the rest, the biggest single blocker is `FlexSettings` (living hinge, 19
 generators), then the `_WallMountedBox` base class (14) and `DoveTailSettings`
 (10). Note that a generator referencing `edges.BaseEdge` is *not* blocked — that
@@ -443,6 +447,7 @@ section is a record of what the engine now has and where the sharp edges were.
 | `BayonetBox` lug geometry | `generators/bayonetbox.py` | `src/lib/bayonet.ts` — BayonetBox, RegularBox `bayonet mount` |
 | `Settings.clone()` | `copy.deepcopy` | `src/lib/edges/settings.ts` — RegularBox |
 | `hexHolesRectangle`, `HexHolesSettings` | | `src/lib/hexholes.ts` — PaintStorage |
+| `CrossingFingerHoleEdge` | `edges.py:1138` | `src/lib/edges/crossingfingerhole.ts` — TrayLayout, its only user in the whole library |
 
 `_polygonWallExtend` was the awkward one and is worth knowing about if you touch
 it. It sizes the part before drawing it, so it walks the border list twice: once
@@ -479,13 +484,44 @@ state, not local values, and anything drawn afterwards sees the redefinition.
 
 ### Deliberate divergences
 
-One, recorded at the site:
+Four, each recorded at the site. Note what they have in common: every one is a
+configuration boxes.py itself refuses to render, so none of them can have a
+golden and the invariant tests are the only cover.
 
+- **TrayLayout with an empty sketch.** `prepare()` offers a `generate_layout`
+  hook for subclasses; TrayLayout defines none, and its default `layout` of
+  `"\n"` is truthy, so upstream parses zero compartments and errors. The port
+  fills the hook by generating a full grid from `sx`/`sy`, so the generator
+  opens on something rather than on a stack trace. The sketch wins once edited.
+- **CompartmentBox with a negative margin.** boxes.py raises `ValueError`. The
+  sliders cannot produce one but a hand-edited permalink can, so the port warns
+  on the field and clamps to zero rather than failing to render.
+- **TrayInsert's `x`/`y`.** boxes.py uses `-1` as the "not given" sentinel. The
+  parameter default here is `0`, which behaves identically — anything at or
+  below the compartment total is ignored either way — and reads better as the
+  off position on a slider.
 - **DisplayShelf with `slope_top` and `angle = 0`.** boxes.py sizes the sloped
   cut by dividing by `sin(angle)` and emits NaN coordinates. With flat floors
   there is nothing to slope, so the port warns on the `angle` field and draws the
   plain rectangular sides. There is no golden for this — boxes.py cannot render
   it — so the invariant tests are the only cover.
+
+Two upstream quirks are reproduced rather than "fixed", because the geometry
+depends on them:
+
+- **CompartmentBox rebinds `š` and `Š` behind your back.** With a stackable
+  bottom and the `lip` handle it clones the Stackable settings, narrows the
+  width, and calls `edgeObjects(chars="aA")`. That looks like two edges; it is
+  four. `Settings._edgeObjects` assigns chars by index and swallows the
+  `IndexError`, so edges 2 and 3 keep their class defaults `š`/`Š` and
+  `addParts` registers all four. The side walls drawn afterwards get the
+  narrowed edge. Our `edgeObjects` guards with `if (i < chars.length)`, which is
+  the same semantics; `ref_compartmentbox_stackable` pins it.
+- **StorageRack shadows `t`.** `render()` binds `t = self.thickness` and then
+  rebinds `t = self.top_edge`; every later `t` is an edge character, not a
+  number. The port uses `te`/`be`. It also passes `adjustSize(self.sh,
+  self.top_edge, self.bottom_edge)` — top before bottom, the opposite of the
+  usual order. Both are the §8 name-shadowing trap.
 
 DisplayShelf also carries a quirk worth not "fixing": `displayshelf.py:200`
 computes `thickness + self.edges["h"].startWidth()` and passes it to
