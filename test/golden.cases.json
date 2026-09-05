@@ -1183,5 +1183,60 @@
       "burn": 0.1,
       "labels": true
     }
+  },
+  {
+    "name": "ref_traylayout",
+    "generator": "traylayout",
+    "pythonClass": "TrayLayout",
+    "params": {
+      "layout": " ,> 50.0mm\n | ,> 50.0mm\n | | ,> 50.0mm\n+-+-+-+\n| | | | 50.0mm\n+-+-+-+\n| | | | 50.0mm\n+-+-+-+\n",
+      "h": 60,
+      "hi": 0,
+      "outside": false,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_traylayout_gaps",
+    "generator": "traylayout",
+    "pythonClass": "TrayLayout",
+    "params": {
+      "layout": " ,> 50.0mm\n | ,> 40.0mm\n | | ,> 50.0mm\n+-+-+-+\n|X|X  | 60.0mm\n+-+-+-+\n|X|X| | 40.0mm\n+-+-+-+\n",
+      "h": 50,
+      "hi": 0,
+      "outside": false,
+      "thickness": 4,
+      "burn": 0.05
+    }
+  },
+  {
+    "name": "ref_traylayout_hi",
+    "generator": "traylayout",
+    "pythonClass": "TrayLayout",
+    "params": {
+      "layout": " ,> 60.0mm\n | ,> 40.0mm\n | | ,> 60.0mm\n+-+ +-+\n| | | | 40.0mm\n+-+-+-+\n| | | | 50.0mm\n+-+-+-+\n",
+      "h": 40,
+      "hi": 60,
+      "outside": true,
+      "thickness": 5,
+      "burn": 0.15,
+      "lid_style": "overthetop",
+      "lid_height": 3
+    }
+  },
+  {
+    "name": "ref_traylayout_labelled",
+    "generator": "traylayout",
+    "pythonClass": "TrayLayout",
+    "params": {
+      "layout": " ,> 60.0mm\n | ,> 60.0mm\n | | ,> 60.0mm\n+-+ +-+\n| | | | 50.0mm\n+-+-+-+\n  | | | 50.0mm\n+-+-+-+\n",
+      "h": 70,
+      "hi": 40,
+      "outside": false,
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
   }
 ]

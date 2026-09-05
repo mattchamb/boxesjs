@@ -21,6 +21,7 @@ import { rectangularWall } from './rectangularwall';
 import { regularBox } from './regularbox';
 import { storageRack } from './storagerack';
 import { trayInsert } from './trayinsert';
+import { trayLayout } from './traylayout';
 import { typeTray } from './typetray';
 import { universalBox } from './universalbox';
 
@@ -42,6 +43,7 @@ const DEFS: GeneratorDef[] = [
   rectangularWall,
   storageRack,
   compartmentBox,
+  trayLayout,
 ];
 
 export const GENERATORS: GeneratorDef[] = DEFS;
