@@ -43,6 +43,34 @@ describe('SVG export', () => {
     expect(nasty).toContain('&lt;script&gt;&amp;&quot;');
     expect(nasty).not.toContain('<script>');
   });
+
+  /**
+   * Text lives on the parts rather than in the layer path data, so a layer that
+   * carries only labels used to be filtered out before it was ever written.
+   */
+  it('keeps part labels even when their layer has no geometry', () => {
+    const labelled = render('trayinsert', { labels: 1, reference: 0 });
+    const names = labelled.parts.flatMap((p) => p.texts.map((t) => t.text));
+    expect(names.length).toBeGreaterThan(0);
+    const out = toSVG(labelled);
+    for (const name of names) expect(out).toContain(`>${name}</text>`);
+  });
+
+  /**
+   * An undeclared prefix makes the file malformed XML, and strict importers
+   * reject the whole thing rather than ignoring the attribute. `inkscape:label`
+   * shipped that way once.
+   */
+  it('declares every namespace prefix it uses', () => {
+    // A tray with labels exercises the text branch and more than one layer.
+    const rich = toSVG(render('typetray', { sx: '50*2', sy: '50*2', h: 60, labels: 1 }));
+    const declared = new Set(
+      [...rich.matchAll(/xmlns:([A-Za-z_][\w.-]*)=/g)].map((m) => m[1]!),
+    );
+    const used = new Set([...rich.matchAll(/[\s<\/]([A-Za-z_][\w.-]*):[A-Za-z_]/g)].map((m) => m[1]!));
+    used.delete('xmlns');
+    expect([...used].filter((p) => !declared.has(p))).toEqual([]);
+  });
 });
 
 describe('LightBurn export', () => {

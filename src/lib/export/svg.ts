@@ -5,7 +5,8 @@
  * 1:1 viewBox so nothing rescales on the way in, one group per layer with a
  * stable id, and hairline strokes in the layer colours LightBurn maps to its
  * own. The Inkscape RDF metadata boxes.py emits is dropped — it is noise for
- * this purpose.
+ * this purpose — but the `inkscape:label` layer names are kept, so the
+ * namespace they need is declared on the root element.
  */
 import { LAYERS, LAYER_INFO, rgbToCSS, type Layer } from '../geom/colors';
 import type { Drawing } from '../render';
@@ -35,7 +36,12 @@ function fmt(n: number): string {
 
 export function toSVG(drawing: Drawing, options: SVGOptions = {}): string {
   const { permalink, title = 'boxesjs', strokeWidth = 0.1 } = options;
-  const active = options.layers ?? LAYERS.filter((l) => drawing.layers[l].length > 0);
+  // Text is held on the parts, not in the layer path data, so a layer can be
+  // non-empty with no geometry at all — part labels live on `annotate`, which
+  // has paths only when the reference stick is switched on.
+  const hasText = (l: Layer) => drawing.parts.some((p) => p.texts.some((t) => t.layer === l));
+  const active =
+    options.layers ?? LAYERS.filter((l) => drawing.layers[l].length > 0 || hasText(l));
 
   const w = fmt(drawing.bbox.width);
   const h = fmt(drawing.bbox.height);
@@ -50,8 +56,11 @@ export function toSVG(drawing: Drawing, options: SVGOptions = {}): string {
   // inside a comment, and "--" would end it early.
   out.push(`<!--\n${notes.replace(/[<>]/g, '').replace(/--/g, '- -')}\n-->`);
 
+  // The layer groups carry inkscape:label, so the prefix has to be declared
+  // here or the file is not well-formed XML and strict parsers reject it.
   out.push(
-    `<svg xmlns="http://www.w3.org/2000/svg" version="1.1" ` +
+    `<svg xmlns="http://www.w3.org/2000/svg" ` +
+      `xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" version="1.1" ` +
       `width="${w}mm" height="${h}mm" viewBox="0 0 ${w} ${h}">`,
   );
   out.push(`<title>${esc(title)}</title>`);
