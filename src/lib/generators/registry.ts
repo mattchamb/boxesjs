@@ -3,6 +3,7 @@
  * output parameters are appended here so each generator only declares its own.
  */
 import { COMMON_PARAMS } from '../params/common';
+import { compartmentBox } from './compartmentbox';
 import { defaultValues, type ParamSpec, type ParamValues } from '../params/schema';
 import type { GeneratorDef } from './types';
 
@@ -40,6 +41,7 @@ const DEFS: GeneratorDef[] = [
   displayShelf,
   rectangularWall,
   storageRack,
+  compartmentBox,
 ];
 
 export const GENERATORS: GeneratorDef[] = DEFS;

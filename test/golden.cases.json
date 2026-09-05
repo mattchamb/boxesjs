@@ -1102,5 +1102,86 @@
       "thickness": 3,
       "burn": 0.1
     }
+  },
+  {
+    "name": "ref_compartmentbox",
+    "generator": "compartmentbox",
+    "pythonClass": "CompartmentBox",
+    "params": {
+      "sx": "50*3",
+      "sy": "50*2",
+      "h": 60,
+      "outside": false,
+      "bottom_edge": "h",
+      "handle": "lip",
+      "radius": 10,
+      "holes": "70",
+      "margin_t": 0.1,
+      "margin_s": 0.05,
+      "split_lip": true,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_compartmentbox_stackable",
+    "generator": "compartmentbox",
+    "pythonClass": "CompartmentBox",
+    "params": {
+      "sx": "40*2",
+      "sy": "60*2",
+      "h": 80,
+      "outside": true,
+      "bottom_edge": "s",
+      "handle": "lip",
+      "radius": 10,
+      "holes": "70",
+      "margin_t": 0.2,
+      "margin_s": 0.1,
+      "split_lip": false,
+      "thickness": 4,
+      "burn": 0.05
+    }
+  },
+  {
+    "name": "ref_compartmentbox_grip",
+    "generator": "compartmentbox",
+    "pythonClass": "CompartmentBox",
+    "params": {
+      "sx": "60*2",
+      "sy": "40*3",
+      "h": 70,
+      "outside": false,
+      "bottom_edge": "F",
+      "handle": "hole",
+      "radius": 8,
+      "holes": "40:40",
+      "margin_t": 0.1,
+      "margin_s": 0.05,
+      "split_lip": true,
+      "thickness": 6,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_compartmentbox_labelled",
+    "generator": "compartmentbox",
+    "pythonClass": "CompartmentBox",
+    "params": {
+      "sx": "50*2",
+      "sy": "50*2",
+      "h": 60,
+      "outside": false,
+      "bottom_edge": "e",
+      "handle": "none",
+      "radius": 10,
+      "holes": "70",
+      "margin_t": 0.1,
+      "margin_s": 0.05,
+      "split_lip": false,
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
   }
 ]
