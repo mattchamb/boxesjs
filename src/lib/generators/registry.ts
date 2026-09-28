@@ -20,6 +20,7 @@ import { paintStorage } from './paintstorage';
 import { rectangularWall } from './rectangularwall';
 import { regularBox } from './regularbox';
 import { storageRack } from './storagerack';
+import { storageShelf } from './storageshelf';
 import { trayInsert } from './trayinsert';
 import { trayLayout } from './traylayout';
 import { typeTray } from './typetray';
@@ -42,6 +43,7 @@ const DEFS: GeneratorDef[] = [
   drillBox,
   displayShelf,
   storageRack,
+  storageShelf,
   paintStorage,
   rectangularWall,
 ];

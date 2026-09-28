@@ -1097,7 +1097,7 @@
       "rail": 35,
       "outside": true,
       "bottom_edge": "F",
-      "top_edge": "\u0160",
+      "top_edge": "Š",
       "labels": true,
       "thickness": 3,
       "burn": 0.1
@@ -1237,6 +1237,104 @@
       "thickness": 3,
       "burn": 0.1,
       "labels": true
+    }
+  },
+  {
+    "name": "ref_storageshelf",
+    "generator": "storageshelf",
+    "pythonClass": "StorageShelf",
+    "params": {
+      "x": 100,
+      "sy": "50*3",
+      "sh": "50*3",
+      "outside": false,
+      "bottom_edge": "h",
+      "top_edge": "e",
+      "retainer": 0,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_storageshelf_thick",
+    "generator": "storageshelf",
+    "pythonClass": "StorageShelf",
+    "params": {
+      "x": 120,
+      "sy": "60:80",
+      "sh": "40:60:80",
+      "outside": true,
+      "bottom_edge": "F",
+      "top_edge": "f",
+      "retainer": 0,
+      "thickness": 6,
+      "burn": 0.2
+    }
+  },
+  {
+    "name": "ref_storageshelf_retainer",
+    "generator": "storageshelf",
+    "pythonClass": "StorageShelf",
+    "params": {
+      "x": 110,
+      "sy": "70*2",
+      "sh": "50*3",
+      "outside": false,
+      "bottom_edge": "h",
+      "top_edge": "e",
+      "retainer": 15,
+      "retainer_hole_edge": true,
+      "thickness": 4,
+      "burn": 0.05
+    }
+  },
+  {
+    "name": "ref_storageshelf_open_bottom",
+    "generator": "storageshelf",
+    "pythonClass": "StorageShelf",
+    "params": {
+      "x": 90,
+      "sy": "50*2",
+      "sh": "45*2",
+      "outside": false,
+      "bottom_edge": "e",
+      "top_edge": "h",
+      "retainer": 10,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_storageshelf_handle",
+    "generator": "storageshelf",
+    "pythonClass": "StorageShelf",
+    "params": {
+      "x": 100,
+      "sy": "60*2",
+      "sh": "55*2",
+      "outside": true,
+      "bottom_edge": "s",
+      "top_edge": "t",
+      "retainer": 0,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_storageshelf_labelled",
+    "generator": "storageshelf",
+    "pythonClass": "StorageShelf",
+    "params": {
+      "x": 120,
+      "sy": "80*2",
+      "sh": "60*2",
+      "outside": false,
+      "bottom_edge": "h",
+      "top_edge": "e",
+      "retainer": 12,
+      "labels": true,
+      "thickness": 3,
+      "burn": 0.1
     }
   }
 ]
