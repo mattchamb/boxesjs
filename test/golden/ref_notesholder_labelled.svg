@@ -12,14 +12,12 @@ the feet.
 
 
 Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
-Creation date: 2026-08-04 12:50:52
 Command line (remove spaces between dashes): boxes NotesHolder - -sx - -opening - -back_openings - -reference
 -->
 <title>NotesHolder</title>
 <metadata>
 <rdf:RDF><cc:Work>
 <dc:title>Box - NotesHolder</dc:title>
-<dc:date>2026-08-04 12:50:52</dc:date>
 <dc:source>boxes NotesHolder --sx '78*2' --y 78 --h 35 --bottom_edge s --opening 10 --back_openings 1 --thickness 3 --burn 0.1 --labels 1 --reference 0</dc:source>
 <dc:description>Box for holding a stack of paper, coasters etc
 

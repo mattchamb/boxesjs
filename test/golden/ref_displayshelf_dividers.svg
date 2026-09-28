@@ -4,14 +4,12 @@
 DisplayShelf - Shelf with slanted floors
 
 Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
-Creation date: 2026-08-06 17:03:41
 Command line (remove spaces between dashes): boxes DisplayShelf - -sx - -front_wall_height - -divider_wall_height - -reference - -labels
 -->
 <title>DisplayShelf</title>
 <metadata>
 <rdf:RDF><cc:Work>
 <dc:title>Shelf - DisplayShelf</dc:title>
-<dc:date>2026-08-06 17:03:41</dc:date>
 <dc:source>boxes DisplayShelf --sx '80*4' --y 100 --h 300 --outside 1 --num 3 --front_wall_height 15 --angle 30 --include_back 0 --include_front 0 --include_bottom 0 --slope_top 0 --divider_wall_height 40 --bottom_distance 0 --top_distance 0 --thickness 3 --burn 0.1 --reference 0 --labels 0</dc:source>
 <dc:description>Shelf with slanted floors
 

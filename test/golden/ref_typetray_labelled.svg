@@ -4,14 +4,12 @@
 TypeTray - Type tray - allows only continuous walls
 
 Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
-Creation date: 2026-08-04 12:50:52
 Command line (remove spaces between dashes): boxes TypeTray - -sx - -sy - -h - -outside - -reference
 -->
 <title>TypeTray</title>
 <metadata>
 <rdf:RDF><cc:Work>
 <dc:title>Tray - TypeTray</dc:title>
-<dc:date>2026-08-04 12:50:52</dc:date>
 <dc:source>boxes TypeTray --sx '50*3' --sy '50*2' --h 60 --hi 0 --outside 0 --bottom_edge h --top_edge e --fingerholes none --gripwidth 0 --gripheight 30 --thickness 3 --burn 0.1 --labels 1 --reference 0</dc:source>
 <dc:description>Type tray - allows only continuous walls
 

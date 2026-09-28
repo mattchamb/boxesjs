@@ -15,14 +15,12 @@ Drawers are not included:
 
 
 Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
-Creation date: 2026-09-06 08:54:02
 Command line (remove spaces between dashes): boxes StorageRack - -sh - -outside - -reference - -labels
 -->
 <title>StorageRack</title>
 <metadata>
 <rdf:RDF><cc:Work>
 <dc:title>Shelf - StorageRack</dc:title>
-<dc:date>2026-09-06 08:54:02</dc:date>
 <dc:source>boxes StorageRack --x 100 --depth 200 --sh '50*3' --rail 30 --outside 0 --bottom_edge h --top_edge F --thickness 3 --burn 0.1 --reference 0 --labels 0</dc:source>
 <dc:description>StorageRack to store boxes and trays which have their own floor
 

@@ -18,14 +18,12 @@ pieces or as a single piece that continues at the back.
 
 
 Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
-Creation date: 2026-09-06 08:56:57
 Command line (remove spaces between dashes): boxes CompartmentBox - -sx - -sy - -h - -bottom_edge - -split_lip - -thickness - -burn - -reference - -labels
 -->
 <title>CompartmentBox</title>
 <metadata>
 <rdf:RDF><cc:Work>
 <dc:title>Tray - CompartmentBox</dc:title>
-<dc:date>2026-09-06 08:56:57</dc:date>
 <dc:source>boxes CompartmentBox --sx '40*2' --sy '60*2' --h 80 --outside 1 --bottom_edge s --handle lip --radius 10 --holes 70 --margin_t 0.2 --margin_s 0.1 --split_lip 0 --thickness 4 --burn 0.05 --reference 0 --labels 0</dc:source>
 <dc:description>Type tray variation with sliding lid
 

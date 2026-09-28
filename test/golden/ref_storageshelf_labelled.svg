@@ -8,14 +8,12 @@ This is a simple shelf box.
 
 
 Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
-Creation date: 2026-09-28 13:36:08
 Command line (remove spaces between dashes): boxes StorageShelf - -x - -sy - -sh - -outside - -retainer - -reference
 -->
 <title>StorageShelf</title>
 <metadata>
 <rdf:RDF><cc:Work>
 <dc:title>Shelf - StorageShelf</dc:title>
-<dc:date>2026-09-28 13:36:08</dc:date>
 <dc:source>boxes StorageShelf --x 120 --sy '80*2' --sh '60*2' --outside 0 --bottom_edge h --top_edge e --retainer 12 --labels 1 --thickness 3 --burn 0.1 --reference 0</dc:source>
 <dc:description>StorageShelf can be used to store Typetray
 

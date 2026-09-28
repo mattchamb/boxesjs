@@ -8,14 +8,12 @@ This box is kept simple on purpose. If you need more features have a look at the
 
 
 Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
-Creation date: 2026-08-04 12:50:52
 Command line (remove spaces between dashes): boxes ABox - -x - -y - -h - -outside - -reference - -labels
 -->
 <title>ABox</title>
 <metadata>
 <rdf:RDF><cc:Work>
 <dc:title>Box - ABox</dc:title>
-<dc:date>2026-08-04 12:50:52</dc:date>
 <dc:source>boxes ABox --x 120 --y 80 --h 60 --outside 0 --bottom_edge h --thickness 3 --burn 0.1 --reference 0 --labels 0</dc:source>
 <dc:description>A simple Box
 

@@ -13,14 +13,12 @@ You can replace the space characters representing the floor by a "X" to remove t
 
 
 Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
-Creation date: 2026-09-06 09:02:17
 Command line (remove spaces between dashes): boxes TrayLayout - -layout - -h - -hi - -thickness - -burn - -Lid_style - -Lid_height - -reference - -labels
 -->
 <title>TrayLayout</title>
 <metadata>
 <rdf:RDF><cc:Work>
 <dc:title>Tray - TrayLayout</dc:title>
-<dc:date>2026-09-06 09:02:17</dc:date>
 <dc:source>boxes TrayLayout --layout ' ,&gt; 60.0mm\n | ,&gt; 40.0mm\n | | ,&gt; 60.0mm\n+-+ +-+\n| | | | 40.0mm\n+-+-+-+\n| | | | 50.0mm\n+-+-+-+\n' --h 40 --hi 60 --outside 1 --thickness 5 --burn 0.15 --Lid_style overthetop --Lid_height 3 --reference 0 --labels 0</dc:source>
 <dc:description>Generate a typetray from a layout file.
 

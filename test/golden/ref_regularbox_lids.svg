@@ -11,14 +11,12 @@ The lids needs to be glued. For the bayonet lid all outside rings attach to the 
 
 
 Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
-Creation date: 2026-08-06 17:03:41
 Command line (remove spaces between dashes): boxes RegularBox - -n - -top - -bottom - -reference - -labels
 -->
 <title>RegularBox</title>
 <metadata>
 <rdf:RDF><cc:Work>
 <dc:title>Box - RegularBox</dc:title>
-<dc:date>2026-08-06 17:03:41</dc:date>
 <dc:source>boxes RegularBox --n 6 --radius_bottom 50 --radius_top 50 --h 100 --outside 1 --top 'round lid' --bottom 'angled lid2' --thickness 3 --burn 0.1 --reference 0 --labels 0</dc:source>
 <dc:description>Box with regular polygon as base
 

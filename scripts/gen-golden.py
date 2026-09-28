@@ -60,6 +60,10 @@ def main() -> int:
             argv += ["--labels", "0"]
 
         box.parseArgs(argv)
+        # Drops the creation date from the comment and the dc:date tag. Nothing
+        # in golden.ts reads either, but without this every regeneration
+        # rewrites all of these files and a real change hides in the churn.
+        box.metadata["reproducible"] = True
         box.open()
         box.render()
         data = box.close()

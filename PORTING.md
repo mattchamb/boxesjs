@@ -46,6 +46,11 @@ numpy typing_extensions`). It expects a boxes.py checkout at `~/src/boxes`; set
 Python is needed **only** to regenerate reference files. Nothing in the app or
 the normal test run touches it.
 
+The script sets boxes.py's `metadata["reproducible"]` flag, which drops the
+creation date from the SVG comment and the `dc:date` tag. Regenerating is
+therefore byte-stable: a `git diff` after a run shows only the cases whose
+geometry actually moved, instead of every file at once.
+
 ### Adding a case
 
 Add to `test/golden.cases.json` — both the Python script and the TypeScript test

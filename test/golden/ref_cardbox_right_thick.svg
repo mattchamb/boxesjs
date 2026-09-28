@@ -19,14 +19,12 @@ Whole box (early version still missing grip rail on the lid):
 
 
 Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
-Creation date: 2026-08-04 12:50:52
 Command line (remove spaces between dashes): boxes CardBox - -sx - -y - -h - -outside - -openingdirection - -fingerhole - -add_lidtopper - -thickness - -burn - -reference - -labels
 -->
 <title>CardBox</title>
 <metadata>
 <rdf:RDF><cc:Work>
 <dc:title>Box - CardBox</dc:title>
-<dc:date>2026-08-04 12:50:52</dc:date>
 <dc:source>boxes CardBox --sx '65*3' --y 90 --h 100 --outside 1 --openingdirection right --fingerhole deep --fingerhole_depth 20 --add_lidtopper 1 --thickness 5 --burn 0.2 --reference 0 --labels 0</dc:source>
 <dc:description>Box for storage of playing cards, with versatile options
 

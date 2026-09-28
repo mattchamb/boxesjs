@@ -8,14 +8,12 @@ Glue together - all outside rings to the bottom, all inside rings to the top.
 
 
 Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
-Creation date: 2026-08-06 17:48:12
 Command line (remove spaces between dashes): boxes BayonetBox - -reference
 -->
 <title>BayonetBox</title>
 <metadata>
 <rdf:RDF><cc:Work>
 <dc:title>Box - BayonetBox</dc:title>
-<dc:date>2026-08-06 17:48:12</dc:date>
 <dc:source>boxes BayonetBox --diameter 50 --lugs 10 --alignment_pins 1.0 --outside 1 --thickness 3 --burn 0.1 --labels 1 --reference 0</dc:source>
 <dc:description>Round box made from layers with twist on top
 

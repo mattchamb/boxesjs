@@ -12,14 +12,12 @@ See BasedBox for variant with a base.
 
 
 Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
-Creation date: 2026-08-04 12:50:52
 Command line (remove spaces between dashes): boxes ClosedBox - -y - -h - -outside - -reference - -labels
 -->
 <title>ClosedBox</title>
 <metadata>
 <rdf:RDF><cc:Work>
 <dc:title>Box - ClosedBox</dc:title>
-<dc:date>2026-08-04 12:50:52</dc:date>
 <dc:source>boxes ClosedBox --x 100 --y 80 --h 60 --outside 0 --thickness 3 --burn 0.1 --reference 0 --labels 0</dc:source>
 <dc:description>Fully closed box
 

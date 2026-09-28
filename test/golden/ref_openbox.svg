@@ -4,14 +4,12 @@
 OpenBox - Box with top and front open
 
 Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
-Creation date: 2026-08-04 12:50:52
 Command line (remove spaces between dashes): boxes OpenBox - -x - -y - -h - -outside - -reference - -labels
 -->
 <title>OpenBox</title>
 <metadata>
 <rdf:RDF><cc:Work>
 <dc:title>Box - OpenBox</dc:title>
-<dc:date>2026-08-04 12:50:52</dc:date>
 <dc:source>boxes OpenBox --x 120 --y 90 --h 70 --outside 0 --edgetype F --thickness 3 --burn 0.1 --reference 0 --labels 0</dc:source>
 <dc:description>Box with top and front open
 

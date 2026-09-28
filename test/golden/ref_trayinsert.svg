@@ -33,14 +33,12 @@ This frees your mind into separately thinking about the cell size vs the overall
 
 
 Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
-Creation date: 2026-09-06 08:37:10
 Command line (remove spaces between dashes): boxes TrayInsert - -sx - -sy - -h - -outside - -x - -y - -reference - -labels
 -->
 <title>TrayInsert</title>
 <metadata>
 <rdf:RDF><cc:Work>
 <dc:title>Tray - TrayInsert</dc:title>
-<dc:date>2026-09-06 08:37:10</dc:date>
 <dc:source>boxes TrayInsert --sx '50*3' --sy '50*2' --h 60 --outside 0 --x 0 --y 0 --draft_angle 0 --thickness 3 --burn 0.1 --reference 0 --labels 0</dc:source>
 <dc:description>Tray insert without floor and outer walls - allows only continuous walls
 

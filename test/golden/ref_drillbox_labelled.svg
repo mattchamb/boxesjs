@@ -8,14 +8,12 @@ DrillBox - A parametrized box for drills
 
 
 Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
-Creation date: 2026-08-04 12:50:52
 Command line (remove spaces between dashes): boxes DrillBox - -sx - -sy - -sh - -reference
 -->
 <title>DrillBox</title>
 <metadata>
 <rdf:RDF><cc:Work>
 <dc:title>Tray - DrillBox</dc:title>
-<dc:date>2026-08-04 12:50:52</dc:date>
 <dc:source>boxes DrillBox --sx '25*3' --sy '60*4' --sh 5:25:10 --bottom_edge h --top_edge e --holes 3 --firsthole 1.0 --holeincrement 0.5 --thickness 3 --burn 0.1 --labels 1 --reference 0</dc:source>
 <dc:description>A parametrized box for drills
 

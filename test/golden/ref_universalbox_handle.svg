@@ -4,14 +4,12 @@
 UniversalBox - Box with various options for different styles and lids
 
 Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
-Creation date: 2026-08-04 12:50:52
 Command line (remove spaces between dashes): boxes UniversalBox - -x - -y - -h - -outside - -bottom_edge - -top_edge - -RoundedTriangleEdge_height - -RoundedTriangleEdge_radius - -RoundedTriangleEdge_r_hole - -thickness - -burn - -reference - -labels
 -->
 <title>UniversalBox</title>
 <metadata>
 <rdf:RDF><cc:Work>
 <dc:title>Box - UniversalBox</dc:title>
-<dc:date>2026-08-04 12:50:52</dc:date>
 <dc:source>boxes UniversalBox --x 110 --y 80 --h 60 --outside 0 --bottom_edge s --top_edge t --vertical_edges 'finger joints' --RoundedTriangleEdge_height 40 --RoundedTriangleEdge_radius 25 --RoundedTriangleEdge_r_hole 3 --RoundedTriangleEdge_outset 1 --thickness 4 --burn 0.05 --reference 0 --labels 0</dc:source>
 <dc:description>Box with various options for different styles and lids
 

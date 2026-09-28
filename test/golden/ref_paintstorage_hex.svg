@@ -4,14 +4,12 @@
 PaintStorage - Stackable storage for hobby paint or other things
 
 Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
-Creation date: 2026-08-04 16:09:50
 Command line (remove spaces between dashes): boxes PaintStorage - -x - -y - -canheight - -candiameter - -minspace - -hexpattern - -Stackable_height - -Stackable_holedistance - -thickness - -burn - -reference - -labels
 -->
 <title>PaintStorage</title>
 <metadata>
 <rdf:RDF><cc:Work>
 <dc:title>Shelf - PaintStorage</dc:title>
-<dc:date>2026-08-04 16:09:50</dc:date>
 <dc:source>boxes PaintStorage --x 110 --y 200 --canheight 45 --candiameter 20 --minspace 6 --hexpattern 1 --Stackable_height 3 --Stackable_holedistance 1.5 --thickness 4 --burn 0.05 --reference 0 --labels 0</dc:source>
 <dc:description>Stackable storage for hobby paint or other things
 

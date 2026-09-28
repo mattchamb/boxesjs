@@ -36,14 +36,12 @@ To remove the panel you have to press in the four tabs at the side. It is easies
 
 
 Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
-Creation date: 2026-08-04 12:50:52
 Command line (remove spaces between dashes): boxes Console2 - -reference - -labels
 -->
 <title>Console2</title>
 <metadata>
 <rdf:RDF><cc:Work>
 <dc:title>Box - Console2</dc:title>
-<dc:date>2026-08-04 12:50:52</dc:date>
 <dc:source>boxes Console2 --x 100 --y 100 --h 100 --outside 0 --bottom_edge s --front_height 30 --angle 50 --removable_backwall 1 --removable_panel 1 --glued_panel 1 --thickness 3 --burn 0.1 --reference 0 --labels 0</dc:source>
 <dc:description>Console with slanted panel and service hatches
 
