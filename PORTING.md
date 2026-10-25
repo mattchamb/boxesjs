@@ -510,10 +510,17 @@ inside the box — callers depend on that.
 Everything else in this document is a port. **Wedged through-tenons** (`w`,
 `W`, `src/lib/edges/wedgedtenon.ts`) are not: boxes.py has no such joint, and
 `w`/`W` are unused there, so the characters cannot clash with a future port.
-They are offered on RectangularWall (any side) and StorageShelf (`wedged`,
-shelves through the side walls; the bottom stays finger-jointed because a
-wedge hangs half its length below its tenon, which under the bottom panel is
-the floor). The settings are `wt_*`, mapped to a `WedgedTenon` family that
+They are offered on RectangularWall (any side) and StorageShelf (`wedged`:
+the shelves and the back pass through the side walls, so nothing needs glue;
+the bottom stays finger-jointed because a wedge hangs half its length below
+its tenon, which under the bottom panel is the floor, and is captured once the
+rest is wedged). A `W` edge sets its holes in by at least half a wedge length,
+so the back's wedges stay inside the cabinet's depth and it can stand against
+a wall; the back is recessed by that much. That makes the side walls wider
+than the `ffff` panel boxes.py's layout steps over, so the wedged shelf steps
+over `fWff` instead. Outside each side wall the back's wedges lie flat and the
+shelves' stand up, and on a shallow shelf they can meet; StorageShelf warns
+on `wt_pitch` when they do. The settings are `wt_*`, mapped to a `WedgedTenon` family that
 `gen-golden.py` never sees.
 
 With no golden to compare against, the geometry is pinned by

@@ -48,7 +48,10 @@ export class WedgedTenonSettings extends Settings {
     end_margin: 1.5,
     /** Length of the wedge. */
     wedge_length: 8.0,
-    /** Inset of the hole line on a `W` edge, as for finger holes. */
+    /**
+     * Minimum material between a `W` edge and its holes, as for finger holes.
+     * The holes usually sit further in, to keep the wedges inside the edge.
+     */
     edge_width: 1.0,
   };
 
@@ -77,6 +80,11 @@ export class WedgedTenonSettings extends Settings {
   /** How far a tenon stands out from its edge. */
   protrusion(): number {
     return this.thickness + this.gap + this.end_margin;
+  }
+
+  /** Distance from a `W` edge to the centre line of its holes. */
+  holeInset(): number {
+    return Math.max(this.edge_width + this.thickness / 2, this.wedge_length / 2);
   }
 
   wedgeNarrow(): number {
@@ -156,6 +164,11 @@ export class WedgedTenonEdge extends BaseEdge {
 /**
  * A straight edge with tenon holes running alongside it, for a panel whose
  * edge a tenoned panel meets at right angles. Takes the place of `h`.
+ *
+ * Here the wedges run parallel to this panel, across the hole line, half a
+ * wedge length either side of it. So the holes are set in at least that far:
+ * otherwise the wedges would stick out past this edge, and a cabinet with a
+ * wedged back could not stand flush against a wall.
  */
 export class WedgedTenonHoleEdge extends BaseEdge {
   override char: string | null = 'W';
@@ -165,13 +178,13 @@ export class WedgedTenonHoleEdge extends BaseEdge {
   call(length: number): void {
     const s = this.settings;
     this.boxes.savedContext(() => {
-      tenonHoles(this.boxes, s, 0, this.burn + s.edge_width + this.thickness / 2, length, 0);
+      tenonHoles(this.boxes, s, 0, this.burn + s.holeInset(), length, 0);
     });
     this.edge(length, 2);
   }
 
   override startWidth(): number {
-    return this.settings.edge_width + this.thickness;
+    return this.settings.holeInset() + this.thickness / 2;
   }
 }
 

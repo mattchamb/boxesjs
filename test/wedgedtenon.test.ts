@@ -143,6 +143,16 @@ describe('a w edge', () => {
 });
 
 describe('a W edge', () => {
+  it('sets its holes in far enough that the wedges stay inside the edge', () => {
+    expect(S.holeInset()).toBeGreaterThanOrEqual(S.wedge_length / 2);
+    const mate = panel({ bottom_edge: 'W' }).parts.find((p) => p.name === 'Panel')!;
+    const out = outlineBox(mate);
+    for (const h of holes(mate)) {
+      const centre = (h.minY + h.maxY) / 2;
+      expect(Math.min(centre - out.minY, out.maxY - centre)).toBeCloseTo(S.holeInset(), 6);
+    }
+  });
+
   it('cuts holes that line up with the tenons of a w edge of the same length', () => {
     const tenon = panel({ bottom_edge: 'w' }).parts.find((p) => p.name === 'Panel')!;
     const mate = panel({ bottom_edge: 'W' }).parts.find((p) => p.name === 'Panel')!;
@@ -164,21 +174,30 @@ describe('a W edge', () => {
 describe('StorageShelf with wedged tenons', () => {
   const base: ParamValues = { ...defaultsFor('storageshelf'), wedged: true, burn: 0, labels: false };
 
-  it('draws two sets of wedges per inner shelf', () => {
+  const s = new WedgedTenonSettings(3, true, {});
+  // Outside measurements: the recessed back costs its W edge's width.
+  const x = Number(base['x']) - (s.holeInset() + 3 / 2);
+  const isWedgeSlot = (h: Box) => {
+    const dims = [h.maxX - h.minX, h.maxY - h.minY].sort((a, b) => a - b);
+    return Math.abs(dims[0]! - (3 + s.slack)) < 1e-6 && Math.abs(dims[1]! - (s.gap + s.draw)) < 1e-6;
+  };
+
+  it('wedges the back to the sides as well as the shelves', () => {
     const d = buildDrawing('storageshelf', base);
+    const back = d.parts.find((p) => p.name === 'back')!;
+    const backSlots = holes(back).filter(isWedgeSlot).length;
+    expect(backSlots).toBeGreaterThan(0);
+    expect(backSlots % 2).toBe(0); // the same tenons on both side edges
+
     const shelves = d.parts.filter((p) => p.name.startsWith('inner horizontal'));
     const wedges = d.parts.filter((p) => p.name === 'wedge');
-    const s = new WedgedTenonSettings(3, true, {});
-    // The shelf depth x shrinks by one thickness for the back when outside.
-    const x = Number(base['x']) - 3;
-    expect(wedges).toHaveLength(s.centres(x).length * 2 * shelves.length);
+    expect(wedges).toHaveLength(s.centres(x).length * 2 * shelves.length + backSlots);
   });
 
   it('puts a tenon hole in the side walls for every tenon', () => {
     const d = buildDrawing('storageshelf', base);
     const shelves = d.parts.filter((p) => p.name.startsWith('inner horizontal')).length;
-    const s = new WedgedTenonSettings(3, true, {});
-    const x = Number(base['x']) - 3;
+    const backTenons = holes(d.parts.find((p) => p.name === 'back')!).filter(isWedgeSlot).length / 2;
     for (const name of ['left', 'right']) {
       const side = d.parts.find((p) => p.name === name)!;
       // The bottom panel stays finger-jointed, so its slots are here too;
@@ -187,8 +206,14 @@ describe('StorageShelf with wedged tenons', () => {
         const dims = [h.maxX - h.minX, h.maxY - h.minY].sort((a, b) => a - b);
         return Math.abs(dims[0]! - (3 + s.slack)) < 1e-6 && Math.abs(dims[1]! - (s.width + s.slack)) < 1e-6;
       });
-      expect(tenonHoles, name).toHaveLength(s.centres(x).length * shelves);
+      expect(tenonHoles, name).toHaveLength(s.centres(x).length * shelves + backTenons);
     }
+  });
+
+  it('warns when a shallow shelf puts shelf wedges and back wedges in each other’s way', () => {
+    expect(renderPreview('storageshelf', base).warnings).toEqual([]);
+    const shallow = renderPreview('storageshelf', { ...base, x: 35 });
+    expect(shallow.warnings.map((w) => w.param)).toContain('wt_pitch');
   });
 
   it('survives the extremes of every tenon setting', () => {

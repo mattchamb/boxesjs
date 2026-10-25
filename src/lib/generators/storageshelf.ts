@@ -96,6 +96,41 @@ class StorageShelf extends Boxes {
     }
   };
 
+  /**
+   * Outside each side wall, the back's wedges lie horizontally near its back
+   * edge and the shelves' wedges stand vertically. On a shallow shelf the two
+   * can meet; a part that cannot be assembled is worth a warning.
+   */
+  private checkWedgeClearance(x: number, h: number): void {
+    const s = this.wedgedTenonSettings;
+    const t = this.thickness;
+    const half = s.wedge_length / 2;
+    const backCentre = s.holeInset();
+    // Measured from the side wall's back edge: the back's wedges span its
+    // hole line ± half a wedge; each shelf wedge is a wedge thickness wide,
+    // centred on its tenon, which is measured from the back's inner face.
+    const shelfStart = s.holeInset() + t / 2;
+    const backWedges = s.centres(h).map((z) => ({ x0: backCentre - half, x1: backCentre + half, z0: z - t / 2, z1: z + t / 2 }));
+    let posh = -0.5 * t;
+    for (const level of this.sh.slice(0, -1)) {
+      posh += level + t;
+      for (const c of s.centres(x)) {
+        const sx0 = shelfStart + c - t / 2;
+        const sx1 = shelfStart + c + t / 2;
+        for (const b of backWedges) {
+          if (sx0 < b.x1 && b.x0 < sx1 && posh - half < b.z1 && b.z0 < posh + half) {
+            this.warn(
+              'A shelf wedge meets one of the back’s wedges outside the side walls. ' +
+                'Make the shelf deeper or change the tenon spacing.',
+              'wt_pitch',
+            );
+            return;
+          }
+        }
+      }
+    }
+  }
+
   render(): void {
     const be0 = this.o.bottomEdge;
 
@@ -105,7 +140,8 @@ class StorageShelf extends Boxes {
       // so this is the reverse of the usual argument order.
       this.sh = this.adjustSize(this.sh, this.o.topEdge, be0);
       // Only the back of the shelf has material to lose; the front is open.
-      this.x = this.adjustSize(this.x, true, false);
+      // A wedged back is recessed into the sides, which costs more depth.
+      this.x = this.adjustSize(this.x, this.o.wedged ? 'W' : true, false);
     }
 
     const t = this.thickness;
@@ -123,12 +159,15 @@ class StorageShelf extends Boxes {
     const hHoles = [null, this.hHoles];
 
     this.savedContext(() => {
-      this.rectangularWall(x, h, [bottom, 'F', t1, 'e'] as EdgeSpec[], {
+      // With wedged tenons the back passes through the sides near their back
+      // edges instead of meeting them at a finger-jointed corner.
+      const backJoint = this.o.wedged ? 'W' : 'F';
+      this.rectangularWall(x, h, [bottom, backJoint, t1, 'e'] as EdgeSpec[], {
         callback: hHoles,
         move: 'up',
         label: 'left',
       });
-      this.rectangularWall(x, h, [bottom, 'e', t3, 'F'] as EdgeSpec[], {
+      this.rectangularWall(x, h, [bottom, 'e', t3, backJoint] as EdgeSpec[], {
         callback: hHoles,
         move: 'up',
         label: 'right',
@@ -168,9 +207,12 @@ class StorageShelf extends Boxes {
         drawLid(this, x, y, this.o.topEdge);
       }
     });
-    this.rectangularWall(x, h, 'ffff', { move: 'right only' });
+    // A wedged back makes the side walls wider than the nominal 'ffff' panel
+    // boxes.py steps over here; step over the widest part of the column then.
+    this.rectangularWall(x, h, this.o.wedged ? 'fWff' : 'ffff', { move: 'right only' });
 
-    this.rectangularWall(y, h, [bottom, 'f', t2, 'f'] as EdgeSpec[], {
+    const backSides = this.o.wedged ? 'w' : 'f';
+    this.rectangularWall(y, h, [bottom, backSides, t2, backSides] as EdgeSpec[], {
       callback: [this.ySlots, this.hSlots],
       move: 'up',
       label: 'back',
@@ -203,8 +245,9 @@ class StorageShelf extends Boxes {
     }
 
     if (this.o.wedged) {
-      // Two side edges per inner shelf, each with its own set of tenons.
-      this.wedges(this.tenonCount(x) * 2 * (this.sh.length - 1), 'up');
+      this.checkWedgeClearance(x, h);
+      // Two side edges per inner shelf, and the back's two side edges.
+      this.wedges(this.tenonCount(x) * 2 * (this.sh.length - 1) + this.tenonCount(h) * 2, 'up');
     }
   }
 }
@@ -306,8 +349,9 @@ export const storageShelf: GeneratorDef = {
       default: false,
       group: 'joints',
       help:
-        'The shelves pass through the side walls and are locked by wedges outside them, so the ' +
-        'shelf can be taken apart again. Not part of boxes.py. The bottom and back stay finger-jointed.',
+        'The shelves and the back pass through the side walls and are locked by wedges outside ' +
+        'them, so the shelf can be taken apart again without glue. The back is recessed so its ' +
+        'wedges stay within the depth. Not part of boxes.py.',
     },
     ...WEDGED_TENON_PARAMS,
   ],
