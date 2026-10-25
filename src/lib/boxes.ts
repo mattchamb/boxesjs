@@ -16,6 +16,7 @@ import { BaseEdge, CompoundEdge, Edge, NoopEdge, OutSetEdge, type BoltPolicy } f
 import { FingerHoles, FingerJointSettings } from './edges/fingerjoint';
 import { StackableSettings } from './edges/stackable';
 import { DoveTailSettings } from './edges/dovetail';
+import { WedgedTenonSettings, drawWedge, tenonHoles } from './edges/wedgedtenon';
 import { GripSettings } from './edges/grip';
 import { RoundedTriangleEdgeSettings } from './edges/roundedtriangle';
 import { HandleEdgeSettings } from './edges/handle';
@@ -100,6 +101,7 @@ export abstract class Boxes {
   lidSettings!: LidSettings;
   lidObj!: Lid;
   hexHolesSettings!: HexHolesSettings;
+  wedgedTenonSettings!: WedgedTenonSettings;
   /** Standalone part shapes; boxes.py hangs these off the box the same way. */
   parts: Parts = new Parts(this);
 
@@ -196,6 +198,9 @@ export abstract class Boxes {
 
     new StackableSettings(t, true, this.settingsFor('Stackable')).edgeObjects(this, 'sSšŠ', true, fj);
     new DoveTailSettings(t, true, this.settingsFor('DoveTail')).edgeObjects(this);
+    // Not in boxes.py; see edges/wedgedtenon.ts. `w`/`W` are unused upstream.
+    this.wedgedTenonSettings = new WedgedTenonSettings(t, true, this.settingsFor('WedgedTenon'));
+    this.wedgedTenonSettings.edgeObjects(this);
     new RoundedTriangleEdgeSettings(t, true, this.settingsFor('RoundedTriangleEdge')).edgeObjects(this);
     new MountingSettings(t, true, this.settingsFor('Mounting')).edgeObjects(this);
     new HandleEdgeSettings(t, true, this.settingsFor('HandleEdge')).edgeObjects(this);
@@ -741,6 +746,21 @@ export abstract class Boxes {
     bedBoltSettings: readonly number[] | null = null,
   ): void {
     this.fingerHolesObj.call(x, y, length, angle, bedBolts, bedBoltSettings);
+  }
+
+  /** Holes for a `w` edge of `length`; placed exactly as `fingerHolesAt` places finger holes. */
+  tenonHolesAt(x: number, y: number, length: number, angle = 90): void {
+    tenonHoles(this, this.wedgedTenonSettings, x, y, length, angle);
+  }
+
+  /** Number of tenons a `w` edge of `length` carries, and so wedges it needs. */
+  tenonCount(length: number): number {
+    return this.wedgedTenonSettings.centres(length).length;
+  }
+
+  /** `n` wedges for the `w` edges, laid out in rows. */
+  wedges(n: number, move: string): void {
+    this.partsMatrix(n, Math.min(n, 8), move, (m) => drawWedge(this, this.wedgedTenonSettings, m));
   }
 
   /** Slots forming a rectangle, for a box inside a box. */

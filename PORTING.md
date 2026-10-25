@@ -505,6 +505,25 @@ and for those it works out which of the four compass directions the sweep passes
 that way. Note `ext` starts at zero on all four sides, so the origin is always
 inside the box — callers depend on that.
 
+### Features that are not from boxes.py
+
+Everything else in this document is a port. **Wedged through-tenons** (`w`,
+`W`, `src/lib/edges/wedgedtenon.ts`) are not: boxes.py has no such joint, and
+`w`/`W` are unused there, so the characters cannot clash with a future port.
+They are offered on RectangularWall (any side) and StorageShelf (`wedged`,
+shelves through the side walls; the bottom stays finger-jointed because a
+wedge hangs half its length below its tenon, which under the bottom panel is
+the floor). The settings are `wt_*`, mapped to a `WedgedTenon` family that
+`gen-golden.py` never sees.
+
+With no golden to compare against, the geometry is pinned by
+`test/wedgedtenon.test.ts`: tenons and holes line up, the slot starts `draw`
+inside the mating panel and leaves `end_margin` at the tip (also under kerf),
+each wedge is exactly `gap` wide at its middle. `test/generators.test.ts` has a
+`VARIANTS` list so options that are off at defaults still get the overlap and
+naming checks; add to it when you add an option like this. Keep these off by
+default, so every golden-covered default stays exactly boxes.py's.
+
 ### Wall edges
 
 boxes.py builds the wall edges with `type()` at runtime: five wall profiles

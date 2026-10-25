@@ -559,6 +559,107 @@ export const DOVETAIL_PARAMS: ParamSpec[] = [
 ];
 
 /**
+ * Wedged through-tenon options (`w`/`W`). Not from boxes.py — see
+ * edges/wedgedtenon.ts for the geometry these describe.
+ */
+export const WEDGED_TENON_PARAMS: ParamSpec[] = [
+  {
+    key: 'wt_width',
+    kind: 'number',
+    label: 'Tenon width',
+    unit: '× thickness',
+    default: 4.0,
+    min: 3,
+    max: 8,
+    step: 0.5,
+    group: 'joints',
+  },
+  {
+    key: 'wt_pitch',
+    kind: 'number',
+    label: 'Tenon spacing',
+    unit: '× thickness',
+    default: 25.0,
+    min: 8,
+    max: 60,
+    step: 1,
+    group: 'joints',
+    help: 'Target distance between tenons. Each edge gets as many as fit, at least one.',
+  },
+  {
+    key: 'wt_gap',
+    kind: 'number',
+    label: 'Wedge width',
+    unit: '× thickness',
+    default: 1.5,
+    min: 1,
+    max: 4,
+    step: 0.1,
+    group: 'joints',
+    help: 'Width of the wedge where it locks, half-way along its length.',
+  },
+  {
+    key: 'wt_end_margin',
+    kind: 'number',
+    label: 'Material beyond the wedge',
+    unit: '× thickness',
+    default: 1.5,
+    min: 0.5,
+    max: 4,
+    step: 0.1,
+    group: 'joints',
+    help: 'Wood left at the tip of each tenon to take the wedge’s push. Too little and it splits.',
+  },
+  {
+    key: 'wt_wedge_length',
+    kind: 'number',
+    label: 'Wedge length',
+    unit: '× thickness',
+    default: 8.0,
+    min: 5,
+    max: 12,
+    step: 0.5,
+    group: 'joints',
+  },
+  {
+    key: 'wt_taper',
+    kind: 'number',
+    label: 'Wedge taper',
+    unit: '1 :',
+    default: 7,
+    min: 5,
+    max: 12,
+    step: 1,
+    group: 'joints',
+    help: 'Gentler tapers (higher numbers) hold better; steeper ones take up more slack.',
+  },
+  {
+    key: 'wt_slack',
+    kind: 'length',
+    label: 'Tenon clearance',
+    unit: 'mm',
+    default: 0.2,
+    min: 0,
+    max: 1,
+    step: 0.05,
+    group: 'joints',
+    help: 'Added to every tenon hole and wedge slot. Raise it if parts will not go together.',
+  },
+  {
+    key: 'wt_draw',
+    kind: 'length',
+    label: 'Wedge draw',
+    unit: 'mm',
+    default: 0.5,
+    min: 0,
+    max: 2,
+    step: 0.1,
+    group: 'joints',
+    help: 'How far the wedge slot starts inside the mating panel, so the wedge pulls the joint tight.',
+  },
+];
+
+/**
  * Lid options, for generators that support one. Spread into a generator's own
  * params rather than added globally, since most generators have no lid.
  */
@@ -806,6 +907,11 @@ export function toBoxesConfig(values: ParamValues): BoxesConfig {
     if (v !== undefined && typeof v !== 'boolean') dovetail[settingKey] = v;
   }
 
+  const wedgedTenon: Record<string, number | string> = {};
+  for (const [k, v] of Object.entries(values)) {
+    if (k.startsWith('wt_') && v !== undefined && typeof v !== 'boolean') wedgedTenon[k.slice(3)] = v;
+  }
+
   return {
     ...DEFAULT_CONFIG,
     thickness: num('thickness', 3.0),
@@ -825,6 +931,7 @@ export function toBoxesConfig(values: ParamValues): BoxesConfig {
       HandleEdge: handleEdge,
       Flex: flex,
       DoveTail: dovetail,
+      WedgedTenon: wedgedTenon,
       ...wallFamilies,
     },
   };

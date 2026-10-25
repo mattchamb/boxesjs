@@ -12,7 +12,7 @@
  */
 import { Boxes, type BoxesConfig, type EdgeSpec } from '../boxes';
 import { SlottedEdge } from '../edges/slots';
-import { HANDLE_PARAMS, STACKABLE_PARAMS } from '../params/common';
+import { HANDLE_PARAMS, STACKABLE_PARAMS, WEDGED_TENON_PARAMS } from '../params/common';
 import { parseSections } from '../params/sections';
 import type { ParamValues } from '../params/schema';
 import { BOTTOM_EDGE_CHOICES, drawLid, isClosedTop, topEdges, TOP_EDGE_CHOICES } from '../topedge';
@@ -27,6 +27,8 @@ interface StorageShelfOptions {
   topEdge: string;
   retainer: number;
   retainerHoleEdge: boolean;
+  /** This port's own option: shelves held by wedged through-tenons. */
+  wedged: boolean;
 }
 
 class StorageShelf extends Boxes {
@@ -89,7 +91,8 @@ class StorageShelf extends Boxes {
     let posh = -0.5 * t;
     for (const h of this.sh.slice(0, -1)) {
       posh += h + t;
-      this.fingerHolesAt(posh, 0, this.x);
+      if (this.o.wedged) this.tenonHolesAt(posh, 0, this.x);
+      else this.fingerHolesAt(posh, 0, this.x);
     }
   };
 
@@ -142,11 +145,14 @@ class StorageShelf extends Boxes {
         });
       }
 
+      // With wedged tenons the shelves' side edges pass through the side
+      // walls and are wedged outside them.
+      const sideJoint = this.o.wedged ? 'w' : 'f';
       for (let i = 0; i < this.sh.length - 1; i++) {
         const e: EdgeSpec[] = [
-          'f',
+          sideJoint,
           new SlottedEdge(this, [...this.sy].reverse(), 'f', 0.5 * x),
-          'f',
+          sideJoint,
           this.o.retainer ? 'f' : 'e',
         ];
         this.rectangularWall(x, y, e, { move: 'up', label: `inner horizontal ${i + 1}` });
@@ -194,6 +200,11 @@ class StorageShelf extends Boxes {
           label: `retainer ${i + 1}`,
         });
       }
+    }
+
+    if (this.o.wedged) {
+      // Two side edges per inner shelf, each with its own set of tenons.
+      this.wedges(this.tenonCount(x) * 2 * (this.sh.length - 1), 'up');
     }
   }
 }
@@ -288,6 +299,17 @@ export const storageShelf: GeneratorDef = {
     // Shelf heights are scaled to fit the outside height, so the depth of the
     // stackable feet changes how much room the shelves actually get.
     ...STACKABLE_PARAMS,
+    {
+      key: 'wedged',
+      kind: 'bool',
+      label: 'Wedged tenons on the shelves',
+      default: false,
+      group: 'joints',
+      help:
+        'The shelves pass through the side walls and are locked by wedges outside them, so the ' +
+        'shelf can be taken apart again. Not part of boxes.py. The bottom and back stay finger-jointed.',
+    },
+    ...WEDGED_TENON_PARAMS,
   ],
   create: (v: ParamValues, config: BoxesConfig) =>
     new StorageShelf(
@@ -300,6 +322,7 @@ export const storageShelf: GeneratorDef = {
         topEdge: s(v, 'top_edge', 'e'),
         retainer: n(v, 'retainer', 0),
         retainerHoleEdge: b(v, 'retainer_hole_edge', false),
+        wedged: b(v, 'wedged', false),
       },
       config,
     ),

@@ -4,12 +4,12 @@
  * existing box.
  */
 import { Boxes, type BoxesConfig } from '../boxes';
-import { DOVETAIL_PARAMS } from '../params/common';
+import { DOVETAIL_PARAMS, WEDGED_TENON_PARAMS } from '../params/common';
 import type { ParamValues } from '../params/schema';
 import { n, s, type GeneratorDef } from './types';
 
 /** Edge characters this build supports on an arbitrary panel. */
-const PANEL_EDGES = 'eEfFdDhgsSšŠtTG';
+const PANEL_EDGES = 'eEfFdDwWhgsSšŠtTG';
 
 class RectangularWall extends Boxes {
   constructor(
@@ -31,8 +31,20 @@ class RectangularWall extends Boxes {
       }
     };
 
+    // Wedges for any `w` edges — this port's own joint, so this branch has no
+    // boxes.py counterpart. Without one the panel is drawn exactly as upstream.
+    let wedges = 0;
+    this.edgetypes.forEach((e, i) => {
+      if (e === 'w') wedges += this.tenonCount(i % 2 ? this.h : this.x);
+    });
+
     this.moveTo(3 * t, 3 * t);
-    this.rectangularWall(this.x, this.h, this.edgetypes, { callback: cb, label: 'Panel' });
+    this.rectangularWall(this.x, this.h, this.edgetypes, {
+      callback: cb,
+      label: 'Panel',
+      move: wedges ? 'up' : undefined,
+    });
+    if (wedges) this.wedges(wedges, 'up');
   }
 }
 
@@ -64,6 +76,7 @@ export const rectangularWall: GeneratorDef = {
     edgeParam('top_edge', 'Top edge'),
     edgeParam('left_edge', 'Left edge'),
     ...DOVETAIL_PARAMS,
+    ...WEDGED_TENON_PARAMS,
   ],
   create: (v: ParamValues, config: BoxesConfig) =>
     new RectangularWall(

@@ -179,6 +179,31 @@ describe.each(generators.map((g) => g.meta))('$id', (meta) => {
   });
 });
 
+/**
+ * Options that change the part list but are off at defaults, so the checks
+ * above never see them. Add a variant when a generator gains such an option,
+ * especially one with no boxes.py golden behind it.
+ */
+const VARIANTS: { id: string; name: string; values: ParamValues }[] = [
+  { id: 'storageshelf', name: 'wedged tenons', values: { wedged: true, x: 200, sh: '120*3', sy: '150*2' } },
+  { id: 'rectangularwall', name: 'wedged tenons', values: { bottom_edge: 'w', right_edge: 'W', top_edge: 'w', left_edge: 'W' } },
+];
+
+describe.each(VARIANTS)('$id with $name', ({ id, values }) => {
+  const v = { ...defaultsFor(id), ...values };
+
+  it('lays out parts without overlapping them', () => {
+    expect(overlappingPairs(buildDrawing(id, v).parts)).toEqual([]);
+  });
+
+  it('names every part it produces', () => {
+    for (const p of renderPreview(id, v).parts) {
+      expect(p.name).not.toBe('');
+      expect(p.name).not.toBe('default');
+    }
+  });
+});
+
 describe('registry', () => {
   it('has unique generator ids', () => {
     const ids = generators.map((g) => g.meta.id);
