@@ -713,8 +713,9 @@ const ASSEMBLY_CHOICES: Record<Assembly, { label: string; help: string }> = {
  * way it offers, and shows with that choice; it is the panel's first field
  * in its group, ahead of the edge choices it overrides.
  */
-export function assemblyParam(options: Assembly[], note = ''): EnumParam {
+export function assemblyParam(options: Assembly[], notes: string | Partial<Record<Assembly, string>> = ''): EnumParam {
   const ways: Assembly[] = ['glue', ...options];
+  const noteFor = (w: Assembly) => (w === 'glue' ? '' : typeof notes === 'string' ? notes : (notes[w] ?? ''));
   return {
     key: 'assembly',
     kind: 'enum',
@@ -723,7 +724,7 @@ export function assemblyParam(options: Assembly[], note = ''): EnumParam {
     choices: ways.map((w) => ({
       value: w,
       label: ASSEMBLY_CHOICES[w].label,
-      help: [ASSEMBLY_CHOICES[w].help, w === 'glue' ? '' : note].filter(Boolean).join(' '),
+      help: [ASSEMBLY_CHOICES[w].help, noteFor(w)].filter(Boolean).join(' '),
     })),
     group: 'joints',
   };

@@ -12,10 +12,14 @@
  *
  * `wedged` is this port's own: everything that holds the two sides apart is
  * joined with wedged through-tenons instead, so the shelf comes apart again.
+ * So is `bolted`, which bolts the same joints with boxes.py's captive nuts.
  */
 import { Boxes, type BoxesConfig, type EdgeSpec, type PolygonBorder } from '../boxes';
+import type { BoltPolicy } from '../edges/base';
+import { checkBolts, shelfBolts, type BoltedJoint } from '../edges/bolts';
+import type { FingerJointSettings } from '../edges/fingerjoint';
 import { tenonFootprints, wedgeClearance, type FaceRect } from '../edges/wedgedtenon';
-import { WEDGED_TENON_PARAMS, assemblyParam } from '../params/common';
+import { BOLT_PARAMS, WEDGED_TENON_PARAMS, assemblyParam } from '../params/common';
 import { parseSections } from '../params/sections';
 import type { ParamValues } from '../params/schema';
 import { b, n, s, type GeneratorDef } from './types';
@@ -39,6 +43,8 @@ interface DisplayShelfOptions {
   topDistance: number;
   /** This port's own option: floors and panels held by wedged through-tenons. */
   wedged: boolean;
+  /** This port's own option: the same joints bolted, with captive nuts. */
+  bolted: boolean;
 }
 
 /** A line of slots in a side panel, as `fingerHolesAt` takes it. */
@@ -47,6 +53,36 @@ interface HoleLine {
   y: number;
   length: number;
   angle: number;
+}
+
+/**
+ * Along a side's edge where `axis` is `at`, the stretches where a line of
+ * slots comes within `deep` of it: a T-slot from that edge there would cut
+ * into it. The floors slant, so one reaches the back edge over a stretch
+ * rather than at a point.
+ */
+function spansNear(lines: HoleLine[], axis: 'x' | 'y', at: number, deep: number): [number, number][] {
+  const out: [number, number][] = [];
+  for (const l of lines) {
+    const p0 = [l.x, l.y];
+    const d = [Math.cos(l.angle * DEG) * l.length, Math.sin(l.angle * DEG) * l.length];
+    const [u, v] = axis === 'x' ? [0, 1] : [1, 0];
+    let lo = 0;
+    let hi = 1;
+    if (Math.abs(d[u]!) < 1e-9) {
+      if (Math.abs(p0[u]! - at) > deep) continue;
+    } else {
+      const t1 = (at - deep - p0[u]!) / d[u]!;
+      const t2 = (at + deep - p0[u]!) / d[u]!;
+      lo = Math.max(0, Math.min(t1, t2));
+      hi = Math.min(1, Math.max(t1, t2));
+      if (lo > hi) continue;
+    }
+    const a = p0[v]! + lo * d[v]!;
+    const b = p0[v]! + hi * d[v]!;
+    out.push([Math.min(a, b), Math.max(a, b)]);
+  }
+  return out;
 }
 
 class DisplayShelf extends Boxes {
@@ -66,6 +102,9 @@ class DisplayShelf extends Boxes {
   private reach = { back: 0, front: 0, bottom: 0 };
   /** Where the slope starts on the front edge, and how far back it cuts. */
   private slope: { front: number; cut: number } | null = null;
+  /** Under `bolted`, each joint's bolts, once the sides' shape is known. */
+  private joints: { floor: BoltPolicy; back: BoltPolicy; front: BoltPolicy; bottom: BoltPolicy; width: BoltPolicy } | null =
+    null;
 
   constructor(
     private o: DisplayShelfOptions,
@@ -110,6 +149,26 @@ class DisplayShelf extends Boxes {
     return { floors, lips };
   }
 
+  /**
+   * The bolts for each joint. The floors' and lips' slots come close to the
+   * sides' back, front and bottom edges, so those edges' bolts keep off them.
+   * Called once the slope, which sets the front's height, is known.
+   */
+  private planBolts(): void {
+    if (!this.o.bolted) return;
+    const lines = this.holeLines();
+    const all = lines ? [...lines.floors, ...lines.lips] : [];
+    // A T-slot's depth, and half a slot's width beyond it.
+    const deep = this.bedBoltSettings[3]! + this.thickness;
+    this.joints = {
+      floor: shelfBolts(this, this.sl),
+      back: shelfBolts(this, this.o.h, spansNear(all, 'x', 0, deep)),
+      front: shelfBolts(this, this.slope ? this.slope.front : this.o.h, spansNear(all, 'x', this.y, deep)),
+      bottom: shelfBolts(this, this.y, spansNear(all, 'y', 0, deep)),
+      width: shelfBolts(this, this.x),
+    };
+  }
+
   /** Slots in a side panel: one per floor, plus one per front lip. */
   private generateFingerHoles(): void {
     if (this.o.wedged) {
@@ -125,10 +184,11 @@ class DisplayShelf extends Boxes {
     for (let i = 0; i < this.o.num; i++) {
       const f = lines.floors[i]!;
       if (this.o.wedged) this.tenonHolesAt(f.x, f.y, f.length, f.angle);
-      else this.fingerHolesAt(f.x, f.y, f.length, f.angle);
+      else this.fingerHolesAt(f.x, f.y, f.length, f.angle, this.joints?.floor ?? null);
       // The lips stay finger-jointed even when wedged: a lip's wedges would
       // hang off the side's front edge. Fitted dry, a lip is trapped between
-      // the sides and its floor.
+      // the sides and its floor; bolted, likewise, as a lip is too short to
+      // bolt.
       const l = lines.lips[i]!;
       this.fingerHolesAt(l.x, l.y, l.length, l.angle);
     }
@@ -200,6 +260,7 @@ class DisplayShelf extends Boxes {
     const top = width - horizontalCut;
     this.front = height - verticalCut;
     this.slope = { front: this.front, cut: horizontalCut };
+    this.planBolts();
 
     if (this.o.wedged) {
       this.generateWedgedSlopedSides(width, height, top, hypotenuse);
@@ -222,8 +283,13 @@ class DisplayShelf extends Boxes {
       le, 90,
     ];
     const holes = [() => this.generateFingerHoles()];
-    this.polygonWall(borders, { edge: edges, callback: holes, move: 'up', label: 'left side' });
-    this.polygonWall(borders, { edge: edges, callback: holes, move: 'up', label: 'right side' });
+    const j = this.joints;
+    // One per leg: bottom, the bottom's corner, front, slope, top, back, corner.
+    const bedBolts = j
+      ? [includeBottom ? j.bottom : null, null, includeFront ? j.front : null, null, null, includeBack ? j.back : null, null]
+      : undefined;
+    this.polygonWall(borders, { edge: edges, callback: holes, bedBolts, move: 'up', label: 'left side' });
+    this.polygonWall(borders, { edge: edges, callback: holes, bedBolts, move: 'up', label: 'right side' });
   }
 
   /**
@@ -274,9 +340,14 @@ class DisplayShelf extends Boxes {
     edges += this.o.includeFront ? 'fe' : 'ee';
     edges += this.o.includeBack ? 'f' : 'e';
 
+    this.planBolts();
+    const j = this.joints;
+    const bedBolts = j
+      ? [this.o.includeBottom ? j.bottom : null, this.o.includeFront ? j.front : null, null, this.o.includeBack ? j.back : null]
+      : undefined;
     const holes = [() => this.generateFingerHoles()];
-    this.rectangularWall(width, height, edges, { callback: holes, move: 'up', label: 'left side' });
-    this.rectangularWall(width, height, edges, { callback: holes, move: 'up', label: 'right side' });
+    this.rectangularWall(width, height, edges, { callback: holes, bedBolts, move: 'up', label: 'left side' });
+    this.rectangularWall(width, height, edges, { callback: holes, bedBolts, move: 'up', label: 'right side' });
   }
 
   private generateShelveFingerHoles(): void {
@@ -303,10 +374,13 @@ class DisplayShelf extends Boxes {
 
     // Wedged floors pass through the sides and are wedged outside them.
     const side = this.o.wedged ? 'w' : 'f';
+    const floor = this.joints?.floor ?? null;
+    const bedBolts = [null, floor, null, floor];
     if (frontWallHeight) {
       for (let i = 0; i < num; i++) {
         this.rectangularWall(this.x, this.sl, `f${side}e${side}`, {
           callback: [() => this.generateShelveFingerHoles()],
+          bedBolts,
           move: 'up',
           label: `shelf ${i + 1}`,
         });
@@ -322,6 +396,7 @@ class DisplayShelf extends Boxes {
     for (let i = 0; i < num; i++) {
       this.rectangularWall(this.x, this.sl, `E${side}e${side}`, {
         callback: [() => this.generateShelveFingerHoles()],
+        bedBolts,
         move: 'up',
         label: `shelf ${i + 1}`,
       });
@@ -407,19 +482,43 @@ class DisplayShelf extends Boxes {
     const wedged = this.o.wedged;
     const bottomEdge = this.o.includeBottom ? (wedged ? 'W' : 'h') : 'e';
     const panelSides = wedged ? 'w' : 'F';
+    const j = this.joints;
+    const widthB = j && this.o.includeBottom ? j.width : null;
     if (this.o.includeBack) {
-      this.rectangularWall(this.x, h, `${bottomEdge}${panelSides}e${panelSides}`, { label: 'back wall', move: 'up' });
+      this.rectangularWall(this.x, h, `${bottomEdge}${panelSides}e${panelSides}`, {
+        bedBolts: j ? [widthB, j.back, null, j.back] : undefined,
+        label: 'back wall',
+        move: 'up',
+      });
     }
     if (this.o.includeFront) {
       // Under slope_top the front wall stops where the slope begins, and that
       // height is only known once the sides have been drawn.
       const fh = this.o.slopeTop && this.o.angle !== 0 ? this.front : h;
-      this.rectangularWall(this.x, fh, `${bottomEdge}${panelSides}e${panelSides}`, { label: 'front wall', move: 'up' });
+      this.rectangularWall(this.x, fh, `${bottomEdge}${panelSides}e${panelSides}`, {
+        bedBolts: j ? [widthB, j.front, null, j.front] : undefined,
+        label: 'front wall',
+        move: 'up',
+      });
     }
     if (this.o.includeBottom) {
-      const j = wedged ? 'w' : 'f';
-      const edges = [this.o.includeFront ? j : 'e', j, this.o.includeBack ? j : 'e', j];
-      this.rectangularWall(this.x, y, edges, { label: 'bottom wall', move: 'up' });
+      const k = wedged ? 'w' : 'f';
+      const edges = [this.o.includeFront ? k : 'e', k, this.o.includeBack ? k : 'e', k];
+      this.rectangularWall(this.x, y, edges, {
+        bedBolts: j
+          ? [this.o.includeFront ? j.width : null, j.bottom, this.o.includeBack ? j.width : null, j.bottom]
+          : undefined,
+        label: 'bottom wall',
+        move: 'up',
+      });
+    }
+
+    if (j) {
+      const joints: BoltedJoint[] = [{ label: 'the floors', length: this.sl, policy: j.floor }];
+      if (this.o.includeBack) joints.push({ label: 'the back', length: h, policy: j.back });
+      if (this.o.includeFront) joints.push({ label: 'the front', length: this.slope ? this.slope.front : h, policy: j.front });
+      if (this.o.includeBottom) joints.push({ label: 'the bottom', length: y, policy: j.bottom });
+      checkBolts(this, this.getEdge('f').settings as FingerJointSettings, joints);
     }
 
     if (wedged) {
@@ -581,11 +680,13 @@ export const displayShelf: GeneratorDef = {
       group: 'dimensions',
       help: 'Cuts the top front corner off the sides so the shelf steps back as it rises.',
     },
-    assemblyParam(
-      ['wedges'],
-      'The floors and any back, front and bottom pass through the sides, the back and front recessed so their wedges stay within the depth; the lips and dividers fit dry.',
-    ),
+    assemblyParam(['wedges', 'bolts'], {
+      wedges:
+        'The floors and any back, front and bottom pass through the sides, the back and front recessed so their wedges stay within the depth; the lips and dividers fit dry.',
+      bolts: 'The floors and any back, front and bottom are bolted to the sides; the lips and dividers fit dry.',
+    }),
     ...WEDGED_TENON_PARAMS,
+    ...BOLT_PARAMS,
   ],
   create: (v: ParamValues, config: BoxesConfig) =>
     new DisplayShelf(
@@ -605,6 +706,7 @@ export const displayShelf: GeneratorDef = {
         bottomDistance: n(v, 'bottom_distance', 0),
         topDistance: n(v, 'top_distance', 0),
         wedged: s(v, 'assembly', 'glue') === 'wedges',
+        bolted: s(v, 'assembly', 'glue') === 'bolts',
       },
       config,
     ),

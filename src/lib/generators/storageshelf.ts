@@ -11,9 +11,12 @@
  * whatever is on the shelf sliding out.
  */
 import { Boxes, type BoxesConfig, type EdgeSpec } from '../boxes';
+import type { BoltPolicy } from '../edges/base';
+import { checkBolts, shelfBolts, wallsBetween } from '../edges/bolts';
+import type { FingerJointSettings } from '../edges/fingerjoint';
 import { SlottedEdge } from '../edges/slots';
 import { tenonFootprints, wedgeClearance, type FaceRect } from '../edges/wedgedtenon';
-import { HANDLE_PARAMS, STACKABLE_PARAMS, WEDGED_TENON_PARAMS, assemblyParam } from '../params/common';
+import { HANDLE_PARAMS, STACKABLE_PARAMS, WEDGED_TENON_PARAMS, BOLT_PARAMS, assemblyParam } from '../params/common';
 import { parseSections } from '../params/sections';
 import type { ParamValues } from '../params/schema';
 import { BOTTOM_EDGE_CHOICES, drawLid, isClosedTop, topEdges, TOP_EDGE_CHOICES } from '../topedge';
@@ -30,6 +33,8 @@ interface StorageShelfOptions {
   retainerHoleEdge: boolean;
   /** This port's own option: shelves held by wedged through-tenons. */
   wedged: boolean;
+  /** This port's own option: the finger joints bolted, with captive nuts. */
+  bolted: boolean;
 }
 
 class StorageShelf extends Boxes {
@@ -93,7 +98,7 @@ class StorageShelf extends Boxes {
     for (const h of this.sh.slice(0, -1)) {
       posh += h + t;
       if (this.o.wedged) this.tenonHolesAt(posh, 0, this.x);
-      else this.fingerHolesAt(posh, 0, this.x);
+      else this.fingerHolesAt(posh, 0, this.x, 90, this.bolts(this.x));
     }
   };
 
@@ -132,6 +137,14 @@ class StorageShelf extends Boxes {
     }
   }
 
+  /**
+   * The bolts for a joint of `length`, when bolted, kept off the slots that
+   * run in from that edge at `across`.
+   */
+  private bolts(length: number, across: number[] = []): BoltPolicy | null {
+    return this.o.bolted ? shelfBolts(this, length, across) : null;
+  }
+
   render(): void {
     const be0 = this.o.bottomEdge;
 
@@ -159,17 +172,32 @@ class StorageShelf extends Boxes {
 
     const hHoles = [null, this.hHoles];
 
+    // Bolted, the bottom and a closed top are bolted where their edge passes
+    // bolts on: a finger joint or finger holes, not a stackable edge.
+    // The shelves' slots run in from the back's joints with the sides, and
+    // the dividers' from its joints with the bottom and top: those joints'
+    // bolts keep off them.
+    const B = (l: number) => this.bolts(l);
+    const backB = this.bolts(h, wallsBetween(this.sh, t));
+    const botB = (l: number) => ('Fh'.includes(bottom) ? B(l) : null);
+    const topB = (l: number) => (closedtop && 'fFh'.includes(this.o.topEdge) ? B(l) : null);
+    const yB = this.bolts(y, wallsBetween(this.sy, t));
+    const botY = 'Fh'.includes(bottom) ? yB : null;
+    const topY = closedtop && 'fFh'.includes(this.o.topEdge) ? yB : null;
+
     this.savedContext(() => {
       // With wedged tenons the back passes through the sides near their back
       // edges instead of meeting them at a finger-jointed corner.
       const backJoint = this.o.wedged ? 'W' : 'F';
       this.rectangularWall(x, h, [bottom, backJoint, t1, 'e'] as EdgeSpec[], {
         callback: hHoles,
+        bedBolts: [botB(x), backB, topB(x), null],
         move: 'up',
         label: 'left',
       });
       this.rectangularWall(x, h, [bottom, 'e', t3, backJoint] as EdgeSpec[], {
         callback: hHoles,
+        bedBolts: [botB(x), null, topB(x), backB],
         move: 'up',
         label: 'right',
       });
@@ -180,6 +208,7 @@ class StorageShelf extends Boxes {
         const e = this.o.retainer ? 'ffff' : 'fffe';
         this.rectangularWall(x, y, e, {
           callback: [null, this.yHoles],
+          bedBolts: [botB(x), botY, botB(x), null],
           move: 'up',
           label: 'bottom',
         });
@@ -195,12 +224,13 @@ class StorageShelf extends Boxes {
           sideJoint,
           this.o.retainer ? 'f' : 'e',
         ];
-        this.rectangularWall(x, y, e, { move: 'up', label: `inner horizontal ${i + 1}` });
+        this.rectangularWall(x, y, e, { bedBolts: [B(x), null, B(x), null], move: 'up', label: `inner horizontal ${i + 1}` });
       }
 
       if (closedtop) {
         this.rectangularWall(x, y, this.o.topEdge === 'f' ? 'FFFe' : 'fffe', {
           callback: [null, this.yHoles],
+          bedBolts: [topB(x), topY, topB(x), null],
           move: 'up',
           label: 'top',
         });
@@ -215,6 +245,7 @@ class StorageShelf extends Boxes {
     const backSides = this.o.wedged ? 'w' : 'f';
     this.rectangularWall(y, h, [bottom, backSides, t2, backSides] as EdgeSpec[], {
       callback: [this.ySlots, this.hSlots],
+      bedBolts: [botY, backB, topY, backB],
       move: 'up',
       label: 'back',
     });
@@ -243,6 +274,16 @@ class StorageShelf extends Boxes {
           label: `retainer ${i + 1}`,
         });
       }
+    }
+
+    if (this.o.bolted) {
+      const fj = this.getEdge('f').settings as FingerJointSettings;
+      const joints = [
+        { label: 'the shelves', length: x, policy: B(x)! },
+        { label: 'the back', length: h, policy: backB! },
+      ];
+      if (botB(x)) joints.push({ label: 'the bottom', length: x, policy: B(x)! });
+      checkBolts(this, fj, joints);
     }
 
     if (this.o.wedged) {
@@ -343,11 +384,14 @@ export const storageShelf: GeneratorDef = {
     // Shelf heights are scaled to fit the outside height, so the depth of the
     // stackable feet changes how much room the shelves actually get.
     ...STACKABLE_PARAMS,
-    assemblyParam(
-      ['wedges'],
-      'The shelves and the back pass through the sides, the back recessed so its wedges stay within the depth; the bottom stays finger-jointed.',
-    ),
+    assemblyParam(['wedges', 'bolts'], {
+      wedges:
+        'The shelves and the back pass through the sides, the back recessed so its wedges stay within the depth; the bottom stays finger-jointed.',
+      bolts:
+        'The shelves and the back are bolted to the sides, and the bottom and top where their edges allow; the dividers and retainers fit dry.',
+    }),
     ...WEDGED_TENON_PARAMS,
+    ...BOLT_PARAMS,
   ],
   create: (v: ParamValues, config: BoxesConfig) =>
     new StorageShelf(
@@ -361,6 +405,7 @@ export const storageShelf: GeneratorDef = {
         retainer: n(v, 'retainer', 0),
         retainerHoleEdge: b(v, 'retainer_hole_edge', false),
         wedged: s(v, 'assembly', 'glue') === 'wedges',
+        bolted: s(v, 'assembly', 'glue') === 'bolts',
       },
       config,
     ),

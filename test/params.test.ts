@@ -5,8 +5,9 @@
  */
 import { describe, expect, it } from 'vitest';
 import { BoltsPolicy, FingerJointSettings } from '~/lib/edges/fingerjoint';
-import { bedBoltSettingsFor, boltPositions } from '~/lib/edges/bolts';
-import { defaultsFor, paramsFor } from '~/lib/generators/registry';
+import { bedBoltSettingsFor, boltPositions, boltsClearOf } from '~/lib/edges/bolts';
+import { defaultsFor, getGenerator, paramsFor } from '~/lib/generators/registry';
+import { toBoxesConfig } from '~/lib/params/common';
 import { decodeParams, encodeParams } from '~/lib/permalink';
 import { buildDrawing, renderPreview } from '~/lib/preview';
 import { visibleParams, type ParamValues } from '~/lib/params/schema';
@@ -68,8 +69,8 @@ describe('warnings land on fields the panel shows', () => {
     ['storagerack', { assembly: 'wedges', sh: '15*5' }],
     ['paintstorage', { assembly: 'wedges' }],
     ['paintstorage', { assembly: 'wedges', drawer: true }],
-    ['closedbox', { assembly: 'bolts', bolt_length: 8 }],
-    ['closedbox', { assembly: 'bolts', bolt_size: 'M6', bolt_length: 30 }],
+    ['closedbox', { assembly: 'bolts', thickness: 5, bolt_length: 8 }],
+    ['closedbox', { assembly: 'bolts', x: 200, y: 60, h: 200, thickness: 8, bolt_size: 'M6', bolt_length: 40 }],
     ['universalbox', { assembly: 'bolts', bottom_edge: 's' }],
     ['closedbox', { assembly: 'bolts', thickness: 7 }],
     ['rectangularwall', { bolts: 2, bottom_edge: 'f', x: 30 }],
@@ -110,10 +111,70 @@ describe('bolts', () => {
     expect(wall2.paths.filter((p) => p.layer === 'inner')).toHaveLength(2 * count(100, 3));
   });
 
-  it('fit the default boxes without a warning', () => {
+  it('fit the default boxes in 5 mm material without a warning', () => {
     for (const id of ['closedbox', 'universalbox']) {
-      expect(renderPreview(id, { ...defaultsFor(id), assembly: 'bolts' }).warnings, id).toEqual([]);
+      expect(renderPreview(id, { ...defaultsFor(id), assembly: 'bolts', thickness: 5 }).warnings, id).toEqual([]);
     }
+  });
+
+  it('say when the bolt is too fat for the material, rather than that cuts meet', () => {
+    const w = renderPreview('closedbox', { ...defaultsFor('closedbox'), assembly: 'bolts' }).warnings;
+    expect(w.map((x) => x.param)).toEqual(['bolt_size']);
+  });
+
+  it('find a T-slot that runs into another cut once the parts are drawn', () => {
+    // M6 × 40 in 8 mm material: 33 mm slots from both upright edges of a
+    // wall only 60 mm deep, so they meet in the middle.
+    const w = renderPreview('closedbox', {
+      ...defaultsFor('closedbox'),
+      x: 200,
+      y: 60,
+      h: 200,
+      assembly: 'bolts',
+      thickness: 8,
+      bolt_size: 'M6',
+      bolt_length: 40,
+    }).warnings;
+    expect(w.map((x) => x.param)).toContain('bolt_length');
+  });
+
+  it('keep off the dividers’ slots on a shelf’s back joints', () => {
+    // Three bolts on the 300 mm back joints would put the middle one on the
+    // divider at 150 mm, whose slots run in from that same edge.
+    const v = { ...defaultsFor('storageshelf'), assembly: 'bolts', thickness: 6, x: 200, sh: '150*3', sy: '150*2', top_edge: 'f' };
+    expect(renderPreview('storageshelf', v).warnings).toEqual([]);
+    const fj = new FingerJointSettings(6, true, {});
+    const y = 2 * 150 + 6;
+    const at = boltPositions(fj, y, boltsClearOf(fj, y, [153], (5.7 + 6) / 2 + 1));
+    expect(at.length).toBeGreaterThan(0);
+    for (const p of at) expect(Math.abs(p - 153)).toBeGreaterThan(6);
+  });
+
+  it.each([
+    ['storageshelf', { x: 200, sh: '150*3', sy: '150*2', top_edge: 'f' }],
+    ['storagerack', { bottom_edge: 'F' }],
+    ['storagerack', { bottom_edge: 'e', sh: '80*4' }],
+    ['displayshelf', { y: 150, include_back: true, include_front: true, include_bottom: true }],
+    ['displayshelf', { y: 150, slope_top: true, include_back: true, include_bottom: true }],
+  ] as const)('on %s %o, put a hole opposite every T-slot, clear of the other cuts', (id, extra) => {
+    const v = { ...defaultsFor(id), assembly: 'bolts', thickness: 6, ...extra };
+    expect(renderPreview(id, v).warnings).toEqual([]);
+    const box = getGenerator(id).create(v, toBoxesConfig(v));
+    box.open();
+    box.render();
+    const cuts = box.close().parts.flatMap((p) => p.boltCuts);
+    // A hole's mark is as wide as the bolt; a T-slot's, as the nut.
+    const d = box.bedBoltSettings[0]!;
+    const holes = cuts.filter(([a, b]) => Math.abs(Math.hypot(b![0] - a![0], b![1] - a![1]) - d) < 1e-6).length;
+    expect(holes).toBeGreaterThan(0);
+    expect(cuts.length - holes).toBe(holes);
+  });
+
+  it('do not take the blame for crossings away from them', () => {
+    // At 8 mm a 120 mm-deep side's stackable foot overlaps itself, as in
+    // boxes.py; the bolts are nowhere near it.
+    const v = { ...defaultsFor('storageshelf'), assembly: 'bolts', thickness: 8, x: 120, bottom_edge: 's' };
+    expect(renderPreview('storageshelf', v).warnings).toEqual([]);
   });
 
   it('say which joints get no bolts, where thick fingers leave too few gaps', () => {

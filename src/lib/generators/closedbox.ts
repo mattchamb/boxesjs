@@ -51,10 +51,6 @@ class ClosedBox extends Boxes {
         this,
         this.getEdge('f').settings as FingerJointSettings,
         [
-          { label: 'Walls 2 and 4', w: y, h, edges: [null, d2, null, d2] },
-          { label: 'the top and bottom', w: x, h: y, edges: [d2, d3, d2, d3] },
-        ],
-        [
           { label: 'the width edges', length: x, policy: d2! },
           { label: 'the depth edges', length: y, policy: d3! },
           { label: 'the corners', length: h, policy: d2! },

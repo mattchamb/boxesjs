@@ -235,6 +235,7 @@ export class FingerJointEdge extends BaseEdge {
     for (let i = 0; i < fingers; i++) {
       if (i !== 0) {
         if (!positive && bedBolts && bedBolts.drawBolt(i)) {
+          this.boxes.markBoltCut(0.5 * (space - d), 0.5 * (thickness - d), 0.5 * (space + d), 0.5 * (thickness + d));
           this.hole(0.5 * space, 0.5 * thickness, 0.5 * d);
         }
         if (positive && bedBolts && bedBolts.drawBolt(i)) {
@@ -314,6 +315,7 @@ export class FingerHoles {
         const pos = leftover / 2.0 + i * (space + f);
         if (bedBolts && bedBolts.drawBolt(i)) {
           const d = (bedBoltSettings ?? b.bedBoltSettings)[0]!;
+          b.markBoltCut(pos - 0.5 * (space + d), -0.5 * d, pos - 0.5 * (space - d), 0.5 * d);
           b.hole(pos - 0.5 * space, 0, d * 0.5);
         }
         b.rectangularHole(pos + 0.5 * f, 0, f + p, s.width + p);

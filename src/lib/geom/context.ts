@@ -204,6 +204,13 @@ export class Part {
   pathes: Path[] = [];
   /** Path currently being accumulated, flushed by `stroke()`. */
   path: PathCmd[] = [];
+  /**
+   * Where bolt slots and bolt holes were cut, as polygons in the same
+   * coordinates as the paths: a crossing elsewhere in the part is the
+   * design's own (boxes.py's stackable feet overlap on short, thick edges)
+   * and not the bolts' doing.
+   */
+  boltCuts: [number, number][][] = [];
 
   constructor(name: string) {
     this.name = name;
@@ -215,6 +222,7 @@ export class Part {
 
   transform(f: number, m: Affine, invertY = false): void {
     for (const p of this.pathes) p.transform(f, m, invertY);
+    this.boltCuts = this.boltCuts.map((z) => z.map(([x, y]) => m.apply(x, y)));
   }
 
   append(cmd: PathCmd): void {
@@ -563,5 +571,10 @@ export class Context {
 
   nameCurrentPart(name: string): void {
     this.dwg.nameCurrentPart(name);
+  }
+
+  /** Record a bolt's cut, a polygon in user coordinates, on the current part. */
+  markBoltCut(pts: [number, number][]): void {
+    this.dwg.currentPart.boltCuts.push(pts.map(([x, y]) => this._m.apply(x, y)));
   }
 }

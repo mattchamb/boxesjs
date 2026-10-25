@@ -4,9 +4,10 @@
  * The preview, the SVG writer and the LightBurn writer all consume this one
  * structure, so geometry is computed exactly once per parameter change.
  */
+import { cutsMeet } from './geom/crossings';
 import type { Boxes, BoxesConfig } from './boxes';
 import { LAYERS, layerForRGB, type Layer } from './geom/colors';
-import { EPS, pointsEqual, type PathCmd, type TextParams } from './geom/context';
+import { EPS, Path, pointsEqual, type PathCmd, type TextParams } from './geom/context';
 import { Affine } from './geom/affine';
 
 export interface BBox {
@@ -149,6 +150,7 @@ export function renderBox(box: Boxes): Drawing {
   const page = surface.adjustCoordinates();
 
   const parts: DrawingPart[] = [];
+  const cutsMeetIn: string[] = [];
   const layerChunks = emptyLayerRecord<string[]>(() => []);
   const lengthByLayer = emptyLayerRecord<number>(() => 0);
 
@@ -162,7 +164,17 @@ export function renderBox(box: Boxes): Drawing {
     let maxX = -Infinity;
     let maxY = -Infinity;
 
+    // Kerf compensation loops at every inner corner, crossing itself on
+    // purpose; checked with those loops trimmed to sharp corners, whatever
+    // the output keeps, what still meets is a real collision.
+    const trimmed: { layer: string; cmds: PathCmd[] }[] = [];
+
     for (const p of part.pathes) {
+      if (box.partCutsCheck) {
+        const probe = new Path(p.path.slice(), p.params);
+        probe.fasterEdges('corner');
+        trimmed.push({ layer: layerForRGB(p.params.rgb), cmds: probe.path.filter((c) => c.c !== 'T') });
+      }
       p.fasterEdges(box.innerCorners);
       const layer = layerForRGB(p.params.rgb);
 
@@ -202,6 +214,8 @@ export function renderBox(box: Boxes): Drawing {
 
     if (paths.length === 0 && texts.length === 0) continue;
 
+    if (box.partCutsCheck && cutsMeet(trimmed, part.boltCuts)) cutsMeetIn.push(part.name || 'unnamed part');
+
     parts.push({
       name: part.name,
       bbox: {
@@ -214,6 +228,8 @@ export function renderBox(box: Boxes): Drawing {
       texts,
     });
   }
+
+  if (box.partCutsCheck && cutsMeetIn.length) box.warn(box.partCutsCheck.message(cutsMeetIn), box.partCutsCheck.param);
 
   const layers = emptyLayerRecord<string>(() => '');
   for (const l of LAYERS) layers[l] = layerChunks[l].join(' ');

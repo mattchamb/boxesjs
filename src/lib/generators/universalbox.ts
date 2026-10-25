@@ -145,7 +145,6 @@ class UniversalBox extends Boxes {
       checkBolts(
         this,
         this.getEdge('f').settings as FingerJointSettings,
-        [{ label: 'the bottom', w: x, h: y, edges: [d2, d3, d2, d3] }],
         [
           { label: 'the bottom’s width edges', length: x, policy: d2! },
           { label: 'the bottom’s depth edges', length: y, policy: d3! },

@@ -71,7 +71,6 @@ class RectangularWall extends Boxes {
       checkBolts(
         this,
         this.getEdge('f').settings as FingerJointSettings,
-        [{ label: 'the panel', w: this.x, h: this.h, edges: policies.map((p, i) => (this.edgetypes[i] === 'f' ? p : null)) }],
         policies.flatMap((policy, i) =>
           policy ? [{ label: `the ${names[i]} edge`, length: i % 2 ? this.h : this.x, policy }] : [],
         ),

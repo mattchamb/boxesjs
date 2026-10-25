@@ -113,6 +113,13 @@ export abstract class Boxes {
   /** Collected non-fatal problems, surfaced next to the offending field. */
   warnings: { param?: string; message: string }[] = [];
 
+  /**
+   * Set by a generator whose cuts reach into its parts — captive-nut T-slots —
+   * to have each finished part checked for cuts that meet. Only the drawn
+   * part knows where everything ended up, so the check runs after drawing.
+   */
+  partCutsCheck: { param: string; message: (parts: string[]) => string } | null = null;
+
   constructor(config: Partial<BoxesConfig> = {}) {
     const c = { ...DEFAULT_CONFIG, ...config };
     this.thickness = c.thickness;
@@ -502,11 +509,17 @@ export abstract class Boxes {
     this.edge(e1.endWidth() * Math.tan((angle / 2) * DEG));
   }
 
+  /** Note the rectangle a bolt's cut spans, for the check on drawn parts. */
+  markBoltCut(x0: number, y0: number, x1: number, y1: number): void {
+    this.ctx.markBoltCut([[x0, y0], [x1, y0], [x1, y1], [x0, y1]]);
+  }
+
   /** Slot for a bed bolt: a keyhole that captures a nut. */
   bedBoltHole(length: number, bedBoltSettings: readonly number[] | null = null, tabs = 0): void {
     const [d, dNut, hNut, l, l1] = (bedBoltSettings ?? this.bedBoltSettings) as [
       number, number, number, number, number,
     ];
+    this.markBoltCut((length - dNut) / 2, 0, (length + dNut) / 2, l);
     this.edge((length - d) / 2.0, Math.floor(tabs / 2));
     this.corner(90);
     this.edge(l1);
@@ -1289,11 +1302,17 @@ export abstract class Boxes {
       turtle?: boolean;
       correctCorners?: boolean;
       callback?: Callback;
+      /**
+       * Bolt policies per leg, as rectangularWall takes them. boxes.py's
+       * polygonWall has none; the port's bolted DisplayShelf needs them on
+       * its sloped sides. Left out, nothing changes.
+       */
+      bedBolts?: (BoltPolicy | null)[];
       move?: string | null;
       label?: string;
     } = {},
   ): void {
-    const { edge = 'f', turtle = false, correctCorners = true, callback, move, label = '' } = opts;
+    const { edge = 'f', turtle = false, correctCorners = true, callback, bedBolts, move, label = '' } = opts;
 
     let specs: EdgeSpec[];
     if (Array.isArray(edge)) specs = edge;
@@ -1328,7 +1347,8 @@ export abstract class Boxes {
         lengthCorrection = 0.0;
       }
       l -= lengthCorrection;
-      e[Math.floor(i / 2) % e.length]!.call(l);
+      const bolts = bedBolts?.[Math.floor(i / 2)];
+      e[Math.floor(i / 2) % e.length]!.call(l, bolts ? { bedBolts: bolts } : undefined);
       this.edge(lengthCorrection);
       this.corner(nextAngle, 0, 1);
     }

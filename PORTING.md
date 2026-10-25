@@ -505,7 +505,7 @@ section is a record of what the engine now has and where the sharp edges were.
 | `roundedPlate`, `_splitWall` | `__init__.py:2299` | `boxes.ts` — WallRollHolder. Without `holesMargin` (see below) |
 | DrillStand's part methods | `generators/drillstand.py` | `drillstand.ts`, as a mixin over `Boxes` (DrillStand) or `WallMountedBox` (WallDrillBox), standing in for boxes.py's multiple inheritance |
 | `HandleEdge`, `HandleHoleEdge` (`y`, `Y`) | `edges.py:2611` | `src/lib/edges/handle.ts` — DividerTray's bottom-panel handle; not offered as a top edge |
-| `Bolts`, `bedBoltHole`, `bedBolts` on `f`/`F`/`h`/`e` | `edges.py:122`, `__init__.py:994` | `BoltsPolicy` in `fingerjoint.ts`, `bedBoltHole` in `boxes.ts` — ClosedBox and UniversalBox with `assembly: 'bolts'`, as wired upstream (five bolted goldens); RectangularWall's `bolts`. Choosing the bolt is `src/lib/edges/bolts.ts` |
+| `Bolts`, `bedBoltHole`, `bedBolts` on `f`/`F`/`h`/`e` | `edges.py:122`, `__init__.py:994` | `BoltsPolicy` in `fingerjoint.ts`, `bedBoltHole` in `boxes.ts` — ClosedBox and UniversalBox with `assembly: 'bolts'`, as wired upstream (five bolted goldens); RectangularWall's `bolts`; the shelves, below. Choosing the bolt, and where it goes on a shelf, is `src/lib/edges/bolts.ts`. `polygonWall` takes `bedBolts` per leg, which boxes.py's does not |
 
 `_polygonWallExtend` was the awkward one and is worth knowing about if you touch
 it. It sizes the part before drawing it, so it walks the border list twice: once
@@ -597,12 +597,36 @@ boxes.py's five numbers: the slot runs a millimetre past the bolt's tip, which
 is its length less the other panel's thickness, and the nut sits with two
 millimetres of thread beyond it. A custom size of 3 / 5.5 / 2 mm, 22 mm long at
 3 mm with no clearance, gives boxes.py's own default exactly, and a golden pins
-that. Three checks warn where bolts cannot work: a bolt too short to reach
-through its nut, T-slots in one panel crossing (`slotsClash`, from
-`boltPositions`, which places bolts as the edges draw them), and a joint with no
-bolts at all. That last one is boxes.py's policy, not a bug: it never bolts the
-end gaps, nor the middle one for an even count, so at 7 mm a 100 mm ClosedBox
-bolts its depth edges and nothing else. UniversalBox bolts only its bottom, as
+that. `checkBolts` warns where bolts cannot work: a bolt hole leaving under half
+a millimetre of wall either side (`bolt_size`; M3 in 3 mm breaks out, as it
+does in boxes.py), a bolt too short to reach through its nut, a joint with no
+bolts at all, and, once the parts are drawn, a bolt's cut running into another
+cut in its part. That last is `cutsMeet` in `geom/crossings.ts`, run by
+`renderBox` on every part when a generator sets `partCutsCheck`: it flattens
+the part's cuts with the kerf loops at inner corners trimmed and looks for
+rings crossing. Only crossings that touch a bolt count. `bedBoltHole` and the
+bolt holes mark their footprint on the part (`markBoltCut`, kept as
+`Part.boltCuts` and transformed with the paths), because boxes.py's own
+geometry crosses itself in places, a stackable foot on a short, thick edge for
+one, and that is not the bolts' doing. A joint with no bolts is boxes.py's
+policy, not a bug: it never bolts the end gaps, nor the middle one for an even
+count, so at 7 mm a 100 mm ClosedBox bolts its depth edges and nothing else.
+
+The shelves, StorageShelf, StorageRack and DisplayShelf, offer bolts on the
+joints they wedge, and leave dry the same short parts (lips, rails' ends,
+dividers, retainers). Their bolt count follows the joint, about one per
+100 mm (`boltsAlong`). Where another part's slots run in from the same edge,
+the dividers' from the back's foot, the shelves' from the back's sides, the
+slanted floors' and lips' near a display side's back, front and bottom, a
+bolt there would cut into them, so `shelfBolts` is told where they are and
+`boltsClearOf` keeps the usual placement if it is clear, and otherwise bolts
+the clear gaps nearest it (`GapBolts`). A gap is only taken with its mirror:
+the two halves of a joint count gaps from opposite ends. Where no gap is
+clear it warns. PaintStorage is not bolted: its pot holes start a few
+millimetres from the shelf edges, so a T-slot would cut into one wherever a
+bolt landed. A test in `test/params.test.ts` runs over each bolted shelf: T-slots and
+bolt holes must come out equal in number, with no warnings, which catches a
+joint bolted on one side only. Add new bolted generators to it. UniversalBox bolts only its bottom, as
 upstream does, and only on an `F` or `h` bottom edge: a stackable edge draws its
 slots without the bolts, so upstream would cut T-slots its walls have no holes
 for. RectangularWall puts `bolts` on its `f`, `F` and `h` edges and not on

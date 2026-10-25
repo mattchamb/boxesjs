@@ -11,10 +11,14 @@
  *
  * `wedged` is this port's own: the floors, rails and back pass through the
  * sides and are held by wedges outside them, so the rack comes apart again.
+ * So is `bolted`, which bolts the same joints with boxes.py's captive nuts.
  */
 import { Boxes, type BoxesConfig, type EdgeSpec } from '../boxes';
+import type { BoltPolicy } from '../edges/base';
+import { checkBolts, shelfBolts, wallsBetween, type BoltedJoint } from '../edges/bolts';
+import type { FingerJointSettings } from '../edges/fingerjoint';
 import { tenonFootprints, wedgeClearance, type FaceRect } from '../edges/wedgedtenon';
-import { STACKABLE_PARAMS, WEDGED_TENON_PARAMS, assemblyParam } from '../params/common';
+import { BOLT_PARAMS, STACKABLE_PARAMS, WEDGED_TENON_PARAMS, assemblyParam } from '../params/common';
 import { parseSections } from '../params/sections';
 import type { ParamValues } from '../params/schema';
 import { b, n, s, type GeneratorDef } from './types';
@@ -29,6 +33,8 @@ interface StorageRackOptions {
   topEdge: string;
   /** This port's own option: floors, rails and back held by wedged through-tenons. */
   wedged: boolean;
+  /** This port's own option: the same joints bolted, with captive nuts. */
+  bolted: boolean;
 }
 
 /**
@@ -60,8 +66,23 @@ class StorageRack extends Boxes {
     for (const h of this.sh.slice(0, -1)) {
       posh += h + this.thickness;
       if (this.o.wedged) this.tenonHolesAt(posh, 0, this.depth);
-      else this.fingerHolesAt(posh, 0, this.depth);
+      else this.fingerHolesAt(posh, 0, this.depth, 90, this.bolts(this.depth));
     }
+  }
+
+  /** The bolts for a joint of `length`, when bolted, kept off the slots at `across`. */
+  private bolts(length: number, across: number[] = []): BoltPolicy | null {
+    return this.o.bolted ? shelfBolts(this, length, across) : null;
+  }
+
+  /**
+   * Whether the floor at top or bottom edge `e` is bolted. One on a corner
+   * joint or finger holes is; so is one an open edge moves to the next level
+   * in, into the sides' and back's slots. A stackable edge's slots are drawn
+   * by the edge itself, without bolts.
+   */
+  private floorBolted(e: string): boolean {
+    return this.o.bolted && 'Fhe'.includes(e);
   }
 
   /** A top or bottom edge as drawn: under `wedged`, a line of tenon holes where it can be. */
@@ -133,7 +154,7 @@ class StorageRack extends Boxes {
         (this.o.bottomEdge === 'e' && nr === 0) ||
         (this.o.topEdge === 'e' && nr === this.sh.length - 2)
       ) {
-        this.fingerHolesAt(0, posh, this.x, 0);
+        this.fingerHolesAt(0, posh, this.x, 0, this.bolts(this.x));
       } else {
         this.fingerHolesAt(0, posh, this.o.rail, 0);
         this.fingerHolesAt(this.x, posh, this.o.rail, 180);
@@ -169,21 +190,33 @@ class StorageRack extends Boxes {
     const sbe = this.outerEdge(be);
     const ste = this.outerEdge(te);
 
+    // Bolted, the rails' slots run in from the back's joints with the sides,
+    // so those joints' bolts keep off them. The rails' ends sit in the back
+    // dry: the joint is a rail deep, often too short for a bolt, and the
+    // bolted sides hold the rail.
+    const backB = this.bolts(h, wallsBetween(this.sh, t));
+    // Where a floor meets the sides' and back's own top or bottom edge.
+    const edgeB = (e: string, l: number) => ('Fh'.includes(e) ? this.bolts(l) : null);
+    const floorB = (e: string): (BoltPolicy | null)[] =>
+      this.floorBolted(e) ? [this.bolts(d), this.bolts(x), this.bolts(d), null] : [];
+
     this.savedContext(() => {
       this.rectangularWall(d, h, [sbe, backJoint, ste, 'E'] as EdgeSpec[], {
         callback: hHoles,
+        bedBolts: [edgeB(be, d), backB, edgeB(te, d), null],
         move: 'up',
         label: 'left side',
       });
       this.rectangularWall(d, h, [sbe, 'E', ste, backJoint] as EdgeSpec[], {
         callback: hHoles,
+        bedBolts: [edgeB(be, d), null, edgeB(te, d), backB],
         move: 'up',
         label: 'right side',
       });
 
       // Full floors close the top and bottom of the stack.
-      this.rectangularWall(d, x, this.floorEdges(be), { move: 'up', label: 'floor 1' });
-      this.rectangularWall(d, x, this.floorEdges(te), { move: 'up', label: 'floor 2' });
+      this.rectangularWall(d, x, this.floorEdges(be), { bedBolts: floorB(be), move: 'up', label: 'floor 1' });
+      this.rectangularWall(d, x, this.floorEdges(te), { bedBolts: floorB(te), move: 'up', label: 'floor 2' });
 
       // An open top or bottom edge means that level is a full floor too, so it
       // needs no rails.
@@ -195,8 +228,9 @@ class StorageRack extends Boxes {
         // Wedged rails pass through the sides; their ends meet the back's
         // slots dry, held there by the wedged sides.
         const side = wedged ? 'w' : 'f';
-        this.rectangularWall(d, this.o.rail, [side, 'f', 'e', 'e'], { move: 'up', label: `left rail ${i + 1}` });
-        this.rectangularWall(d, this.o.rail, [side, 'e', 'e', 'f'], { move: 'up', label: `right rail ${i + 1}` });
+        const railB = [this.bolts(d)];
+        this.rectangularWall(d, this.o.rail, [side, 'f', 'e', 'e'], { bedBolts: railB, move: 'up', label: `left rail ${i + 1}` });
+        this.rectangularWall(d, this.o.rail, [side, 'e', 'e', 'f'], { bedBolts: railB, move: 'up', label: `right rail ${i + 1}` });
       }
     });
     // Wedged, the sides and the floors' tenoned backs both stand wider than
@@ -207,9 +241,19 @@ class StorageRack extends Boxes {
     const backSides = wedged ? 'w' : 'f';
     this.rectangularWall(x, h, [sbe, backSides, ste, backSides] as EdgeSpec[], {
       callback: [() => this.backHoles()],
+      bedBolts: [edgeB(be, x), backB, edgeB(te, x), backB],
       move: 'up',
       label: 'back wall',
     });
+
+    if (this.o.bolted) {
+      const joints: BoltedJoint[] = [
+        { label: 'the rails', length: d, policy: this.bolts(d)! },
+        { label: 'the back', length: h, policy: backB! },
+      ];
+      if (this.floorBolted(be) || this.floorBolted(te)) joints.push({ label: 'the floors', length: x, policy: this.bolts(x)! });
+      checkBolts(this, this.getEdge('f').settings as FingerJointSettings, joints);
+    }
 
     if (wedged) {
       this.checkWedgeClearance(h, d, sbe, ste);
@@ -303,11 +347,14 @@ export const storageRack: GeneratorDef = {
     // Shelf heights are scaled to fit the outside height, so the depth of the
     // stackable feet changes how much room the shelves actually get.
     ...STACKABLE_PARAMS,
-    assemblyParam(
-      ['wedges'],
-      'The floors, rails and back pass through the sides, the back recessed; a floor on a stackable edge stays finger-jointed.',
-    ),
+    assemblyParam(['wedges', 'bolts'], {
+      wedges:
+        'The floors, rails and back pass through the sides, the back recessed; a floor on a stackable edge stays finger-jointed.',
+      bolts:
+        'The floors, rails and back are bolted to the sides, and the floors to the back; a floor on a stackable edge is glued, and the rails’ ends sit in the back dry.',
+    }),
     ...WEDGED_TENON_PARAMS,
+    ...BOLT_PARAMS,
   ],
   create: (v: ParamValues, config: BoxesConfig) =>
     new StorageRack(
@@ -320,6 +367,7 @@ export const storageRack: GeneratorDef = {
         bottomEdge: s(v, 'bottom_edge', 'h'),
         topEdge: s(v, 'top_edge', 'F'),
         wedged: s(v, 'assembly', 'glue') === 'wedges',
+        bolted: s(v, 'assembly', 'glue') === 'bolts',
       },
       config,
     ),

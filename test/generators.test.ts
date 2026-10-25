@@ -4,6 +4,7 @@
  * later that throws, lays parts on top of each other, or produces nothing.
  */
 import { describe, expect, it } from 'vitest';
+import { insideRing, polylines, ringsCross, type Pt } from '~/lib/geom/crossings';
 import { defaultsFor, listGenerators, paramsFor } from '~/lib/generators/registry';
 import { buildDrawing, renderPreview } from '~/lib/preview';
 import type { DrawingPart } from '~/lib/render';
@@ -11,64 +12,12 @@ import type { ParamValues } from '~/lib/params/schema';
 
 const generators = listGenerators();
 
-type Pt = [number, number];
-
 /**
- * Flatten a part's outline into polylines. Only the cut layer counts: inner
- * cuts and engraving live inside a part and say nothing about where it sits.
+ * A part's outline as polylines. Only the cut layer counts: inner cuts and
+ * engraving live inside a part and say nothing about where it sits.
  */
 function outline(part: DrawingPart): Pt[][] {
-  const rings: Pt[][] = [];
-  for (const path of part.paths) {
-    if (path.layer !== 'cut') continue;
-    let ring: Pt[] = [];
-    let x = 0;
-    let y = 0;
-    for (const c of path.cmds) {
-      if (c.c === 'M') {
-        if (ring.length > 1) rings.push(ring);
-        ring = [[c.x, c.y]];
-      } else if (c.c === 'L') {
-        ring.push([c.x, c.y]);
-      } else if (c.c === 'C') {
-        // Sampling the curve is enough: the question is only whether two
-        // outlines meet, and boxes.py's arcs are shallow at this scale.
-        for (let i = 1; i <= 8; i++) {
-          const t = i / 8;
-          const u = 1 - t;
-          ring.push([
-            u * u * u * x + 3 * u * u * t * c.x1 + 3 * u * t * t * c.x2 + t * t * t * c.x,
-            u * u * u * y + 3 * u * u * t * c.y1 + 3 * u * t * t * c.y2 + t * t * t * c.y,
-          ]);
-        }
-      }
-      x = c.x;
-      y = c.y;
-    }
-    if (ring.length > 1) rings.push(ring);
-  }
-  return rings;
-}
-
-const cross = (o: Pt, p: Pt, q: Pt) =>
-  (p[0] - o[0]) * (q[1] - o[1]) - (p[1] - o[1]) * (q[0] - o[0]);
-
-function segmentsCross(a: Pt, b: Pt, c: Pt, d: Pt): boolean {
-  const d1 = cross(c, d, a);
-  const d2 = cross(c, d, b);
-  const d3 = cross(a, b, c);
-  const d4 = cross(a, b, d);
-  return d1 > 0 !== d2 > 0 && d3 > 0 !== d4 > 0;
-}
-
-function inside(p: Pt, ring: Pt[]): boolean {
-  let hit = false;
-  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
-    const [xi, yi] = ring[i]!;
-    const [xj, yj] = ring[j]!;
-    if (yi > p[1] !== yj > p[1] && p[0] < ((xj - xi) * (p[1] - yi)) / (yj - yi) + xi) hit = !hit;
-  }
-  return hit;
+  return part.paths.filter((p) => p.layer === 'cut').flatMap((p) => polylines(p.cmds));
 }
 
 function bboxesMeet(a: DrawingPart, b: DrawingPart): boolean {
@@ -92,24 +41,10 @@ function overlappingPairs(parts: DrawingPart[]) {
       if (!bboxesMeet(parts[i]!, parts[j]!)) continue;
       const a = rings[i]!;
       const b = rings[j]!;
-      let collides = false;
-      for (const ra of a) {
-        for (let k = 1; k < ra.length && !collides; k++) {
-          for (const rb of b) {
-            for (let l = 1; l < rb.length; l++) {
-              if (segmentsCross(ra[k - 1]!, ra[k]!, rb[l - 1]!, rb[l]!)) {
-                collides = true;
-                break;
-              }
-            }
-            if (collides) break;
-          }
-        }
-        if (collides) break;
-      }
+      let collides = a.some((ra) => b.some((rb) => ringsCross(ra, rb)));
       // No crossing still leaves one part nested inside the other.
       if (!collides && a.length && b.length) {
-        collides = inside(a[0]![0]!, b[0]!) || inside(b[0]![0]!, a[0]!);
+        collides = insideRing(a[0]![0]!, b[0]!) || insideRing(b[0]![0]!, a[0]!);
       }
       if (collides) bad.push(`${parts[i]!.name} ∩ ${parts[j]!.name}`);
     }
@@ -199,6 +134,11 @@ const VARIANTS: { id: string; name: string; values: ParamValues }[] = [
   { id: 'universalbox', name: 'bolted', values: { assembly: 'bolts' } },
   { id: 'universalbox', name: 'bolted, finger-jointed bottom', values: { assembly: 'bolts', bottom_edge: 'F', vertical_edges: 'finger holes' } },
   { id: 'rectangularwall', name: 'bolted', values: { bolts: 2, bottom_edge: 'f', right_edge: 'F', top_edge: 'h', left_edge: 'f' } },
+  { id: 'storageshelf', name: 'bolted', values: { assembly: 'bolts', thickness: 6, x: 200, sh: '150*3', sy: '150*2', top_edge: 'f' } },
+  { id: 'storagerack', name: 'bolted', values: { assembly: 'bolts', thickness: 6, bottom_edge: 'F' } },
+  { id: 'storagerack', name: 'bolted, open bottom', values: { assembly: 'bolts', thickness: 6, bottom_edge: 'e' } },
+  { id: 'displayshelf', name: 'bolted', values: { assembly: 'bolts', thickness: 6, include_back: true, include_front: true, include_bottom: true } },
+  { id: 'displayshelf', name: 'bolted, sloped', values: { assembly: 'bolts', thickness: 6, slope_top: true, include_back: true, include_bottom: true } },
 ];
 
 describe.each(VARIANTS)('$id with $name', ({ id, values }) => {

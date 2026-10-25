@@ -104,7 +104,9 @@ export class Edge extends BaseEdge {
       if (this.positive) {
         const d = (opts.bedBoltSettings ?? this.boxes.bedBoltSettings)[0]!;
         for (let i = 0; i < bedBolts.bolts; i++) {
-          this.hole(0.5 * intervalLength, 0.5 * this.thickness, 0.5 * d);
+          const [x, y] = [0.5 * intervalLength, 0.5 * this.thickness];
+          this.boxes.markBoltCut(x - 0.5 * d, y - 0.5 * d, x + 0.5 * d, y + 0.5 * d);
+          this.hole(x, y, 0.5 * d);
           this.edge(intervalLength, i === 0 || i === bedBolts.bolts - 1 ? 1 : 0);
         }
       } else {
