@@ -4,11 +4,12 @@
  * existing box.
  */
 import { Boxes, type BoxesConfig } from '../boxes';
+import { DOVETAIL_PARAMS } from '../params/common';
 import type { ParamValues } from '../params/schema';
 import { n, s, type GeneratorDef } from './types';
 
 /** Edge characters this build supports on an arbitrary panel. */
-const PANEL_EDGES = 'eEfFhgsSšŠtTG';
+const PANEL_EDGES = 'eEfFdDhgsSšŠtTG';
 
 class RectangularWall extends Boxes {
   constructor(
@@ -62,6 +63,7 @@ export const rectangularWall: GeneratorDef = {
     edgeParam('right_edge', 'Right edge'),
     edgeParam('top_edge', 'Top edge'),
     edgeParam('left_edge', 'Left edge'),
+    ...DOVETAIL_PARAMS,
   ],
   create: (v: ParamValues, config: BoxesConfig) =>
     new RectangularWall(

@@ -15,6 +15,7 @@ import { ANNOTATIONS, Color, INNER_CUT, OUTER_CUT, type RGB } from './geom/color
 import { BaseEdge, CompoundEdge, Edge, NoopEdge, OutSetEdge, type BoltPolicy } from './edges/base';
 import { FingerHoles, FingerJointSettings } from './edges/fingerjoint';
 import { StackableSettings } from './edges/stackable';
+import { DoveTailSettings } from './edges/dovetail';
 import { GripSettings } from './edges/grip';
 import { RoundedTriangleEdgeSettings } from './edges/roundedtriangle';
 import { HandleEdgeSettings } from './edges/handle';
@@ -194,6 +195,7 @@ export abstract class Boxes {
     this.fingerHolesObj = new FingerHoles(this, fj);
 
     new StackableSettings(t, true, this.settingsFor('Stackable')).edgeObjects(this, 'sSšŠ', true, fj);
+    new DoveTailSettings(t, true, this.settingsFor('DoveTail')).edgeObjects(this);
     new RoundedTriangleEdgeSettings(t, true, this.settingsFor('RoundedTriangleEdge')).edgeObjects(this);
     new MountingSettings(t, true, this.settingsFor('Mounting')).edgeObjects(this);
     new HandleEdgeSettings(t, true, this.settingsFor('HandleEdge')).edgeObjects(this);

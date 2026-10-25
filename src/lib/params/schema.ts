@@ -108,6 +108,8 @@ export const EDGE_INFO: Record<string, { name: string; description: string }> = 
   E: { name: 'Straight, outset', description: 'Straight, offset outward by one thickness' },
   f: { name: 'Finger joint', description: 'Protruding fingers' },
   F: { name: 'Finger joint (opposite)', description: 'Matching gaps for an `f` edge' },
+  d: { name: 'Dovetail', description: 'Flared tails joining two panels edge to edge' },
+  D: { name: 'Dovetail (opposite)', description: 'Sockets for a `d` edge' },
   h: { name: 'Finger holes', description: 'Slots for a wall to pass through the panel' },
   s: { name: 'Stackable feet', description: 'Feet plus slots for the bottom panel' },
   S: { name: 'Stackable top', description: 'Recesses that accept the feet of the box above' },

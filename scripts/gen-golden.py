@@ -61,6 +61,8 @@ def main() -> int:
                 key = "FrenchCleat_" + key[12:]
             elif key.startswith("skadis_"):
                 key = "Skadis_" + key[7:]
+            elif key.startswith("dt_"):
+                key = "DoveTail_" + key[3:]
             elif key.startswith("flex_"):
                 key = "Flex_" + key[5:]
             elif key.startswith("he_"):

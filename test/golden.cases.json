@@ -609,6 +609,92 @@
     }
   },
   {
+    "name": "ref_rectwall_dovetail",
+    "generator": "rectangularwall",
+    "pythonClass": "RectangularWall",
+    "pythonModule": "rectangularWall",
+    "params": {
+      "x": 150,
+      "h": 100,
+      "bottom_edge": "d",
+      "right_edge": "e",
+      "top_edge": "D",
+      "left_edge": "e",
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_rectwall_dovetail_thick",
+    "generator": "rectangularwall",
+    "pythonClass": "RectangularWall",
+    "pythonModule": "rectangularWall",
+    "params": {
+      "x": 200,
+      "h": 120,
+      "bottom_edge": "d",
+      "right_edge": "e",
+      "top_edge": "D",
+      "left_edge": "e",
+      "thickness": 6,
+      "burn": 0.15,
+      "dt_radius": 0
+    }
+  },
+  {
+    "name": "ref_rectwall_dovetail_custom",
+    "generator": "rectangularwall",
+    "pythonClass": "RectangularWall",
+    "pythonModule": "rectangularWall",
+    "params": {
+      "x": 150,
+      "h": 100,
+      "bottom_edge": "d",
+      "right_edge": "d",
+      "top_edge": "D",
+      "left_edge": "D",
+      "thickness": 3,
+      "burn": 0.1,
+      "dt_angle": 30,
+      "dt_size": 4,
+      "dt_depth": 2,
+      "dt_radius": 0.3
+    }
+  },
+  {
+    "name": "ref_rectwall_dovetail_square",
+    "generator": "rectangularwall",
+    "pythonClass": "RectangularWall",
+    "pythonModule": "rectangularWall",
+    "params": {
+      "x": 150,
+      "h": 100,
+      "bottom_edge": "D",
+      "right_edge": "f",
+      "top_edge": "d",
+      "left_edge": "F",
+      "thickness": 3,
+      "burn": 0.1,
+      "dt_angle": 0
+    }
+  },
+  {
+    "name": "ref_rectwall_dovetail_short",
+    "generator": "rectangularwall",
+    "pythonClass": "RectangularWall",
+    "pythonModule": "rectangularWall",
+    "params": {
+      "x": 15,
+      "h": 40,
+      "bottom_edge": "d",
+      "right_edge": "d",
+      "top_edge": "D",
+      "left_edge": "D",
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
     "name": "ref_typetray_lid",
     "generator": "typetray",
     "pythonClass": "TypeTray",

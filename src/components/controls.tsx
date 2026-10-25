@@ -254,6 +254,8 @@ const EDGE_GLYPHS: Record<string, string> = {
   E: 'M2 10 H46',
   f: 'M2 14 H12 V6 H22 V14 H26 V6 H36 V14 H46',
   F: 'M2 14 H12 V22 H22 V14 H26 V22 H36 V14 H46',
+  d: 'M2 14 H10 L8 5 H20 L18 14 H30 L28 5 H40 L38 14 H46',
+  D: 'M2 14 H10 L8 23 H20 L18 14 H30 L28 23 H40 L38 14 H46',
   h: 'M2 14 H46 M10 9 h8 v-4 h-8 z M30 9 h8 v-4 h-8 z',
   s: 'M2 18 h6 a4 4 0 0 1 4 -4 h24 a4 4 0 0 1 4 4 h6 M10 9 h8 v-4 h-8 z M30 9 h8 v-4 h-8 z',
   S: 'M2 10 h6 a4 4 0 0 0 4 4 h24 a4 4 0 0 0 4 -4 h6',

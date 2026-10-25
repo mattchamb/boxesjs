@@ -86,6 +86,7 @@ settings arguments:
 | `st_*` | `--Stackable_*` |
 | `he_*` | `--HandleEdge_*` |
 | `flex_*` | `--Flex_*` |
+| `dt_*` | `--DoveTail_*` |
 | `slatwall_*`, `dinrail_*`, `frenchcleat_*`, `skadis_*` | `--SlatWall_*`, `--DinRail_*`, `--FrenchCleat_*`, `--Skadis_*` |
 | everything else | `--<key>` verbatim |
 
@@ -441,7 +442,7 @@ WallEdges, WallConsole, WallPlaneHolder, WallPliersHolder, WallStairs,
 WallChiselHolder, WallSlottedHolder, WallWrenchHolder, WallPinRow,
 WallTypeTray, WallStackableBin, WallCaliper, WallHook, WallRollHolder,
 WallDrillBox) — plus the RectangularWall part. All of them match boxes.py
-coordinate-for-coordinate across 184 golden cases, regenerated against
+coordinate-for-coordinate across 189 golden cases, regenerated against
 boxes.py master at `84e392b` (2026-10-22).
 
 When the boxes.py checkout moves, regenerate and diff before porting anything
@@ -465,8 +466,9 @@ family and RoundedBox also bend walls through `surroundingWall` (and
 `shutterbox` and `shoe` call `X` directly and may need nothing else — check
 their other dependencies before starting.
 `_WallMountedBox`, `roundedPlate` and `flangedWall` are now ported too (see
-below), along with every wall-mounted generator. `DoveTailSettings` (9) is the
-largest remaining blocker. Note that a generator referencing `edges.BaseEdge` is *not* blocked — that
+below), along with every wall-mounted generator, and so are dovetail joints.
+JointPanel, AirPurifier and GridfinityBase were blocked only by dovetails;
+re-survey before assuming what is largest now. Note that a generator referencing `edges.BaseEdge` is *not* blocked — that
 is the generator-local edge pattern of §7, which already works.
 
 If you are adding a *new* generator from boxes.py, §§1-8 are what you need; this
@@ -488,6 +490,7 @@ section is a record of what the engine now has and where the sharp edges were.
 | `CrossingFingerHoleEdge` | `edges.py:1138` | `src/lib/edges/crossingfingerhole.ts` — TrayLayout, its only user in the whole library |
 | `FlexSettings`, `FlexEdge` (`X`) | `edges.py` | `src/lib/edges/flex.ts` — the `chest` lid. Call it as `call(length, { h })`; boxes.py's second positional argument |
 | `_WallMountedBox`, wall edges (`aAbBcCdD\|`) | `walledges.py` | `src/lib/walledges.ts` — WallHopper; base class `WallMountedBox`, shared `WALL_PARAMS` |
+| `DoveTailSettings` (`d`, `D`) | `edges.py` | `src/lib/edges/dovetail.ts` — offered on RectangularWall, the only ported generator boxes.py offers it on. The wall generators rebind `d`/`D` to wall edges, as boxes.py does |
 | `flangedWall` | `__init__.py:2620` | `boxes.ts` — WallCaliper, WallHook. boxes.py indexes `flanges[i-1]` at `i = 0`, i.e. Python's `[-1]`; the port spells that out |
 | `roundedPlate`, `_splitWall` | `__init__.py:2299` | `boxes.ts` — WallRollHolder. Without `holesMargin` (see below) |
 | DrillStand's part methods | `generators/drillstand.py` | `drillstand.ts`, as a mixin over `Boxes` (DrillStand) or `WallMountedBox` (WallDrillBox), standing in for boxes.py's multiple inheritance |
@@ -608,7 +611,7 @@ conditional are truthy. The float is discarded. The port passes a literal `true`
 ### Not ported, and nothing above needs it
 
 `surroundingWall`, `roundedPlate`, `CabinetHinge`, `ChestHinge`, `Click`, `SlideOnLid`,
-`DoveTail`, `Grooved`, gears, pulleys, servos, QR codes, `fillHoles`, DXF and PostScript output.
+`Grooved`, gears, pulleys, servos, QR codes, `fillHoles`, DXF and PostScript output.
 
 `polygonWalls` (plural) is not ported. Neither is `roundedPlate`'s
 `holesMargin`/`holesSettings`, which fill the plate through `hexHolesPlate`.

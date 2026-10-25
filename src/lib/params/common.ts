@@ -505,6 +505,60 @@ export const WALL_PARAMS: ParamSpec[] = [
 ];
 
 /**
+ * Dovetail joint options, for generators that offer the `d`/`D` edges.
+ */
+export const DOVETAIL_PARAMS: ParamSpec[] = [
+  {
+    key: 'dt_angle',
+    kind: 'number',
+    label: 'Dovetail flare',
+    unit: '°',
+    default: 50,
+    min: 0,
+    max: 80,
+    step: 1,
+    group: 'joints',
+    help: 'How much the tails widen towards their ends. Zero gives square tabs.',
+  },
+  {
+    key: 'dt_size',
+    kind: 'number',
+    label: 'Dovetail pitch',
+    unit: '× thickness',
+    default: 3,
+    min: 1,
+    max: 10,
+    step: 0.5,
+    group: 'joints',
+    help: 'Centre-to-centre distance of the tails.',
+  },
+  {
+    key: 'dt_depth',
+    kind: 'number',
+    label: 'Dovetail depth',
+    unit: '× thickness',
+    default: 1.5,
+    min: 0.5,
+    max: 5,
+    step: 0.1,
+    group: 'joints',
+    help: 'How far the tails stick out of the edge.',
+  },
+  {
+    key: 'dt_radius',
+    kind: 'number',
+    label: 'Dovetail corner radius',
+    unit: '× thickness',
+    default: 0.2,
+    min: 0,
+    max: 1,
+    step: 0.05,
+    group: 'joints',
+    help: 'Rounds all four corners of each tail. Never smaller than the kerf.',
+  },
+];
+
+/**
  * Lid options, for generators that support one. Spread into a generator's own
  * params rather than added globally, since most generators have no lid.
  */
@@ -740,6 +794,18 @@ export function toBoxesConfig(values: ParamValues): BoxesConfig {
     wallFamilies[family] = settings;
   }
 
+  const dovetail: Record<string, number | string> = {};
+  const dovetailMap: Record<string, string> = {
+    dt_angle: 'angle',
+    dt_size: 'size',
+    dt_depth: 'depth',
+    dt_radius: 'radius',
+  };
+  for (const [formKey, settingKey] of Object.entries(dovetailMap)) {
+    const v = values[formKey];
+    if (v !== undefined && typeof v !== 'boolean') dovetail[settingKey] = v;
+  }
+
   return {
     ...DEFAULT_CONFIG,
     thickness: num('thickness', 3.0),
@@ -758,6 +824,7 @@ export function toBoxesConfig(values: ParamValues): BoxesConfig {
       Stackable: stackable,
       HandleEdge: handleEdge,
       Flex: flex,
+      DoveTail: dovetail,
       ...wallFamilies,
     },
   };
