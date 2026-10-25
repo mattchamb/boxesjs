@@ -15,6 +15,7 @@ import { console2 } from './console2';
 import { displayShelf } from './displayshelf';
 import { dividerTray } from './dividertray';
 import { drillBox } from './drillbox';
+import { drillStand, wallDrillBox } from './drillstand';
 import { frameLoom } from './frameloom';
 import { notesHolder } from './notesholder';
 import { openBox } from './openbox';
@@ -28,6 +29,20 @@ import { trayLayout } from './traylayout';
 import { typeTray } from './typetray';
 import { universalBox } from './universalbox';
 import { wallHopper } from './wallhopper';
+import { wallEdges } from './walledges';
+import { wallConsole } from './wallconsole';
+import { wallPlaneHolder } from './wallplaneholder';
+import { wallPliersHolder } from './wallpliersholder';
+import { wallStairs } from './wallstairs';
+import { wallChiselHolder } from './wallchiselholder';
+import { wallSlottedHolder } from './wallslottedholder';
+import { wallWrenchHolder } from './wallwrenchholder';
+import { wallPinRow } from './wallpinrow';
+import { wallTypeTray } from './walltypetray';
+import { wallStackableBin } from './wallstackablebin';
+import { wallCaliper } from './wallcaliperholder';
+import { wallHook } from './wallhook';
+import { wallRollHolder } from './wallrollholder';
 
 const DEFS: GeneratorDef[] = [
   aBox,
@@ -45,12 +60,28 @@ const DEFS: GeneratorDef[] = [
   dividerTray,
   compartmentBox,
   drillBox,
+  drillStand,
   displayShelf,
   storageRack,
   storageShelf,
   paintStorage,
   frameLoom,
   wallHopper,
+  wallEdges,
+  wallConsole,
+  wallPlaneHolder,
+  wallPliersHolder,
+  wallStairs,
+  wallChiselHolder,
+  wallSlottedHolder,
+  wallWrenchHolder,
+  wallPinRow,
+  wallTypeTray,
+  wallStackableBin,
+  wallCaliper,
+  wallHook,
+  wallRollHolder,
+  wallDrillBox,
   rectangularWall,
 ];
 

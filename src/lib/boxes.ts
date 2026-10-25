@@ -1311,6 +1311,151 @@ export abstract class Boxes {
     if (!turtle) this.move(tw, th, move, false, label);
   }
 
+  /**
+   * Rectangular wall that may extend past its nominal size on any side, as a
+   * flange (e.g. a plate screwed to the wall either side of a bracket). A side
+   * with a flange is drawn straight; an `F` or `h` edge there becomes finger
+   * holes in the flange instead.
+   */
+  flangedWall(
+    x: number,
+    y: number,
+    edges: string | EdgeSpec[] = 'FFFF',
+    opts: { flanges?: number[]; r?: number; callback?: Callback; move?: string | null; label?: string } = {},
+  ): void {
+    const { r = 0.0, callback, move, label = '' } = opts;
+    const t = this.thickness;
+    const f4 = [...(opts.flanges ?? [])];
+    while (f4.length < 4) f4.push(0.0);
+
+    const specs = typeof edges === 'string' ? Array.from(edges) : edges;
+    const e4 = specs.map((s) => this.getEdge(s));
+    // Doubled so i + 1 runs past the end, as boxes.py does; i - 1 at i = 0 is
+    // Python's index -1, the last of the doubled list.
+    const e = [...e4, ...e4];
+    const flanges = [...f4, ...f4];
+    const prev = (i: number) => (i + 7) % 8;
+
+    const tw = x + e[1]!.spacing() + flanges[1]! + e[3]!.spacing() + flanges[3]!;
+    const th = y + e[0]!.spacing() + flanges[0]! + e[2]!.spacing() + flanges[2]!;
+
+    if (this.move(tw, th, move, true)) return;
+
+    let rl = Math.min(r, Math.max(flanges[7]!, flanges[0]!));
+    this.moveTo(rl + e[7]!.margin(), e[0]!.margin());
+
+    for (let i = 0; i < 4; i++) {
+      const l = i % 2 ? y : x;
+      const p = prev(i);
+      rl = Math.min(r, Math.max(flanges[p]!, flanges[i]!));
+      const rr = Math.min(r, Math.max(flanges[i]!, flanges[i + 1]!));
+      this.cc(callback ?? null, i, -rl);
+      if (flanges[i]) {
+        // boxes.py compares identity, so only the box's own F and h qualify.
+        if (e[i] === this.edges['F'] || e[i] === this.edges['h']) {
+          this.fingerHolesAt(flanges[p]! + e[p]!.endWidth() - rl, 0.5 * t + flanges[i]!, l, 0);
+        }
+        this.edge(l + flanges[p]! + flanges[i + 1]! + e[p]!.endWidth() + e[i + 1]!.startWidth() - rl - rr);
+      } else {
+        this.edge(flanges[p]! + e[p]!.endWidth() - rl);
+        e[i]!.call(l);
+        this.edge(flanges[i + 1]! + e[i + 1]!.startWidth() - rr);
+      }
+      this.corner(90, rr);
+    }
+    this.move(tw, th, move, false, label);
+  }
+
+  /**
+   * Which sides of a rounded plate or surrounding wall to split in two, for
+   * `pieces` separate wall pieces (0-4).
+   */
+  private splitWall(pieces: number, side: number): boolean {
+    return [
+      [false, false, false, false, true],
+      [true, false, false, false, true],
+      [true, false, true, false, true],
+      [true, true, true, false, true],
+      [true, true, true, true, true],
+    ][pieces]![side]!;
+  }
+
+  /**
+   * Plate with rounded corners, the counterpart of boxes.py's
+   * `surroundingWall`. boxes.py's `holesMargin`/`holesSettings` fill it with
+   * hex holes through `hexHolesPlate`, which is not ported, so they are absent.
+   */
+  roundedPlate(
+    x: number,
+    y: number,
+    r: number,
+    opts: {
+      edge?: EdgeSpec;
+      callback?: Callback;
+      bedBolts?: (BoltPolicy | null)[] | BoltPolicy | null;
+      bedBoltSettings?: readonly number[][] | readonly number[] | null;
+      wallpieces?: number;
+      extendCorners?: boolean;
+      move?: string | null;
+      label?: string;
+    } = {},
+  ): void {
+    const { callback, bedBolts = null, bedBoltSettings = null, extendCorners = true, move, label = '' } = opts;
+    const cornerHoles = true;
+    const t = this.thickness;
+    const edge = this.getEdge(opts.edge ?? 'f');
+    const overallwidth = x + 2 * edge.spacing();
+    const overallheight = y + 2 * edge.spacing();
+
+    if (this.move(overallwidth, overallheight, move, true)) return;
+
+    const lx = x - 2 * r;
+    const ly = y - 2 * r;
+
+    this.moveTo(edge.spacing(), edge.margin());
+    this.moveTo(r, 0);
+
+    const wallpieces = Math.min(opts.wallpieces ?? 1, 4);
+
+    let wallcount = 0;
+    const side = (l: number) => {
+      this.cc(callback ?? null, wallcount, 0, edge.startWidth() + this.burn);
+      edge.call(l, {
+        bedBolts: this.getEntry(bedBolts as BoltPolicy | BoltPolicy[] | null, wallcount),
+        bedBoltSettings: this.getEntry(bedBoltSettings as never, wallcount),
+      });
+      wallcount++;
+    };
+    [lx, ly, lx, ly].forEach((l, nr) => {
+      if (this.splitWall(wallpieces, nr)) {
+        side(l / 2.0);
+        side(l / 2.0);
+      } else {
+        side(l);
+      }
+      if (extendCorners) {
+        if (cornerHoles) {
+          this.savedContext(() => {
+            this.moveTo(0, edge.startWidth());
+            this.polyline(0, [90, r], 0, -90, t, -90, 0, [-90, r + t], 0, -90, t, -90, 0);
+            this.ctx.stroke();
+          });
+        }
+        this.corner(90, r + edge.startWidth());
+      } else {
+        this.step(-edge.endWidth());
+        this.corner(90, r);
+        this.step(edge.startWidth());
+      }
+    });
+
+    this.ctx.restore();
+    this.ctx.save();
+    this.moveTo(edge.margin(), edge.margin());
+
+    this.move(overallwidth, overallheight, move, false, label);
+  }
+
   /** Right triangle, used for brackets and shelf supports. */
   rectangularTriangle(
     x: number,

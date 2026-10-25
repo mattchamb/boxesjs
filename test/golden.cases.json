@@ -1871,5 +1871,784 @@
       "burn": 0.1,
       "labels": true
     }
+  },
+  {
+    "name": "ref_walledges",
+    "generator": "walledges",
+    "pythonClass": "WallEdges",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_walledges_slatwall",
+    "generator": "walledges",
+    "pythonClass": "WallEdges",
+    "params": {
+      "thickness": 4,
+      "burn": 0.15,
+      "walltype": "slatwall",
+      "h": 240
+    }
+  },
+  {
+    "name": "ref_walledges_dinrail",
+    "generator": "walledges",
+    "pythonClass": "WallEdges",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "walltype": "dinrail",
+      "h": 80
+    }
+  },
+  {
+    "name": "ref_walledges_cleat",
+    "generator": "walledges",
+    "pythonClass": "WallEdges",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "walltype": "french cleat",
+      "h": 150
+    }
+  },
+  {
+    "name": "ref_walledges_skadis",
+    "generator": "walledges",
+    "pythonClass": "WallEdges",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "walltype": "skadis",
+      "h": 130
+    }
+  },
+  {
+    "name": "ref_walledges_reinforced",
+    "generator": "walledges",
+    "pythonClass": "WallEdges",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "walltype": "plain reinforced"
+    }
+  },
+  {
+    "name": "ref_walledges_labelled",
+    "generator": "walledges",
+    "pythonClass": "WallEdges",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_wallconsole",
+    "generator": "wallconsole",
+    "pythonClass": "WallConsole",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_wallconsole_thick",
+    "generator": "wallconsole",
+    "pythonClass": "WallConsole",
+    "params": {
+      "thickness": 6,
+      "burn": 0.05,
+      "sx": "80*3",
+      "h": 150,
+      "outside": false,
+      "top_depth": 70,
+      "bottom_depth": 30
+    }
+  },
+  {
+    "name": "ref_wallconsole_cleat",
+    "generator": "wallconsole",
+    "pythonClass": "WallConsole",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "sx": "120:80",
+      "h": 200,
+      "walltype": "french cleat"
+    }
+  },
+  {
+    "name": "ref_wallconsole_labelled",
+    "generator": "wallconsole",
+    "pythonClass": "WallConsole",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "sx": "100*2",
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_wallplaneholder",
+    "generator": "wallplaneholder",
+    "pythonClass": "WallPlaneHolder",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_wallplaneholder_thick",
+    "generator": "wallplaneholder",
+    "pythonClass": "WallPlaneHolder",
+    "params": {
+      "thickness": 5,
+      "burn": 0.15,
+      "width": 60,
+      "length": 200,
+      "hold_length": 40,
+      "height": 60
+    }
+  },
+  {
+    "name": "ref_wallplaneholder_slatwall",
+    "generator": "wallplaneholder",
+    "pythonClass": "WallPlaneHolder",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "walltype": "slatwall"
+    }
+  },
+  {
+    "name": "ref_wallplaneholder_labelled",
+    "generator": "wallplaneholder",
+    "pythonClass": "WallPlaneHolder",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_wallpliersholder",
+    "generator": "wallpliersholder",
+    "pythonClass": "WallPliersHolder",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_wallpliersholder_thick",
+    "generator": "wallpliersholder",
+    "pythonClass": "WallPliersHolder",
+    "params": {
+      "thickness": 6,
+      "burn": 0.05,
+      "sx": "80*2",
+      "y": 60,
+      "h": 40,
+      "outside": false,
+      "angle": 35
+    }
+  },
+  {
+    "name": "ref_wallpliersholder_skadis",
+    "generator": "wallpliersholder",
+    "pythonClass": "WallPliersHolder",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "walltype": "skadis",
+      "h": 70
+    }
+  },
+  {
+    "name": "ref_wallpliersholder_labelled",
+    "generator": "wallpliersholder",
+    "pythonClass": "WallPliersHolder",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_wallstairs",
+    "generator": "wallstairs",
+    "pythonClass": "WallStairs",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_wallstairs_thick",
+    "generator": "wallstairs",
+    "pythonClass": "WallStairs",
+    "params": {
+      "thickness": 5,
+      "burn": 0.05,
+      "sx": "60*3",
+      "sy": "30*4",
+      "sh": "20:60:100:140",
+      "braceheight": 0
+    }
+  },
+  {
+    "name": "ref_wallstairs_dinrail",
+    "generator": "wallstairs",
+    "pythonClass": "WallStairs",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "walltype": "dinrail"
+    }
+  },
+  {
+    "name": "ref_wallstairs_labelled",
+    "generator": "wallstairs",
+    "pythonClass": "WallStairs",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_wallchiselholder",
+    "generator": "wallchiselholder",
+    "pythonClass": "WallChiselHolder",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_wallchiselholder_thick",
+    "generator": "wallchiselholder",
+    "pythonClass": "WallChiselHolder",
+    "params": {
+      "thickness": 6,
+      "burn": 0.05,
+      "h": 150,
+      "tooldiameter": 40,
+      "holediameter": 25,
+      "slot_width": 8,
+      "radius": 3,
+      "number": 4
+    }
+  },
+  {
+    "name": "ref_wallchiselholder_odds",
+    "generator": "wallchiselholder",
+    "pythonClass": "WallChiselHolder",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "number": 7,
+      "hooks": "odds",
+      "walltype": "slatwall"
+    }
+  },
+  {
+    "name": "ref_wallchiselholder_third",
+    "generator": "wallchiselholder",
+    "pythonClass": "WallChiselHolder",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "number": 7,
+      "hooks": "everythird",
+      "walltype": "french cleat"
+    }
+  },
+  {
+    "name": "ref_wallchiselholder_labelled",
+    "generator": "wallchiselholder",
+    "pythonClass": "WallChiselHolder",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_wallslottedholder",
+    "generator": "wallslottedholder",
+    "pythonClass": "WallSlottedHolder",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_wallslottedholder_thick",
+    "generator": "wallslottedholder",
+    "pythonClass": "WallSlottedHolder",
+    "params": {
+      "thickness": 6,
+      "burn": 0.05,
+      "h": 150,
+      "slot_depth": 40,
+      "additional_depth": 30,
+      "slot_width": 10,
+      "tool_width": 40,
+      "radius": 3,
+      "number": 4
+    }
+  },
+  {
+    "name": "ref_wallslottedholder_odds",
+    "generator": "wallslottedholder",
+    "pythonClass": "WallSlottedHolder",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "number": 5,
+      "hooks": "odds",
+      "walltype": "skadis"
+    }
+  },
+  {
+    "name": "ref_wallslottedholder_labelled",
+    "generator": "wallslottedholder",
+    "pythonClass": "WallSlottedHolder",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_wallwrenchholder",
+    "generator": "wallwrenchholder",
+    "pythonClass": "WallWrenchHolder",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_wallwrenchholder_thick",
+    "generator": "wallwrenchholder",
+    "pythonClass": "WallWrenchHolder",
+    "params": {
+      "thickness": 5,
+      "burn": 0.15,
+      "x": 150,
+      "depth": 40,
+      "number": 8,
+      "min_width": 10,
+      "max_width": 30,
+      "min_strength": 4,
+      "max_strength": 6,
+      "extra_distance": 3
+    }
+  },
+  {
+    "name": "ref_wallwrenchholder_dinrail",
+    "generator": "wallwrenchholder",
+    "pythonClass": "WallWrenchHolder",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "walltype": "dinrail"
+    }
+  },
+  {
+    "name": "ref_wallwrenchholder_labelled",
+    "generator": "wallwrenchholder",
+    "pythonClass": "WallWrenchHolder",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_wallpinrow",
+    "generator": "wallpinrow",
+    "pythonClass": "WallPinRow",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_wallpinrow_thick",
+    "generator": "wallpinrow",
+    "pythonClass": "WallPinRow",
+    "params": {
+      "thickness": 5,
+      "burn": 0.05,
+      "pins": 5,
+      "pinlength": 50,
+      "pinwidth": 12,
+      "pinspacing": 50,
+      "pinspacing_increment": 5,
+      "angle": 30,
+      "hooks": 4,
+      "h": 70
+    }
+  },
+  {
+    "name": "ref_wallpinrow_flat",
+    "generator": "wallpinrow",
+    "pythonClass": "WallPinRow",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "angle": 0,
+      "hooks": 2,
+      "h": 10,
+      "walltype": "french cleat"
+    }
+  },
+  {
+    "name": "ref_wallpinrow_labelled",
+    "generator": "wallpinrow",
+    "pythonClass": "WallPinRow",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_walltypetray",
+    "generator": "walltypetray",
+    "pythonClass": "WallTypeTray",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_walltypetray_thick",
+    "generator": "walltypetray",
+    "pythonClass": "WallTypeTray",
+    "params": {
+      "thickness": 6,
+      "burn": 0.05,
+      "sx": "60*2",
+      "sy": "40*3",
+      "h": 80,
+      "hi": 50,
+      "outside": false,
+      "bottom_edge": "F",
+      "back_height": 40,
+      "radius": 20
+    }
+  },
+  {
+    "name": "ref_walltypetray_allmounts",
+    "generator": "walltypetray",
+    "pythonClass": "WallTypeTray",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "all_mounts": true,
+      "back_height": 30,
+      "bottom_edge": "e",
+      "walltype": "slatwall"
+    }
+  },
+  {
+    "name": "ref_walltypetray_stackable",
+    "generator": "walltypetray",
+    "pythonClass": "WallTypeTray",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "bottom_edge": "s",
+      "walltype": "french cleat",
+      "back_height": 60
+    }
+  },
+  {
+    "name": "ref_walltypetray_labelled",
+    "generator": "walltypetray",
+    "pythonClass": "WallTypeTray",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_wallstackablebin",
+    "generator": "wallstackablebin",
+    "pythonClass": "WallStackableBin",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_wallstackablebin_thick",
+    "generator": "wallstackablebin",
+    "pythonClass": "WallStackableBin",
+    "params": {
+      "thickness": 5,
+      "burn": 0.15,
+      "sx": "60*3",
+      "h": 150,
+      "y": 120,
+      "outside": false,
+      "front": 0.4,
+      "angle": 20,
+      "label_height": 0.25
+    }
+  },
+  {
+    "name": "ref_wallstackablebin_nolabel",
+    "generator": "wallstackablebin",
+    "pythonClass": "WallStackableBin",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "label": false,
+      "angle": 45,
+      "walltype": "slatwall",
+      "st_bottom_stabilizers": 0
+    }
+  },
+  {
+    "name": "ref_wallstackablebin_labelled",
+    "generator": "wallstackablebin",
+    "pythonClass": "WallStackableBin",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "sx": "80*2",
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_wallcaliperholder",
+    "generator": "wallcaliperholder",
+    "pythonClass": "WallCaliper",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1
+    },
+    "pythonModule": "wallcaliperholder"
+  },
+  {
+    "name": "ref_wallcaliperholder_thick",
+    "generator": "wallcaliperholder",
+    "pythonClass": "WallCaliper",
+    "params": {
+      "thickness": 5,
+      "burn": 0.05,
+      "h": 140,
+      "width": 25,
+      "height": 10
+    },
+    "pythonModule": "wallcaliperholder"
+  },
+  {
+    "name": "ref_wallcaliperholder_skadis",
+    "generator": "wallcaliperholder",
+    "pythonClass": "WallCaliper",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "walltype": "skadis"
+    },
+    "pythonModule": "wallcaliperholder"
+  },
+  {
+    "name": "ref_wallcaliperholder_labelled",
+    "generator": "wallcaliperholder",
+    "pythonClass": "WallCaliper",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "width": 40,
+      "labels": true
+    },
+    "pythonModule": "wallcaliperholder"
+  },
+  {
+    "name": "ref_wallhook",
+    "generator": "wallhook",
+    "pythonClass": "WallHook",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_wallhook_thick",
+    "generator": "wallhook",
+    "pythonClass": "WallHook",
+    "params": {
+      "thickness": 6,
+      "burn": 0.05,
+      "h": 150,
+      "width": 30,
+      "hook_inside_diameter": 60,
+      "hook_thickness": 25
+    }
+  },
+  {
+    "name": "ref_wallhook_cleat",
+    "generator": "wallhook",
+    "pythonClass": "WallHook",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "walltype": "french cleat",
+      "width": 25
+    }
+  },
+  {
+    "name": "ref_wallhook_labelled",
+    "generator": "wallhook",
+    "pythonClass": "WallHook",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "width": 40,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_wallrollholder",
+    "generator": "wallrollholder",
+    "pythonClass": "WallRollHolder",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_wallrollholder_thick",
+    "generator": "wallrollholder",
+    "pythonClass": "WallRollHolder",
+    "params": {
+      "thickness": 6,
+      "burn": 0.05,
+      "width": 200,
+      "diameter": 150,
+      "height": 60,
+      "axle": 30
+    }
+  },
+  {
+    "name": "ref_wallrollholder_dinrail",
+    "generator": "wallrollholder",
+    "pythonClass": "WallRollHolder",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "walltype": "dinrail"
+    }
+  },
+  {
+    "name": "ref_wallrollholder_labelled",
+    "generator": "wallrollholder",
+    "pythonClass": "WallRollHolder",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_drillstand",
+    "generator": "drillstand",
+    "pythonClass": "DrillStand",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_drillstand_thick",
+    "generator": "drillstand",
+    "pythonClass": "DrillStand",
+    "params": {
+      "thickness": 5,
+      "burn": 0.05,
+      "sx": "30*4",
+      "sy": "15:25",
+      "sh": "30:55",
+      "extra_height": 20
+    }
+  },
+  {
+    "name": "ref_drillstand_flat",
+    "generator": "drillstand",
+    "pythonClass": "DrillStand",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "sx": "20*5",
+      "sy": "10:20:30:40",
+      "sh": "20:35:50:65",
+      "extra_height": 0,
+      "st_height": 2,
+      "st_width": 4
+    }
+  },
+  {
+    "name": "ref_drillstand_labelled",
+    "generator": "drillstand",
+    "pythonClass": "DrillStand",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_walldrillbox",
+    "generator": "walldrillbox",
+    "pythonClass": "WallDrillBox",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_walldrillbox_thick",
+    "generator": "walldrillbox",
+    "pythonClass": "WallDrillBox",
+    "params": {
+      "thickness": 5,
+      "burn": 0.05,
+      "sx": "30*4",
+      "sy": "15:25",
+      "sh": "30:55",
+      "extra_height": 20
+    }
+  },
+  {
+    "name": "ref_walldrillbox_slatwall",
+    "generator": "walldrillbox",
+    "pythonClass": "WallDrillBox",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "walltype": "slatwall",
+      "sh": "60:80:100"
+    }
+  },
+  {
+    "name": "ref_walldrillbox_labelled",
+    "generator": "walldrillbox",
+    "pythonClass": "WallDrillBox",
+    "params": {
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
   }
 ]

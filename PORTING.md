@@ -409,6 +409,12 @@ unambiguous, comment it at the site, and remember you cannot write a golden case
 for a configuration boxes.py refuses to render — so the fixed path is covered by
 the invariant tests only.
 
+**Check `outside` defaults against `buildArgParser`.** A bare `"outside"`
+argument defaults to **True** in boxes.py; only `outside=False` makes it false.
+DividerTray was first ported with `false` and its goldens still passed, because
+every case set `outside` explicitly — the golden tests never see a UI default.
+The same goes for any default: copy it from the argparser, not from intuition.
+
 **Part bounding boxes exclude the label.** `renderBox` sizes the page from the
 surface extents, which include text just as boxes.py's do, but a *part's* box
 covers only its drawn geometry. Otherwise a name that overhangs its part reports
@@ -426,12 +432,16 @@ this reason).
 
 ## 9. State of the port
 
-**Every generator on the list is done.** Twenty-one generators are registered —
+**Every generator on the list is done.** Thirty-seven generators are registered —
 ABox, ClosedBox, OpenBox, CardBox, Console2, UniversalBox, RegularBox,
 BayonetBox, NotesHolder, TypeTray, TrayLayout, TrayInsert, DividerTray,
-CompartmentBox, DrillBox, DisplayShelf, StorageRack, StorageShelf, PaintStorage,
-FrameLoom, WallHopper — plus the RectangularWall part. All of them match boxes.py
-coordinate-for-coordinate across 115 golden cases, regenerated against
+CompartmentBox, DrillBox, DrillStand, DisplayShelf, StorageRack, StorageShelf,
+PaintStorage, FrameLoom, and the whole wall-mounted family (WallHopper,
+WallEdges, WallConsole, WallPlaneHolder, WallPliersHolder, WallStairs,
+WallChiselHolder, WallSlottedHolder, WallWrenchHolder, WallPinRow,
+WallTypeTray, WallStackableBin, WallCaliper, WallHook, WallRollHolder,
+WallDrillBox) — plus the RectangularWall part. All of them match boxes.py
+coordinate-for-coordinate across 184 golden cases, regenerated against
 boxes.py master at `84e392b` (2026-10-22).
 
 When the boxes.py checkout moves, regenerate and diff before porting anything
@@ -454,8 +464,9 @@ family and RoundedBox also bend walls through `surroundingWall` (and
 `roundedPlate`), which is not; `flextest`, `flexbook`, `folder`, `breadbox`,
 `shutterbox` and `shoe` call `X` directly and may need nothing else — check
 their other dependencies before starting.
-`_WallMountedBox` (16) is now ported too (see below). Next come `roundedPlate`
-(10), `flangedWall` and `DoveTailSettings` (9 each). Note that a generator referencing `edges.BaseEdge` is *not* blocked — that
+`_WallMountedBox`, `roundedPlate` and `flangedWall` are now ported too (see
+below), along with every wall-mounted generator. `DoveTailSettings` (9) is the
+largest remaining blocker. Note that a generator referencing `edges.BaseEdge` is *not* blocked — that
 is the generator-local edge pattern of §7, which already works.
 
 If you are adding a *new* generator from boxes.py, §§1-8 are what you need; this
@@ -477,6 +488,9 @@ section is a record of what the engine now has and where the sharp edges were.
 | `CrossingFingerHoleEdge` | `edges.py:1138` | `src/lib/edges/crossingfingerhole.ts` — TrayLayout, its only user in the whole library |
 | `FlexSettings`, `FlexEdge` (`X`) | `edges.py` | `src/lib/edges/flex.ts` — the `chest` lid. Call it as `call(length, { h })`; boxes.py's second positional argument |
 | `_WallMountedBox`, wall edges (`aAbBcCdD\|`) | `walledges.py` | `src/lib/walledges.ts` — WallHopper; base class `WallMountedBox`, shared `WALL_PARAMS` |
+| `flangedWall` | `__init__.py:2620` | `boxes.ts` — WallCaliper, WallHook. boxes.py indexes `flanges[i-1]` at `i = 0`, i.e. Python's `[-1]`; the port spells that out |
+| `roundedPlate`, `_splitWall` | `__init__.py:2299` | `boxes.ts` — WallRollHolder. Without `holesMargin` (see below) |
+| DrillStand's part methods | `generators/drillstand.py` | `drillstand.ts`, as a mixin over `Boxes` (DrillStand) or `WallMountedBox` (WallDrillBox), standing in for boxes.py's multiple inheritance |
 | `HandleEdge`, `HandleHoleEdge` (`y`, `Y`) | `edges.py:2611` | `src/lib/edges/handle.ts` — DividerTray's bottom-panel handle; not offered as a top edge |
 
 `_polygonWallExtend` was the awkward one and is worth knowing about if you touch
@@ -536,7 +550,7 @@ state, not local values, and anything drawn afterwards sees the redefinition.
 
 ### Deliberate divergences
 
-Five, each recorded at the site. Note what they have in common: every one is a
+Six, each recorded at the site. Note what they have in common: every one is a
 configuration boxes.py itself refuses to render, so none of them can have a
 golden and the invariant tests are the only cover.
 
@@ -552,6 +566,9 @@ golden and the invariant tests are the only cover.
   `frame()` and draws nothing. Only the frame's pins depend on it, so the port
   warns on `warpspacing` and draws the other parts. The slider cannot reach
   this; a hand-edited permalink can.
+- **WallStairs and DrillStand/WallDrillBox with fewer heights than rows.**
+  boxes.py indexes past the end of `sh` and raises `IndexError`. The port
+  warns on `sh` and draws nothing.
 - **TrayInsert's `x`/`y`.** boxes.py uses `-1` as the "not given" sentinel. The
   parameter default here is `0`, which behaves identically — anything at or
   below the compartment total is ignored either way — and reads better as the
@@ -593,7 +610,9 @@ conditional are truthy. The float is discarded. The port passes a literal `true`
 `surroundingWall`, `roundedPlate`, `CabinetHinge`, `ChestHinge`, `Click`, `SlideOnLid`,
 `DoveTail`, `Grooved`, gears, pulleys, servos, QR codes, `fillHoles`, DXF and PostScript output.
 
-`polygonWalls` (plural) is not ported. `hexHolesRectangle` is; `hexHolesPlate`,
+`polygonWalls` (plural) is not ported. Neither is `roundedPlate`'s
+`holesMargin`/`holesSettings`, which fill the plate through `hexHolesPlate`.
+`hexHolesRectangle` is ported; `hexHolesPlate`,
 `hexHolesCircle` and `hexHolesHex` are not, and neither is `rectangularWall`'s
 `holesMargin` argument, which is the only caller of `hexHolesRectangle` inside
 the engine. Of `parts.py` only `disc` is ported — `wavyKnob` and `roundKnob`
