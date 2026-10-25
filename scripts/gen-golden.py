@@ -53,6 +53,14 @@ def main() -> int:
                 key = "RoundedTriangleEdge_" + key[3:]
             elif key.startswith("st_"):
                 key = "Stackable_" + key[3:]
+            elif key.startswith("slatwall_"):
+                key = "SlatWall_" + key[9:]
+            elif key.startswith("dinrail_"):
+                key = "DinRail_" + key[8:]
+            elif key.startswith("frenchcleat_"):
+                key = "FrenchCleat_" + key[12:]
+            elif key.startswith("skadis_"):
+                key = "Skadis_" + key[7:]
             elif key.startswith("flex_"):
                 key = "Flex_" + key[5:]
             elif key.startswith("he_"):

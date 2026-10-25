@@ -27,6 +27,7 @@ import { trayInsert } from './trayinsert';
 import { trayLayout } from './traylayout';
 import { typeTray } from './typetray';
 import { universalBox } from './universalbox';
+import { wallHopper } from './wallhopper';
 
 const DEFS: GeneratorDef[] = [
   aBox,
@@ -49,6 +50,7 @@ const DEFS: GeneratorDef[] = [
   storageShelf,
   paintStorage,
   frameLoom,
+  wallHopper,
   rectangularWall,
 ];
 

@@ -1702,5 +1702,174 @@
       "includeneedles": false,
       "include2by2heddle": true
     }
+  },
+  {
+    "name": "ref_wallhopper",
+    "generator": "wallhopper",
+    "pythonClass": "WallHopper",
+    "params": {
+      "sx": "80",
+      "h": 150,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_wallhopper_thick",
+    "generator": "wallhopper",
+    "pythonClass": "WallHopper",
+    "params": {
+      "sx": "60*3",
+      "h": 200,
+      "thickness": 6,
+      "burn": 0.05,
+      "hopper_depth": 70,
+      "dispenser_depth": 55,
+      "dispenser_height": 60
+    }
+  },
+  {
+    "name": "ref_wallhopper_nolabel",
+    "generator": "wallhopper",
+    "pythonClass": "WallHopper",
+    "params": {
+      "sx": "50:70",
+      "h": 150,
+      "thickness": 3,
+      "burn": 0.1,
+      "label": false,
+      "slope_angle": 45,
+      "slope_ratio": 0.6
+    }
+  },
+  {
+    "name": "ref_wallhopper_steep",
+    "generator": "wallhopper",
+    "pythonClass": "WallHopper",
+    "params": {
+      "sx": "80",
+      "h": 150,
+      "thickness": 3,
+      "burn": 0.1,
+      "slope_angle": 80,
+      "slope_ratio": 0.7,
+      "label_ratio": 0.5
+    }
+  },
+  {
+    "name": "ref_wallhopper_reinforced",
+    "generator": "wallhopper",
+    "pythonClass": "WallHopper",
+    "params": {
+      "sx": "60*2",
+      "h": 150,
+      "thickness": 3,
+      "burn": 0.1,
+      "walltype": "plain reinforced"
+    }
+  },
+  {
+    "name": "ref_wallhopper_slatwall",
+    "generator": "wallhopper",
+    "pythonClass": "WallHopper",
+    "params": {
+      "sx": "80",
+      "h": 300,
+      "thickness": 3,
+      "burn": 0.1,
+      "walltype": "slatwall",
+      "slatwall_bottom_hook": "spring"
+    }
+  },
+  {
+    "name": "ref_wallhopper_slatwall_stud",
+    "generator": "wallhopper",
+    "pythonClass": "WallHopper",
+    "params": {
+      "sx": "80",
+      "h": 260,
+      "thickness": 3,
+      "burn": 0.1,
+      "walltype": "slatwall",
+      "slatwall_bottom_hook": "stud",
+      "slatwall_pitch": 80
+    }
+  },
+  {
+    "name": "ref_wallhopper_dinrail",
+    "generator": "wallhopper",
+    "pythonClass": "WallHopper",
+    "params": {
+      "sx": "80",
+      "h": 180,
+      "thickness": 3,
+      "burn": 0.1,
+      "walltype": "dinrail"
+    }
+  },
+  {
+    "name": "ref_wallhopper_cleat",
+    "generator": "wallhopper",
+    "pythonClass": "WallHopper",
+    "params": {
+      "sx": "80",
+      "h": 250,
+      "thickness": 3,
+      "burn": 0.1,
+      "walltype": "french cleat"
+    }
+  },
+  {
+    "name": "ref_wallhopper_cleat_hook",
+    "generator": "wallhopper",
+    "pythonClass": "WallHopper",
+    "params": {
+      "sx": "80",
+      "h": 500,
+      "thickness": 3,
+      "burn": 0.1,
+      "walltype": "french cleat",
+      "frenchcleat_bottom": "hook",
+      "frenchcleat_spacing": 150,
+      "frenchcleat_angle": 30
+    }
+  },
+  {
+    "name": "ref_wallhopper_skadis",
+    "generator": "wallhopper",
+    "pythonClass": "WallHopper",
+    "params": {
+      "sx": "80",
+      "h": 200,
+      "thickness": 3,
+      "burn": 0.1,
+      "walltype": "skadis"
+    }
+  },
+  {
+    "name": "ref_wallhopper_skadis_stud",
+    "generator": "wallhopper",
+    "pythonClass": "WallHopper",
+    "params": {
+      "sx": "60*2",
+      "h": 200,
+      "thickness": 3,
+      "burn": 0.1,
+      "walltype": "skadis",
+      "skadis_style": "hook+stud",
+      "skadis_board_thickness": 4
+    }
+  },
+  {
+    "name": "ref_wallhopper_labelled",
+    "generator": "wallhopper",
+    "pythonClass": "WallHopper",
+    "params": {
+      "sx": "70*2",
+      "h": 150,
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
   }
 ]

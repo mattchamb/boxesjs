@@ -366,6 +366,145 @@ export const HANDLE_EDGE_PARAMS: ParamSpec[] = [
 ];
 
 /**
+ * Wall-mounting options, for generators built on WallMountedBox. Only the
+ * settings for the chosen wall system are read; the rest are ignored.
+ */
+export const WALL_PARAMS: ParamSpec[] = [
+  {
+    key: 'walltype',
+    kind: 'enum',
+    label: 'Wall system',
+    default: 'plain',
+    choices: [
+      { value: 'plain', label: 'Plain wall' },
+      { value: 'plain reinforced', label: 'Plain, reinforced' },
+      { value: 'slatwall', label: 'Slatwall' },
+      { value: 'dinrail', label: 'DIN rail' },
+      { value: 'french cleat', label: 'French cleat' },
+      { value: 'skadis', label: 'IKEA Skådis' },
+    ],
+    group: 'dimensions',
+    help: 'What the back plate hangs on. Plain is screwed to the wall; reinforced adds a second plate.',
+  },
+  {
+    key: 'slatwall_bottom_hook',
+    kind: 'enum',
+    label: 'Slatwall: lower fixing',
+    default: 'hook',
+    choices: [
+      { value: 'hook', label: 'Hook' },
+      { value: 'spring', label: 'Spring' },
+      { value: 'stud', label: 'Stud' },
+      { value: 'none', label: 'None' },
+    ],
+    group: 'joints',
+  },
+  {
+    key: 'slatwall_pitch',
+    kind: 'length',
+    label: 'Slatwall: slot pitch',
+    unit: 'mm',
+    default: 101.6,
+    min: 20,
+    max: 300,
+    step: 0.1,
+    group: 'joints',
+    help: 'Distance between slots, centre to centre.',
+  },
+  {
+    key: 'dinrail_bottom',
+    kind: 'enum',
+    label: 'DIN rail: lower fixing',
+    default: 'stud',
+    choices: [
+      { value: 'stud', label: 'Stud' },
+      { value: 'none', label: 'None' },
+    ],
+    group: 'joints',
+  },
+  {
+    key: 'dinrail_depth',
+    kind: 'length',
+    label: 'DIN rail: hook depth',
+    unit: 'mm',
+    default: 8.0,
+    min: 5,
+    max: 20,
+    step: 0.5,
+    group: 'joints',
+  },
+  {
+    key: 'frenchcleat_bottom',
+    kind: 'enum',
+    label: 'French cleat: lower fixing',
+    default: 'stud',
+    choices: [
+      { value: 'stud', label: 'Stud against the wall' },
+      { value: 'hook', label: 'Hook onto a second cleat' },
+      { value: 'none', label: 'None' },
+    ],
+    group: 'joints',
+  },
+  {
+    key: 'frenchcleat_depth',
+    kind: 'length',
+    label: 'French cleat: depth',
+    unit: 'mm',
+    default: 18.0,
+    min: 5,
+    max: 50,
+    step: 0.5,
+    group: 'joints',
+  },
+  {
+    key: 'frenchcleat_angle',
+    kind: 'number',
+    label: 'French cleat: angle',
+    unit: '°',
+    default: 45.0,
+    min: 0,
+    max: 60,
+    step: 1,
+    group: 'joints',
+  },
+  {
+    key: 'frenchcleat_spacing',
+    kind: 'length',
+    label: 'French cleat: cleat spacing',
+    unit: 'mm',
+    default: 200.0,
+    min: 50,
+    max: 1000,
+    step: 1,
+    group: 'joints',
+    help: 'Distance between cleats, for the "hook" lower fixing.',
+  },
+  {
+    key: 'skadis_style',
+    kind: 'enum',
+    label: 'Skådis: fixing',
+    default: 'hooks',
+    choices: [
+      { value: 'hooks', label: 'Hooks' },
+      { value: 'hook+stud', label: 'Hook and stud' },
+      { value: 'single', label: 'Single hook' },
+    ],
+    group: 'joints',
+  },
+  {
+    key: 'skadis_board_thickness',
+    kind: 'length',
+    label: 'Skådis: board thickness',
+    unit: 'mm',
+    default: 5.1,
+    min: 2,
+    max: 10,
+    step: 0.1,
+    group: 'joints',
+  },
+];
+
+/**
  * Lid options, for generators that support one. Spread into a generator's own
  * params rather than added globally, since most generators have no lid.
  */
@@ -586,6 +725,21 @@ export function toBoxesConfig(values: ParamValues): BoxesConfig {
     if (v !== undefined && typeof v !== 'boolean') flex[settingKey] = v;
   }
 
+  // Wall systems: the form key prefix, then the boxes.py settings family.
+  const wallFamilies: Record<string, Record<string, number | string>> = {};
+  for (const [prefix, family] of [
+    ['slatwall_', 'SlatWall'],
+    ['dinrail_', 'DinRail'],
+    ['frenchcleat_', 'FrenchCleat'],
+    ['skadis_', 'Skadis'],
+  ] as const) {
+    const settings: Record<string, number | string> = {};
+    for (const [k, v] of Object.entries(values)) {
+      if (k.startsWith(prefix) && v !== undefined && typeof v !== 'boolean') settings[k.slice(prefix.length)] = v;
+    }
+    wallFamilies[family] = settings;
+  }
+
   return {
     ...DEFAULT_CONFIG,
     thickness: num('thickness', 3.0),
@@ -604,6 +758,7 @@ export function toBoxesConfig(values: ParamValues): BoxesConfig {
       Stackable: stackable,
       HandleEdge: handleEdge,
       Flex: flex,
+      ...wallFamilies,
     },
   };
 }

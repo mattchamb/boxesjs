@@ -86,6 +86,7 @@ settings arguments:
 | `st_*` | `--Stackable_*` |
 | `he_*` | `--HandleEdge_*` |
 | `flex_*` | `--Flex_*` |
+| `slatwall_*`, `dinrail_*`, `frenchcleat_*`, `skadis_*` | `--SlatWall_*`, `--DinRail_*`, `--FrenchCleat_*`, `--Skadis_*` |
 | everything else | `--<key>` verbatim |
 
 If you expose a new settings family in the UI, add its prefix to that map or the
@@ -425,12 +426,12 @@ this reason).
 
 ## 9. State of the port
 
-**Every generator on the list is done.** Twenty generators are registered —
+**Every generator on the list is done.** Twenty-one generators are registered —
 ABox, ClosedBox, OpenBox, CardBox, Console2, UniversalBox, RegularBox,
 BayonetBox, NotesHolder, TypeTray, TrayLayout, TrayInsert, DividerTray,
 CompartmentBox, DrillBox, DisplayShelf, StorageRack, StorageShelf, PaintStorage,
-FrameLoom — plus the RectangularWall part. All of them match boxes.py
-coordinate-for-coordinate across 102 golden cases, regenerated against
+FrameLoom, WallHopper — plus the RectangularWall part. All of them match boxes.py
+coordinate-for-coordinate across 115 golden cases, regenerated against
 boxes.py master at `84e392b` (2026-10-22).
 
 When the boxes.py checkout moves, regenerate and diff before porting anything
@@ -453,8 +454,8 @@ family and RoundedBox also bend walls through `surroundingWall` (and
 `roundedPlate`), which is not; `flextest`, `flexbook`, `folder`, `breadbox`,
 `shutterbox` and `shoe` call `X` directly and may need nothing else — check
 their other dependencies before starting.
-After that come the `_WallMountedBox` base class (14) and `DoveTailSettings`
-(10). Note that a generator referencing `edges.BaseEdge` is *not* blocked — that
+`_WallMountedBox` (16) is now ported too (see below). Next come `roundedPlate`
+(10), `flangedWall` and `DoveTailSettings` (9 each). Note that a generator referencing `edges.BaseEdge` is *not* blocked — that
 is the generator-local edge pattern of §7, which already works.
 
 If you are adding a *new* generator from boxes.py, §§1-8 are what you need; this
@@ -475,6 +476,7 @@ section is a record of what the engine now has and where the sharp edges were.
 | `hexHolesRectangle`, `HexHolesSettings` | | `src/lib/hexholes.ts` — PaintStorage |
 | `CrossingFingerHoleEdge` | `edges.py:1138` | `src/lib/edges/crossingfingerhole.ts` — TrayLayout, its only user in the whole library |
 | `FlexSettings`, `FlexEdge` (`X`) | `edges.py` | `src/lib/edges/flex.ts` — the `chest` lid. Call it as `call(length, { h })`; boxes.py's second positional argument |
+| `_WallMountedBox`, wall edges (`aAbBcCdD\|`) | `walledges.py` | `src/lib/walledges.ts` — WallHopper; base class `WallMountedBox`, shared `WALL_PARAMS` |
 | `HandleEdge`, `HandleHoleEdge` (`y`, `Y`) | `edges.py:2611` | `src/lib/edges/handle.ts` — DividerTray's bottom-panel handle; not offered as a top edge |
 
 `_polygonWallExtend` was the awkward one and is worth knowing about if you touch
@@ -485,6 +487,28 @@ and for those it works out which of the four compass directions the sweep passes
 (`_angle_in_sweep`) to find the extremes. It is ported literally and should stay
 that way. Note `ext` starts at zero on all four sides, so the origin is always
 inside the box — callers depend on that.
+
+### Wall edges
+
+boxes.py builds the wall edges with `type()` at runtime: five wall profiles
+(plain, slatwall, DIN rail, French cleat, Skådis), each crossed with five
+roles (plain, joined, back, holes, hole edge) through multiple inheritance,
+plus a reversed flag. The port uses composition instead. The profile lives on
+the settings class (`lengths`, `section`, `profileMargin`), and one edge class
+per role overrides exactly what its Python mixin overrides. The header of
+`walledges.ts` has the table. If you add a profile, give it those three
+methods and nothing else; if you touch a role, check its method resolution
+order in Python first. `WallBackEdge` draws plain sections and a thickness
+margin whatever the profile is, which looks like a bug and is not.
+
+`wallHolesAt` is the `|` edge called with `(x, y, length, angle)`, as
+`fingerHolesAt` is for `f`. A reinforced plain wall rebinds `c`/`C` to the
+hole edges `d`/`D`.
+
+WallHopper also registers angled finger joints as `gG` and `kK`. Each of those
+`edgeObjects` calls gets three edges for two characters, so it rebinds `h` as
+well — the §9 CompartmentBox quirk again — and the side walls draw with the
+last one. That is reproduced, not fixed.
 
 ### `Settings.clone()`
 
@@ -567,8 +591,7 @@ conditional are truthy. The float is discarded. The port passes a literal `true`
 ### Not ported, and nothing above needs it
 
 `surroundingWall`, `roundedPlate`, `CabinetHinge`, `ChestHinge`, `Click`, `SlideOnLid`,
-`DoveTail`, `Grooved`, gears, pulleys, servos, wall
-edges, QR codes, `fillHoles`, DXF and PostScript output.
+`DoveTail`, `Grooved`, gears, pulleys, servos, QR codes, `fillHoles`, DXF and PostScript output.
 
 `polygonWalls` (plural) is not ported. `hexHolesRectangle` is; `hexHolesPlate`,
 `hexHolesCircle` and `hexHolesHex` are not, and neither is `rectangularWall`'s
