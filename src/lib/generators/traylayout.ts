@@ -12,7 +12,7 @@
  * Upstream this is step 2 of a two-step process — `TrayLayoutFile` emits the
  * skeleton text from `sx`/`sy` and the user edits it before running this
  * generator. boxes.py leaves a hook for collapsing the two (`generate_layout`,
- * `traylayout.py:170`), and that is what this port does: an empty layout box
+ * `traylayout.py:179`), and that is what this port does: an empty layout box
  * means "full grid from the compartment sizes", so the generator is usable
  * without ever touching the text.
  */
@@ -708,7 +708,11 @@ export const trayLayout: GeneratorDef = {
     const sx = parseSections(s(v, 'sx', '50*3'));
     const sy = parseSections(s(v, 'sy', '50*3'));
     // Not trimmed: every size line in the sketch starts with a space.
-    const layout = s(v, 'layout', '');
+    let layout = s(v, 'layout', '');
+    // The command line boxes.py stores in its SVGs writes the sketch's
+    // newlines as a literal \n; decode those so a pasted one works, as
+    // boxes.py's own prepare() does.
+    if (!layout.includes('\n') && layout.includes('\\n')) layout = layout.replaceAll('\\n', '\n');
     return new TrayLayout(
       {
         h: n(v, 'h', 100),

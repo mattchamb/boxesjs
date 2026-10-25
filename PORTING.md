@@ -429,7 +429,15 @@ ABox, ClosedBox, OpenBox, CardBox, Console2, UniversalBox, RegularBox,
 BayonetBox, NotesHolder, TypeTray, TrayLayout, TrayInsert, DividerTray,
 CompartmentBox, DrillBox, DisplayShelf, StorageRack, StorageShelf, PaintStorage
 — plus the RectangularWall part. All of them match boxes.py
-coordinate-for-coordinate across 86 golden cases.
+coordinate-for-coordinate across 90 golden cases, regenerated against
+boxes.py master at `84e392b` (2026-10-22).
+
+When the boxes.py checkout moves, regenerate and diff before porting anything
+new: a golden that changes for a generator you did not touch is upstream drift
+to port, not noise. The sync to `84e392b` brought the flat lid's
+`brim_spacing`, the `flatbrim` and `flatfang` lid styles, Console2's corrected
+panel angle and etched corner marks, and TrayLayout decoding a literal `\n` in
+a pasted layout. Everything else in that range was typing and f-strings.
 
 boxes.py has 169 further generators. **53 of them need no new engine
 machinery at all** — every method, settings family and edge they touch is
@@ -502,8 +510,8 @@ configuration boxes.py itself refuses to render, so none of them can have a
 golden and the invariant tests are the only cover.
 
 - **TrayLayout with an empty sketch.** `prepare()` offers a `generate_layout`
-  hook for subclasses; TrayLayout defines none, and its default `layout` of
-  `"\n"` is truthy, so upstream parses zero compartments and errors. The port
+  hook for subclasses; TrayLayout defines none, so upstream raises
+  `RuntimeError` on a blank sketch. The port
   fills the hook by generating a full grid from `sx`/`sy`, so the generator
   opens on something rather than on a stack trace. The sketch wins once edited.
 - **CompartmentBox with a negative margin.** boxes.py raises `ValueError`. The

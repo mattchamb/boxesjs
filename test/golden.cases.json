@@ -136,6 +136,42 @@
     }
   },
   {
+    "name": "ref_abox_lid_flatbrim",
+    "generator": "abox",
+    "pythonClass": "ABox",
+    "params": {
+      "x": 100,
+      "y": 100,
+      "h": 50,
+      "outside": true,
+      "bottom_edge": "F",
+      "lid_style": "flatbrim",
+      "lid_handle": "long_rounded",
+      "thickness": 3,
+      "burn": 0.1,
+      "lid_brim_spacing": 0.2,
+      "lid_brim_height": 2
+    }
+  },
+  {
+    "name": "ref_abox_lid_flatfang",
+    "generator": "abox",
+    "pythonClass": "ABox",
+    "params": {
+      "x": 100,
+      "y": 100,
+      "h": 50,
+      "outside": true,
+      "bottom_edge": "F",
+      "lid_style": "flatfang",
+      "lid_handle": "long_rounded",
+      "thickness": 4,
+      "burn": 0.15,
+      "lid_fang_size": 3,
+      "lid_brim_height": 1.5
+    }
+  },
+  {
     "name": "ref_displayshelf",
     "generator": "displayshelf",
     "pythonClass": "DisplayShelf",
@@ -653,6 +689,25 @@
       "thickness": 3,
       "burn": 0.1,
       "labels": true
+    }
+  },
+  {
+    "name": "ref_console2_angle",
+    "generator": "console2",
+    "pythonClass": "Console2",
+    "params": {
+      "x": 100,
+      "y": 100,
+      "h": 100,
+      "outside": false,
+      "bottom_edge": "s",
+      "front_height": 30,
+      "angle": 40,
+      "removable_backwall": true,
+      "removable_panel": true,
+      "glued_panel": true,
+      "thickness": 3,
+      "burn": 0.1
     }
   },
   {
@@ -1237,6 +1292,19 @@
       "thickness": 3,
       "burn": 0.1,
       "labels": true
+    }
+  },
+  {
+    "name": "ref_traylayout_escaped",
+    "generator": "traylayout",
+    "pythonClass": "TrayLayout",
+    "params": {
+      "layout": " ,> 50.0mm\\n | ,> 50.0mm\\n | | ,> 50.0mm\\n+-+-+-+\\n| | | | 50.0mm\\n+-+-+-+\\n| | | | 50.0mm\\n+-+-+-+",
+      "h": 60,
+      "hi": 0,
+      "outside": false,
+      "thickness": 3,
+      "burn": 0.1
     }
   },
   {

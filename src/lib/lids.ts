@@ -2,18 +2,21 @@
  * Lids, ported from boxes.py `boxes/lids.py`.
  *
  * A lid is an optional set of extra parts appended to a box. `flat` is two
- * stacked plates; `overthetop` is a shallow box that slips over the outside.
+ * stacked plates; `flatbrim` is one plate with a rim of strips underneath that
+ * drops inside the walls; `flatfang` is one plate held by four small tabs at
+ * its corners; `overthetop` is a shallow box that slips over the outside.
  *
  * The `chest` and `ontop` styles from boxes.py are not ported — chest needs the
- * flex/living-hinge edges and ontop needs `polygonWall`, neither of which is in
- * this build. They are simply absent from the style list rather than silently
- * falling back to something else.
+ * flex/living-hinge edges, which are not in this build; ontop has everything it
+ * needs since `polygonWall` arrived, but nobody has ported it yet. They are
+ * absent from the style list rather than silently falling back to something
+ * else.
  */
 import type { Boxes } from './boxes';
 import { INNER_CUT } from './geom/colors';
 import { Settings } from './edges/settings';
 
-export type LidStyle = 'none' | 'flat' | 'overthetop';
+export type LidStyle = 'none' | 'flat' | 'overthetop' | 'flatbrim' | 'flatfang';
 export type LidHandle =
   | 'none'
   | 'long_rounded'
@@ -23,7 +26,7 @@ export type LidHandle =
 
 export class LidSettings extends Settings {
   static override absoluteParams = {
-    style: ['none', 'flat', 'overthetop'] as const,
+    style: ['none', 'flat', 'overthetop', 'flatbrim', 'flatfang'] as const,
     handle: [
       'none',
       'long_rounded',
@@ -31,12 +34,16 @@ export class LidSettings extends Settings {
       'long_doublerounded',
       'knob',
     ] as const,
+    /** Millimetres, not thickness: the gap between a flat lid's inner part and the walls. */
+    brim_spacing: 0.1,
   };
 
   static override relativeParams = {
     height: 4.0,
     play: 0.1,
+    brim_height: 1.0,
     handle_height: 8.0,
+    fang_size: 1.0,
   };
 
   get style(): LidStyle { return this.getStr('style') as LidStyle; }
@@ -44,6 +51,9 @@ export class LidSettings extends Settings {
   get height(): number { return this.getNum('height'); }
   get play(): number { return this.getNum('play'); }
   get handle_height(): number { return this.getNum('handle_height'); }
+  get brim_spacing(): number { return this.getNum('brim_spacing'); }
+  get brim_height(): number { return this.getNum('brim_height'); }
+  get fang_size(): number { return this.getNum('fang_size'); }
 }
 
 export class Lid {
@@ -59,7 +69,9 @@ export class Lid {
     const s = this.settings;
 
     if (s.style === 'flat') {
-      b.rectangularWall(x, y, 'eeee', {
+      // The lower plate sits inside the walls, so it is cut a little smaller.
+      const bs = s.brim_spacing;
+      b.rectangularWall(x - bs * 2, y - bs * 2, 'eeee', {
         callback: [this.handleCallback(x, y)],
         move: 'up',
         label: 'Lid bottom',
@@ -69,6 +81,42 @@ export class Lid {
         move: 'up',
         label: 'Lid top',
       });
+    } else if (s.style === 'flatbrim') {
+      // boxes.py also reads the finger and space settings here and derives a
+      // `gap` from them, then never uses it; that dead arithmetic is left out.
+      const bs = s.brim_spacing;
+      const brimX = x - bs * 2;
+      const brimY = y - bs * 2 - t * 2;
+      // One callback per side; each runs with that side as its baseline, so
+      // the four calls trace a rectangle of slots for the brim strips.
+      const brimHoles = (spacing: number, length: number) => () =>
+        b.fingerHolesAt(spacing + bs, t * 0.5 + bs, length, 0);
+
+      b.rectangularWall(x, y, 'EEEE', {
+        callback: [brimHoles(0, brimX), brimHoles(t, brimY), brimHoles(0, brimX), brimHoles(t, brimY)],
+        move: 'right',
+        label: 'Lid top',
+      });
+      for (const length of [brimX, brimX, brimY, brimY]) {
+        b.rectangularWall(length, s.brim_height, 'feee', { move: 'up', label: 'Lid brim' });
+      }
+    } else if (s.style === 'flatfang') {
+      const bs = s.brim_spacing;
+      const fs = s.fang_size;
+      // Positions transcribed term for term from boxes.py, including the
+      // `- t + t` pairs, so the arithmetic rounds the same way.
+      const fangHoles = () => {
+        b.rectangularHole(bs - t * 0.5 + t, bs + fs * 0.5 - t + t, t, fs);
+        b.rectangularHole(x - bs - fs * 0.5, bs - t * 0.5 + t, fs, t);
+        b.rectangularHole(bs + fs / 2 - t + t, y - bs + t * 0.5 - t, fs, t);
+        b.rectangularHole(x - bs + t * 0.5 - t, y - bs - fs / 2, t, fs);
+      };
+
+      b.rectangularWall(x, y, 'EEEE', { callback: [fangHoles], move: 'up', label: 'Lid top' });
+      // boxes.py labels only the first of these; every part needs a name here.
+      for (let i = 0; i < 4; i++) {
+        b.rectangularWall(fs, s.brim_height + t, 'eeee', { move: 'right', label: 'Lid fang' });
+      }
     } else if (s.style === 'overthetop') {
       // Slips over the outside of the box, so it needs clearance all round.
       const x2 = x + 2 * t + s.play;

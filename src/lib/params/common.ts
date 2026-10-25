@@ -378,10 +378,14 @@ export const LID_PARAMS: ParamSpec[] = [
     choices: [
       { value: 'none', label: 'None' },
       { value: 'flat', label: 'Flat plates' },
+      { value: 'flatbrim', label: 'Flat with brim' },
+      { value: 'flatfang', label: 'Flat with corner tabs' },
       { value: 'overthetop', label: 'Over the top' },
     ],
     group: 'top',
-    help: 'Flat stacks two plates; over-the-top is a shallow box that slips over the outside.',
+    help:
+      'Flat stacks two plates. The brim and corner-tab styles are one plate that locates ' +
+      'inside the walls. Over-the-top is a shallow box that slips over the outside.',
   },
   {
     key: 'lid_handle',
@@ -408,6 +412,41 @@ export const LID_PARAMS: ParamSpec[] = [
     step: 0.5,
     group: 'top',
     help: 'How far an over-the-top lid comes down the side of the box.',
+  },
+  {
+    key: 'lid_brim_spacing',
+    kind: 'length',
+    label: 'Lid inset clearance',
+    unit: 'mm',
+    default: 0.1,
+    min: 0,
+    max: 2,
+    step: 0.05,
+    group: 'top',
+    help: 'Gap between the walls and the part of a flat lid that sits inside them.',
+  },
+  {
+    key: 'lid_brim_height',
+    kind: 'number',
+    label: 'Lid brim depth',
+    unit: '× thickness',
+    default: 1.0,
+    min: 0.5,
+    max: 10,
+    step: 0.5,
+    group: 'top',
+    help: 'How far the brim or corner tabs of a flat lid reach down inside the walls.',
+  },
+  {
+    key: 'lid_fang_size',
+    kind: 'number',
+    label: 'Lid corner tab width',
+    unit: '× thickness',
+    default: 1.0,
+    min: 0.5,
+    max: 10,
+    step: 0.5,
+    group: 'top',
   },
   {
     key: 'lid_play',
@@ -449,6 +488,9 @@ export function toBoxesConfig(values: ParamValues): BoxesConfig {
     lid_handle: 'handle',
     lid_height: 'height',
     lid_play: 'play',
+    lid_brim_spacing: 'brim_spacing',
+    lid_brim_height: 'brim_height',
+    lid_fang_size: 'fang_size',
   };
   for (const [formKey, settingKey] of Object.entries(lidMap)) {
     const v = values[formKey];

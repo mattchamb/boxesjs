@@ -6,6 +6,7 @@
  * glue, so the case can be re-opened with a screwdriver but not by hand.
  */
 import { Boxes, type BoxesConfig, type EdgeSpec } from '../boxes';
+import { ETCHING } from '../geom/colors';
 import type { ParamValues } from '../params/schema';
 import { b, n, s, type GeneratorDef } from './types';
 
@@ -179,8 +180,8 @@ class Console2 extends Boxes {
 
     // The panel meets the walls at an angle, so the joint has to start and end
     // one thickness in along each axis rather than at the corner itself.
-    const d1 = t * Math.cos(rad(this.o.angle));
-    const d2 = t * Math.sin(rad(this.o.angle));
+    const d1 = t * Math.sin(rad(this.o.angle));
+    const d2 = t * Math.cos(rad(this.o.angle));
 
     this.moveTo(t, 0);
     bottom.call(borders[0]!);
@@ -213,11 +214,26 @@ class Console2 extends Boxes {
     this.move(tw, th, move, false, label);
   }
 
+  /**
+   * Etched L-shaped corner marks. boxes.py adds them to the glued panel only
+   * when the panel is also removable.
+   */
+  private cornerCB = (): void => {
+    this.ctx.stroke();
+    const t = this.thickness;
+    this.setSourceColor(ETCHING);
+    this.moveTo(0, 2 * t, -90);
+    this.polyline(2 * t, 90, 2 * t);
+    this.moveTo(0, t, 180);
+    this.polyline(t, -90, t);
+    this.ctx.stroke();
+  };
+
   render(): void {
     const t = this.thickness;
     const bottom = this.edges[this.o.bottomEdge]!;
     let backTopEdge = 'e';
-    let topBackEdge = 'e';
+    let topBackEdge = 'E';
 
     // A glued-on back wall can carry finger joints; a removable one cannot.
     if (!this.o.removableBackwall) {
@@ -232,8 +248,8 @@ class Console2 extends Boxes {
     }
     const x = this.o.x;
 
-    const d1 = t * Math.cos(rad(this.o.angle));
-    const d2 = t * Math.sin(rad(this.o.angle));
+    const d1 = t * Math.sin(rad(this.o.angle));
+    const d2 = t * Math.cos(rad(this.o.angle));
 
     this.latchpos = 6 * t;
     const latchpos = this.latchpos;
@@ -250,7 +266,11 @@ class Console2 extends Boxes {
     });
 
     if (this.o.gluedPanel) {
-      this.rectangularWall(borders[4]!, x, 'EEEE', { move: 'right', label: 'Panel' });
+      this.rectangularWall(borders[4]!, x, 'EEEE', {
+        move: 'right',
+        callback: this.o.removablePanel ? [this.cornerCB, this.cornerCB, this.cornerCB, this.cornerCB] : [],
+        label: 'Panel',
+      });
     } else if (this.o.removablePanel) {
       this.rectangularWall(borders[4]!, x - 2 * t, 'hEhE', { move: 'right', label: 'Panel' });
     } else {
@@ -258,7 +278,7 @@ class Console2 extends Boxes {
     }
 
     if (borders.length === 10) {
-      this.rectangularWall(borders[6]! - d2, x, ['F', 'E', 'F', topBackEdge], {
+      this.rectangularWall(borders[6]! - d2, x, ['F', 'e', 'F', topBackEdge], {
         move: 'right',
         label: 'Top',
       });
