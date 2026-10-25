@@ -172,6 +172,39 @@
     }
   },
   {
+    "name": "ref_abox_lid_ontop",
+    "generator": "abox",
+    "pythonClass": "ABox",
+    "params": {
+      "x": 100,
+      "y": 100,
+      "h": 50,
+      "outside": true,
+      "bottom_edge": "F",
+      "lid_style": "ontop",
+      "lid_handle": "knob",
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_abox_lid_ontop_thick",
+    "generator": "abox",
+    "pythonClass": "ABox",
+    "params": {
+      "x": 100,
+      "y": 100,
+      "h": 50,
+      "outside": true,
+      "bottom_edge": "F",
+      "lid_style": "ontop",
+      "lid_handle": "none",
+      "thickness": 6,
+      "burn": 0.05,
+      "lid_height": 3
+    }
+  },
+  {
     "name": "ref_displayshelf",
     "generator": "displayshelf",
     "pythonClass": "DisplayShelf",

@@ -381,11 +381,13 @@ export const LID_PARAMS: ParamSpec[] = [
       { value: 'flatbrim', label: 'Flat with brim' },
       { value: 'flatfang', label: 'Flat with corner tabs' },
       { value: 'overthetop', label: 'Over the top' },
+      { value: 'ontop', label: 'On top' },
     ],
     group: 'top',
     help:
       'Flat stacks two plates. The brim and corner-tab styles are one plate that locates ' +
-      'inside the walls. Over-the-top is a shallow box that slips over the outside.',
+      'inside the walls. Over-the-top is a shallow box that slips over the outside; ' +
+      'on-top is the same box resting on the walls, located by tabs that hang inside.',
   },
   {
     key: 'lid_handle',

@@ -429,7 +429,7 @@ ABox, ClosedBox, OpenBox, CardBox, Console2, UniversalBox, RegularBox,
 BayonetBox, NotesHolder, TypeTray, TrayLayout, TrayInsert, DividerTray,
 CompartmentBox, DrillBox, DisplayShelf, StorageRack, StorageShelf, PaintStorage
 — plus the RectangularWall part. All of them match boxes.py
-coordinate-for-coordinate across 90 golden cases, regenerated against
+coordinate-for-coordinate across 92 golden cases, regenerated against
 boxes.py master at `84e392b` (2026-10-22).
 
 When the boxes.py checkout moves, regenerate and diff before porting anything

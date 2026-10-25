@@ -4,19 +4,18 @@
  * A lid is an optional set of extra parts appended to a box. `flat` is two
  * stacked plates; `flatbrim` is one plate with a rim of strips underneath that
  * drops inside the walls; `flatfang` is one plate held by four small tabs at
- * its corners; `overthetop` is a shallow box that slips over the outside.
+ * its corners; `overthetop` is a shallow box that slips over the outside;
+ * `ontop` is the same box at the box's own size, resting on the walls.
  *
- * The `chest` and `ontop` styles from boxes.py are not ported — chest needs the
- * flex/living-hinge edges, which are not in this build; ontop has everything it
- * needs since `polygonWall` arrived, but nobody has ported it yet. They are
- * absent from the style list rather than silently falling back to something
- * else.
+ * The `chest` style from boxes.py is not ported — it needs the flex/living-hinge
+ * edges, which are not in this build. It is absent from the style list rather
+ * than silently falling back to something else.
  */
 import type { Boxes } from './boxes';
 import { INNER_CUT } from './geom/colors';
 import { Settings } from './edges/settings';
 
-export type LidStyle = 'none' | 'flat' | 'overthetop' | 'flatbrim' | 'flatfang';
+export type LidStyle = 'none' | 'flat' | 'overthetop' | 'ontop' | 'flatbrim' | 'flatfang';
 export type LidHandle =
   | 'none'
   | 'long_rounded'
@@ -26,7 +25,7 @@ export type LidHandle =
 
 export class LidSettings extends Settings {
   static override absoluteParams = {
-    style: ['none', 'flat', 'overthetop', 'flatbrim', 'flatfang'] as const,
+    style: ['none', 'flat', 'overthetop', 'ontop', 'flatbrim', 'flatfang'] as const,
     handle: [
       'none',
       'long_rounded',
@@ -117,10 +116,16 @@ export class Lid {
       for (let i = 0; i < 4; i++) {
         b.rectangularWall(fs, s.brim_height + t, 'eeee', { move: 'right', label: 'Lid fang' });
       }
-    } else if (s.style === 'overthetop') {
-      // Slips over the outside of the box, so it needs clearance all round.
-      const x2 = x + 2 * t + s.play;
-      const y2 = y + 2 * t + s.play;
+    } else if (s.style === 'overthetop' || s.style === 'ontop') {
+      // Over-the-top slips over the outside of the box, so it needs clearance
+      // all round. On-top is the same shallow box at the box's own size,
+      // resting on the walls and kept in place by the brims drawn below.
+      let x2 = x;
+      let y2 = y;
+      if (s.style === 'overthetop') {
+        x2 += 2 * t + s.play;
+        y2 += 2 * t + s.play;
+      }
       const bottom = edge === 'S' || edge === 'Š' ? 'š' : 'e';
 
       b.savedContext(() => {
@@ -152,6 +157,16 @@ export class Lid {
         move: 'right rotated upsidedown',
         label: 'Lid right',
       });
+      if (s.style === 'ontop') {
+        // Rounded tabs that hang down inside the walls. boxes.py labels them
+        // "lid\nbrim"; a part name here becomes an export id, so one line.
+        for (let i = 0; i < 4; i++) {
+          b.polygonWall(
+            [2 * t, [90, t], t + s.height, 90, 4 * t, 90, t + s.height, [90, t]],
+            { edge: 'e', move: 'up', label: 'Lid brim' },
+          );
+        }
+      }
     } else {
       return false;
     }
