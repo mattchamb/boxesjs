@@ -231,3 +231,106 @@ describe('StorageShelf with wedged tenons', () => {
     expect(off.parts.some((p) => p.name === 'wedge')).toBe(false);
   });
 });
+
+describe('DisplayShelf with wedged tenons', () => {
+  const s = new WedgedTenonSettings(3, true, {});
+  const base: ParamValues = { ...defaultsFor('displayshelf'), wedged: true, burn: 0, labels: false };
+  const closed: ParamValues = { ...base, include_back: true, include_front: true, include_bottom: true };
+  const isTenonHole = (h: Box) => {
+    const dims = [h.maxX - h.minX, h.maxY - h.minY].sort((a, b) => a - b);
+    return Math.abs(dims[0]! - (3 + s.slack)) < 1e-6 && Math.abs(dims[1]! - (s.width + s.slack)) < 1e-6;
+  };
+  const wedgeSlots = (p: DrawingPart) =>
+    holes(p).filter((h) => {
+      const dims = [h.maxX - h.minX, h.maxY - h.minY].sort((a, b) => a - b);
+      return Math.abs(dims[0]! - (3 + s.slack)) < 1e-6 && Math.abs(dims[1]! - (s.gap + s.draw)) < 1e-6;
+    }).length;
+
+  it('wedges every floor, and nothing at all when switched off', () => {
+    const d = buildDrawing('displayshelf', base);
+    const floors = d.parts.filter((p) => p.name.startsWith('shelf '));
+    expect(floors).toHaveLength(3);
+    const perFloor = wedgeSlots(floors[0]!);
+    expect(perFloor).toBeGreaterThan(0);
+    expect(d.parts.filter((p) => p.name === 'wedge')).toHaveLength(3 * perFloor);
+    const off = buildDrawing('displayshelf', { ...base, wedged: false });
+    expect(off.parts.some((p) => p.name === 'wedge')).toBe(false);
+  });
+
+  // Upright axis-aligned holes only: the back, front and bottom panels'.
+  // A floor's holes are slanted, so their bounding boxes are not tenon-sized.
+  for (const slope_top of [false, true]) {
+    const v = { ...closed, slope_top };
+    const d = buildDrawing('displayshelf', v);
+    const side = d.parts.find((p) => p.name === 'left side')!;
+    const out = outlineBox(side);
+    const tenonHoles = holes(side).filter(isTenonHole);
+    const back = tenonHoles.filter((h) => h.maxY - h.minY > h.maxX - h.minX && h.minX - out.minX < 20);
+    const front = tenonHoles.filter((h) => h.maxY - h.minY > h.maxX - h.minX && out.maxX - h.maxX < 20);
+    const bottom = tenonHoles.filter((h) => h.maxX - h.minX > h.maxY - h.minY);
+
+    it(`sets the panels' holes in from the side's edges${slope_top ? ', sloped' : ''}`, () => {
+      expect(back.length).toBeGreaterThan(0);
+      expect(front.length).toBeGreaterThan(0);
+      expect(bottom.length).toBeGreaterThan(0);
+      for (const h of back) expect((h.minX + h.maxX) / 2 - out.minX).toBeCloseTo(s.holeInset(), 6);
+      for (const h of front) expect(out.maxX - (h.minX + h.maxX) / 2).toBeCloseTo(s.holeInset(), 6);
+      // The sheet's y may run either way; the bottom holes are nearer one edge.
+      for (const h of bottom) {
+        const c = (h.minY + h.maxY) / 2;
+        expect(Math.min(c - out.minY, out.maxY - c)).toBeCloseTo(s.holeInset(), 6);
+      }
+    });
+
+    it(`puts the bottom panel's holes where its tenons are${slope_top ? ', sloped' : ''}`, () => {
+      const panel = d.parts.find((p) => p.name === 'bottom wall')!;
+      const panelOut = outlineBox(panel);
+      // The bottom panel's depth is the space between the recessed back and front.
+      const depth = out.maxX - out.minX - 2 * (s.holeInset() + 3 / 2);
+      const centres = bottom.map((h) => (h.minX + h.maxX) / 2 - out.minX - (s.holeInset() + 3 / 2)).sort((a, b) => a - b);
+      const expected = s.centres(depth);
+      expect(centres).toHaveLength(expected.length);
+      centres.forEach((c, i) => expect(c).toBeCloseTo(expected[i]!, 6));
+      // Its side edges carry tenons that stand out of the panel by the protrusion.
+      expect(panelOut.maxY - panelOut.minY).toBeCloseTo(depth + 2 * s.protrusion(), 6);
+    });
+
+    it(`counts one wedge per tenon${slope_top ? ', sloped' : ''}`, () => {
+      const slots = d.parts.filter((p) => !['left side', 'right side', 'wedge'].includes(p.name)).reduce((a, p) => a + wedgeSlots(p), 0);
+      expect(d.parts.filter((p) => p.name === 'wedge')).toHaveLength(slots);
+    });
+
+    it(`fits the default shelf without a warning${slope_top ? ', sloped' : ''}`, () => {
+      expect(renderPreview('displayshelf', v).warnings).toEqual([]);
+    });
+  }
+
+  it('keeps the outside depth with a recessed back and front', () => {
+    for (const slope_top of [false, true]) {
+      const side = buildDrawing('displayshelf', { ...closed, slope_top }).parts.find((p) => p.name === 'left side')!;
+      const out = outlineBox(side);
+      expect(out.maxX - out.minX).toBeCloseTo(Number(closed['y']), 6);
+    }
+  });
+
+  it('warns when a floor sits on the bottom panel, where their wedges meet', () => {
+    const r = renderPreview('displayshelf', { ...base, angle: 0, include_bottom: true });
+    expect(r.warnings.map((w) => w.param)).toContain('wt_pitch');
+    expect(renderPreview('displayshelf', { ...base, angle: 0, include_bottom: true, bottom_distance: 30 }).warnings).toEqual([]);
+  });
+
+  it('warns when a wedge hangs off the side', () => {
+    // Flat floors with no bottom panel: the lowest floor's wedges reach below the side.
+    const r = renderPreview('displayshelf', { ...base, angle: 0 });
+    expect(r.warnings.map((w) => w.param)).toContain('wt_wedge_length');
+  });
+
+  it('survives the extremes of every tenon setting', () => {
+    for (const spec of paramsFor('displayshelf')) {
+      if (!spec.key.startsWith('wt_') || (spec.kind !== 'number' && spec.kind !== 'length')) continue;
+      for (const v of [spec.min, spec.max]) {
+        expect(() => renderPreview('displayshelf', { ...closed, [spec.key]: v }), `${spec.key}=${v}`).not.toThrow();
+      }
+    }
+  });
+});

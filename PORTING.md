@@ -510,7 +510,7 @@ inside the box — callers depend on that.
 Everything else in this document is a port. **Wedged through-tenons** (`w`,
 `W`, `src/lib/edges/wedgedtenon.ts`) are not: boxes.py has no such joint, and
 `w`/`W` are unused there, so the characters cannot clash with a future port.
-They are offered on RectangularWall (any side) and StorageShelf (`wedged`:
+They are offered on RectangularWall (any side), DisplayShelf (below) and StorageShelf (`wedged`:
 the shelves and the back pass through the side walls, so nothing needs glue;
 the bottom stays finger-jointed because a wedge hangs half its length below
 its tenon, which under the bottom panel is the floor, and is captured once the
@@ -522,6 +522,23 @@ over `fWff` instead. Outside each side wall the back's wedges lie flat and the
 shelves' stand up, and on a shallow shelf they can meet; StorageShelf warns
 on `wt_pitch` when they do. The settings are `wt_*`, mapped to a `WedgedTenon` family that
 `gen-golden.py` never sees.
+
+DisplayShelf (`wedged`) wedges the floors and any back, front and bottom
+panels. Here the bottom is wedged too: the sides' bottom edge becomes `W`, so
+the bottom panel is raised by the same inset as a recessed back and its wedges
+stay above the floor, and the back and front take the bottom's tenons through
+a `W` bottom edge of their own. The front lips are not wedged. Their wedges
+would stand square to the lip, half of each hanging off the side's front edge,
+so the lips keep their finger slots, fitted dry, and are trapped between the
+sides and their floor. The sloped sides are a `polygonWall`, which draws an
+edge on its leg where `rectangularWall` would push it out by the edge's width,
+so the generator lengthens the legs by the recess itself and splits the bottom
+leg so its hole edge spans exactly the bottom panel. Its clearance check is
+the general one, `tenonFootprints` and `wedgeClearance` in `wedgedtenon.ts`: it
+lays every tenon end and wedge on the side's outer face, in the frame the holes
+are drawn in, and warns on `wt_pitch` when two meet and on `wt_wedge_length`
+when one hangs off the side. Use those for the next generator rather than
+another special case like StorageShelf's.
 
 With no golden to compare against, the geometry is pinned by
 `test/wedgedtenon.test.ts`: tenons and holes line up, the slot starts `draw`

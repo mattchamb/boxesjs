@@ -187,6 +187,8 @@ describe.each(generators.map((g) => g.meta))('$id', (meta) => {
 const VARIANTS: { id: string; name: string; values: ParamValues }[] = [
   { id: 'storageshelf', name: 'wedged tenons', values: { wedged: true, x: 200, sh: '120*3', sy: '150*2' } },
   { id: 'rectangularwall', name: 'wedged tenons', values: { bottom_edge: 'w', right_edge: 'W', top_edge: 'w', left_edge: 'W' } },
+  { id: 'displayshelf', name: 'wedged tenons', values: { wedged: true, include_back: true, include_front: true, include_bottom: true } },
+  { id: 'displayshelf', name: 'wedged tenons, sloped', values: { wedged: true, slope_top: true, include_back: true, include_front: true, include_bottom: true } },
 ];
 
 describe.each(VARIANTS)('$id with $name', ({ id, values }) => {

@@ -9,8 +9,13 @@
  * `slope_top` cuts the top front corner off both sides so the shelf steps back
  * as it rises; that variant is the only one drawn with `polygonWall` rather
  * than `rectangularWall`.
+ *
+ * `wedged` is this port's own: everything that holds the two sides apart is
+ * joined with wedged through-tenons instead, so the shelf comes apart again.
  */
 import { Boxes, type BoxesConfig, type EdgeSpec, type PolygonBorder } from '../boxes';
+import { tenonFootprints, wedgeClearance, type FaceRect } from '../edges/wedgedtenon';
+import { WEDGED_TENON_PARAMS } from '../params/common';
 import { parseSections } from '../params/sections';
 import type { ParamValues } from '../params/schema';
 import { b, n, s, type GeneratorDef } from './types';
@@ -32,6 +37,16 @@ interface DisplayShelfOptions {
   dividerWallHeight: number;
   bottomDistance: number;
   topDistance: number;
+  /** This port's own option: floors and panels held by wedged through-tenons. */
+  wedged: boolean;
+}
+
+/** A line of slots in a side panel, as `fingerHolesAt` takes it. */
+interface HoleLine {
+  x: number;
+  y: number;
+  length: number;
+  angle: number;
 }
 
 class DisplayShelf extends Boxes {
@@ -44,6 +59,13 @@ class DisplayShelf extends Boxes {
   private sl = 0;
   /** Height of the front wall once the top has been sloped away. */
   private front = 0;
+  /**
+   * Under `wedged`, how far the side panels reach past the space between the
+   * panels they hold: the recessed back and front, and the raised bottom.
+   */
+  private reach = { back: 0, front: 0, bottom: 0 };
+  /** Where the slope starts on the front edge, and how far back it cuts. */
+  private slope: { front: number; cut: number } | null = null;
 
   constructor(
     private o: DisplayShelfOptions,
@@ -54,8 +76,11 @@ class DisplayShelf extends Boxes {
     this.y = o.y;
   }
 
-  /** Slots in a side panel: one per floor, plus one per front lip. */
-  private generateFingerHoles(): void {
+  /**
+   * The slots in a side panel: one line per floor, and one per front lip.
+   * Null, with a warning, when the floors do not fit.
+   */
+  private holeLines(): { floors: HoleLine[]; lips: HoleLine[] } | null {
     const t = this.thickness;
     const a = this.radians;
     const { num, angle, frontWallHeight, bottomDistance, topDistance } = this.o;
@@ -64,25 +89,93 @@ class DisplayShelf extends Boxes {
     const bOffs = bottomDistance;
     const h = this.o.h - bOffs - topDistance;
 
-    if (this.o.slopeTop && this.o.includeBottom) {
-      this.moveTo(0, this.getEdge('h').startWidth());
-    }
-
     if (h - Math.abs(hs) - 3 * t * (num - 1) < 0) {
       // boxes.py raises here and renders nothing; a warning keeps the rest of
       // the sheet usable and puts the message on the offending field.
       this.warn('Not enough height to fit this many shelves.', 'h');
-      return;
+      return null;
     }
 
+    const floors: HoleLine[] = [];
+    const lips: HoleLine[] = [];
     for (let i = 0; i < num; i++) {
       let posX = Math.abs(0.5 * t * Math.sin(a));
       let posY = hs - Math.cos(a) * 0.5 * t + (i * (h - Math.abs(hs))) / (num - 0.5) + bOffs;
       if (a < 0) posY += -Math.sin(a) * this.sl;
-      this.fingerHolesAt(posX, posY, this.sl, -angle);
+      floors.push({ x: posX, y: posY, length: this.sl, angle: -angle });
       posX += Math.cos(-a) * (this.sl + 0.5 * t) + Math.sin(a) * 0.5 * t;
       posY += Math.sin(-a) * (this.sl + 0.5 * t) + Math.cos(a) * 0.5 * t;
-      this.fingerHolesAt(posX, posY, frontWallHeight, 90 - angle);
+      lips.push({ x: posX, y: posY, length: frontWallHeight, angle: 90 - angle });
+    }
+    return { floors, lips };
+  }
+
+  /** Slots in a side panel: one per floor, plus one per front lip. */
+  private generateFingerHoles(): void {
+    if (this.o.wedged) {
+      // The callback starts at the polygon's corner, outside the reach of the
+      // recessed back and the raised bottom.
+      if (this.slope) this.moveTo(this.reach.back, this.reach.bottom);
+    } else if (this.o.slopeTop && this.o.includeBottom) {
+      this.moveTo(0, this.getEdge('h').startWidth());
+    }
+
+    const lines = this.holeLines();
+    if (!lines) return;
+    for (let i = 0; i < this.o.num; i++) {
+      const f = lines.floors[i]!;
+      if (this.o.wedged) this.tenonHolesAt(f.x, f.y, f.length, f.angle);
+      else this.fingerHolesAt(f.x, f.y, f.length, f.angle);
+      // The lips stay finger-jointed even when wedged: a lip's wedges would
+      // hang off the side's front edge. Fitted dry, a lip is trapped between
+      // the sides and its floor.
+      const l = lines.lips[i]!;
+      this.fingerHolesAt(l.x, l.y, l.length, l.angle);
+    }
+  }
+
+  /**
+   * Outside each side panel lie the wedges of the floors and of any back,
+   * front and bottom panels. A shelf whose wedges meet, or hang off the side,
+   * cannot be assembled as drawn; that is worth a warning.
+   */
+  private checkWedgeClearance(): void {
+    const lines = this.holeLines();
+    if (!lines) return;
+    const s = this.wedgedTenonSettings;
+    const t = this.thickness;
+    const { includeBack, includeFront, includeBottom } = this.o;
+    const y = this.y;
+    const h = this.o.h;
+    const fh = this.slope ? this.slope.front : h;
+
+    // All in the frame the side's holes are drawn in: the inner corner of
+    // the back and bottom, with the joined panels' mid-planes t/2 outside.
+    const tenons: FaceRect[][] = lines.floors.flatMap((f) => tenonFootprints(s, f.x, f.y, f.length, f.angle));
+    if (includeBack) tenons.push(...tenonFootprints(s, -t / 2, 0, h, 90));
+    if (includeFront) tenons.push(...tenonFootprints(s, y + t / 2, 0, fh, 90));
+    if (includeBottom) tenons.push(...tenonFootprints(s, 0, -t / 2, y, 0));
+
+    const { back, front, bottom } = this.reach;
+    const right = y + front;
+    const outline: [number, number][] = this.slope
+      ? [[-back, -bottom], [right, -bottom], [right, this.slope.front], [right - this.slope.cut, h], [-back, h]]
+      : [[-back, -bottom], [right, -bottom], [right, h], [-back, h]];
+
+    const { clash, overhang } = wedgeClearance(tenons, outline);
+    if (clash) {
+      this.warn(
+        'Some of the wedges outside the side panels meet each other. Change the tenon spacing, ' +
+          'or the depth or angle of the floors.',
+        'wt_pitch',
+      );
+    }
+    if (overhang) {
+      this.warn(
+        'Some wedges hang off the edge of the side panels, so they bear on one side of their ' +
+          'tenon only. Shorten the wedges or change the tenon spacing.',
+        'wt_wedge_length',
+      );
     }
   }
 
@@ -106,6 +199,12 @@ class DisplayShelf extends Boxes {
 
     const top = width - horizontalCut;
     this.front = height - verticalCut;
+    this.slope = { front: this.front, cut: horizontalCut };
+
+    if (this.o.wedged) {
+      this.generateWedgedSlopedSides(width, height, top, hypotenuse);
+      return;
+    }
 
     let edges = includeBottom ? 'he' : 'ee';
     const le = includeBottom ? this.getEdge('h').startWidth() : this.getEdge('e').startWidth();
@@ -127,7 +226,50 @@ class DisplayShelf extends Boxes {
     this.polygonWall(borders, { edge: edges, callback: holes, move: 'up', label: 'right side' });
   }
 
+  /**
+   * The sloped sides with wedged joints. polygonWall draws each edge on its
+   * leg, where rectangularWall would push it out by its width, so the reach
+   * of the recessed panels is added to the legs here instead — and the
+   * bottom is split so its hole edge spans exactly the bottom panel.
+   */
+  private generateWedgedSlopedSides(width: number, height: number, top: number, hypotenuse: number): void {
+    const { angle, includeBottom, includeFront, includeBack } = this.o;
+    const { back, front, bottom } = this.reach;
+    const borders: PolygonBorder[] = [];
+    const edges: EdgeSpec[] = [];
+    const leg = (l: number, a: number, e: EdgeSpec) => {
+      borders.push(l, a);
+      edges.push(e);
+    };
+    if (back) leg(back, 0, 'e');
+    leg(width, front ? 0 : 90, includeBottom ? 'W' : 'e');
+    if (front) leg(front, 90, 'e');
+    leg(bottom, 0, 'e');
+    leg(this.front, 90 - angle, includeFront ? 'W' : 'e');
+    leg(hypotenuse, angle, 'e');
+    leg(top + back + front, 90, 'e');
+    leg(height, 0, includeBack ? 'W' : 'e');
+    leg(bottom, 90, 'e');
+
+    const holes = [() => this.generateFingerHoles()];
+    this.polygonWall(borders, { edge: edges, callback: holes, move: 'up', label: 'left side' });
+    this.polygonWall(borders, { edge: edges, callback: holes, move: 'up', label: 'right side' });
+  }
+
   private generateRectangularSides(width: number, height: number): void {
+    if (this.o.wedged) {
+      const edges = [
+        this.o.includeBottom ? 'W' : 'e',
+        this.o.includeFront ? 'W' : 'e',
+        'e',
+        this.o.includeBack ? 'W' : 'e',
+      ];
+      const holes = [() => this.generateFingerHoles()];
+      this.rectangularWall(width, height, edges, { callback: holes, move: 'up', label: 'left side' });
+      this.rectangularWall(width, height, edges, { callback: holes, move: 'up', label: 'right side' });
+      return;
+    }
+
     let edges = this.o.includeBottom ? 'h' : 'e';
     edges += this.o.includeFront ? 'fe' : 'ee';
     edges += this.o.includeBack ? 'f' : 'e';
@@ -159,9 +301,11 @@ class DisplayShelf extends Boxes {
   private generateShelves(): void {
     const { num, frontWallHeight } = this.o;
 
+    // Wedged floors pass through the sides and are wedged outside them.
+    const side = this.o.wedged ? 'w' : 'f';
     if (frontWallHeight) {
       for (let i = 0; i < num; i++) {
-        this.rectangularWall(this.x, this.sl, 'ffef', {
+        this.rectangularWall(this.x, this.sl, `f${side}e${side}`, {
           callback: [() => this.generateShelveFingerHoles()],
           move: 'up',
           label: `shelf ${i + 1}`,
@@ -176,7 +320,7 @@ class DisplayShelf extends Boxes {
     }
 
     for (let i = 0; i < num; i++) {
-      this.rectangularWall(this.x, this.sl, 'Efef', {
+      this.rectangularWall(this.x, this.sl, `E${side}e${side}`, {
         callback: [() => this.generateShelveFingerHoles()],
         move: 'up',
         label: `shelf ${i + 1}`,
@@ -222,7 +366,17 @@ class DisplayShelf extends Boxes {
       // read — and both branches of its conditional are truthy, so the bottom
       // always costs one thickness whether or not there is a bottom panel.
       this.sx = this.adjustSize(this.sx, true);
-      this.y = this.adjustSize(this.y, this.o.includeBack, this.o.includeFront);
+      // A wedged back or front is recessed into the sides, which costs more depth.
+      const w = this.o.wedged ? 'W' : true;
+      this.y = this.adjustSize(this.y, this.o.includeBack && w, this.o.includeFront && w);
+    }
+    if (this.o.wedged) {
+      const reach = this.getEdge('W').startWidth();
+      this.reach = {
+        back: this.o.includeBack ? reach : 0,
+        front: this.o.includeFront ? reach : 0,
+        bottom: this.o.includeBottom ? reach : 0,
+      };
     }
 
     const y = this.y;
@@ -248,20 +402,38 @@ class DisplayShelf extends Boxes {
     this.generateShelves();
     this.generateDividers();
 
-    const bottomEdge = this.o.includeBottom ? 'h' : 'e';
+    // Wedged, the back and front pass through the sides, and the bottom
+    // passes through all four.
+    const wedged = this.o.wedged;
+    const bottomEdge = this.o.includeBottom ? (wedged ? 'W' : 'h') : 'e';
+    const panelSides = wedged ? 'w' : 'F';
     if (this.o.includeBack) {
-      this.rectangularWall(this.x, h, `${bottomEdge}FeF`, { label: 'back wall', move: 'up' });
+      this.rectangularWall(this.x, h, `${bottomEdge}${panelSides}e${panelSides}`, { label: 'back wall', move: 'up' });
     }
     if (this.o.includeFront) {
       // Under slope_top the front wall stops where the slope begins, and that
       // height is only known once the sides have been drawn.
       const fh = this.o.slopeTop && this.o.angle !== 0 ? this.front : h;
-      this.rectangularWall(this.x, fh, `${bottomEdge}FeF`, { label: 'front wall', move: 'up' });
+      this.rectangularWall(this.x, fh, `${bottomEdge}${panelSides}e${panelSides}`, { label: 'front wall', move: 'up' });
     }
     if (this.o.includeBottom) {
-      let edges = this.o.includeFront ? 'ff' : 'ef';
-      edges += this.o.includeBack ? 'ff' : 'ef';
+      const j = wedged ? 'w' : 'f';
+      const edges = [this.o.includeFront ? j : 'e', j, this.o.includeBack ? j : 'e', j];
       this.rectangularWall(this.x, y, edges, { label: 'bottom wall', move: 'up' });
+    }
+
+    if (wedged) {
+      this.checkWedgeClearance();
+      const n = (l: number) => this.tenonCount(l);
+      let count = this.o.num * 2 * n(this.sl);
+      if (this.o.includeBack) count += 2 * n(h);
+      if (this.o.includeFront) count += 2 * n(this.slope ? this.slope.front : h);
+      if (this.o.includeBottom) {
+        count += 2 * n(y);
+        if (this.o.includeFront) count += n(this.x);
+        if (this.o.includeBack) count += n(this.x);
+      }
+      this.wedges(count, 'up');
     }
   }
 }
@@ -409,6 +581,19 @@ export const displayShelf: GeneratorDef = {
       group: 'dimensions',
       help: 'Cuts the top front corner off the sides so the shelf steps back as it rises.',
     },
+    {
+      key: 'wedged',
+      kind: 'bool',
+      label: 'Wedged tenons',
+      default: false,
+      group: 'joints',
+      help:
+        'The floors, and any back, front and bottom panels, pass through the sides and are locked ' +
+        'by wedges outside them, so the shelf can be taken apart again without glue. The front ' +
+        'lips and dividers fit dry and are held in place by the rest. Back and front panels are ' +
+        'recessed so their wedges stay within the depth. Not part of boxes.py.',
+    },
+    ...WEDGED_TENON_PARAMS,
   ],
   create: (v: ParamValues, config: BoxesConfig) =>
     new DisplayShelf(
@@ -427,6 +612,7 @@ export const displayShelf: GeneratorDef = {
         dividerWallHeight: n(v, 'divider_wall_height', 20),
         bottomDistance: n(v, 'bottom_distance', 0),
         topDistance: n(v, 'top_distance', 0),
+        wedged: b(v, 'wedged', false),
       },
       config,
     ),

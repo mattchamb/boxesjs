@@ -230,3 +230,89 @@ export function drawWedge(boxes: Boxes, s: WedgedTenonSettings, move: string): v
 
   boxes.move(l, wide, move, false, 'wedge');
 }
+
+/**
+ * Something on a panel's outer face: a rectangle `along` long in the
+ * direction `angle` (degrees) and `across` wide, centred at (cx, cy).
+ */
+export interface FaceRect {
+  cx: number;
+  cy: number;
+  angle: number;
+  along: number;
+  across: number;
+}
+
+/**
+ * What each tenon of a hole line puts on the mating panel's outer face, in
+ * the frame the holes were drawn in: the tenon end standing out of its hole,
+ * and the wedge through it. The wedge runs square to the tenoned panel, so
+ * across the hole line, half its length either side.
+ */
+export function tenonFootprints(
+  s: WedgedTenonSettings,
+  x: number,
+  y: number,
+  length: number,
+  angle = 90,
+): FaceRect[][] {
+  const t = s.thickness;
+  const a = (angle * Math.PI) / 180;
+  return s.centres(length).map((c) => {
+    const cx = x + c * Math.cos(a);
+    const cy = y + c * Math.sin(a);
+    return [
+      { cx, cy, angle, along: s.width + s.slack, across: t + s.slack },
+      { cx, cy, angle, along: t, across: s.wedge_length },
+    ];
+  });
+}
+
+function corners(r: FaceRect): [number, number][] {
+  const a = (r.angle * Math.PI) / 180;
+  const ux = Math.cos(a), uy = Math.sin(a);
+  const hx = r.along / 2, hy = r.across / 2;
+  return [
+    [-hx, -hy], [hx, -hy], [hx, hy], [-hx, hy],
+  ].map(([p, q]) => [r.cx + p! * ux - q! * uy, r.cy + p! * uy + q! * ux]);
+}
+
+/** Separating-axis test; rectangles that only touch do not overlap. */
+function overlaps(a: FaceRect, b: FaceRect): boolean {
+  const ca = corners(a);
+  const cb = corners(b);
+  for (const r of [a, b]) {
+    const ang = (r.angle * Math.PI) / 180;
+    for (const [ax, ay] of [[Math.cos(ang), Math.sin(ang)], [-Math.sin(ang), Math.cos(ang)]]) {
+      const pa = ca.map(([x, y]) => x * ax! + y * ay!);
+      const pb = cb.map(([x, y]) => x * ax! + y * ay!);
+      if (Math.max(...pa) <= Math.min(...pb) + 1e-9 || Math.max(...pb) <= Math.min(...pa) + 1e-9) return false;
+    }
+  }
+  return true;
+}
+
+/**
+ * Checks the tenons and wedges on one panel's outer face: whether any two
+ * tenons' footprints meet, and whether any wedge hangs off the panel, where it
+ * would bear on one side of its tenon only. `outline` is the panel's outline
+ * as a convex polygon, counter-clockwise, in the same frame as the footprints.
+ */
+export function wedgeClearance(
+  tenons: FaceRect[][],
+  outline: [number, number][],
+): { clash: boolean; overhang: boolean } {
+  let clash = false;
+  for (let i = 0; i < tenons.length && !clash; i++) {
+    for (let j = i + 1; j < tenons.length && !clash; j++) {
+      clash = tenons[i]!.some((a) => tenons[j]!.some((b) => overlaps(a, b)));
+    }
+  }
+  const inside = ([x, y]: [number, number]) =>
+    outline.every(([x0, y0], k) => {
+      const [x1, y1] = outline[(k + 1) % outline.length]!;
+      return (x1 - x0) * (y - y0) - (y1 - y0) * (x - x0) >= -1e-9;
+    });
+  const overhang = tenons.some((fs) => fs.some((r) => !corners(r).every(inside)));
+  return { clash, overhang };
+}
