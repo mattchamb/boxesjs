@@ -84,12 +84,19 @@ settings arguments:
 | `lid_*` | `--Lid_*` |
 | `rt_*` | `--RoundedTriangleEdge_*` |
 | `st_*` | `--Stackable_*` |
+| `he_*` | `--HandleEdge_*` |
 | everything else | `--<key>` verbatim |
 
 If you expose a new settings family in the UI, add its prefix to that map or the
 golden run will pass an argument boxes.py rejects. That is three parallel edits:
 a `xx_*` block in `common.ts`, an entry in `toBoxesConfig`'s `edgeSettings`, and
-the prefix here. `st_*` was added this way for PaintStorage.
+the prefix here. `st_*` was added this way for PaintStorage, `he_*` for
+DividerTray.
+
+Settings a generator declares for itself (DividerTray's `SlotSettings`,
+`NotchSettings`, `DividerSettings`) are not edge families: boxes.py's
+`parseArgs` sets them straight onto the box as `Slot_depth` and so on. Those
+keys keep boxes.py's spelling and need no prefix entry.
 
 ### What to cover
 
@@ -417,12 +424,12 @@ this reason).
 
 ## 9. State of the port
 
-**Every generator on the list is done.** Eighteen generators are registered —
+**Every generator on the list is done.** Nineteen generators are registered —
 ABox, ClosedBox, OpenBox, CardBox, Console2, UniversalBox, RegularBox,
-BayonetBox, NotesHolder, TypeTray, TrayLayout, TrayInsert, CompartmentBox,
-DrillBox, DisplayShelf, StorageRack, StorageShelf, PaintStorage — plus the
-RectangularWall part. All of them match boxes.py coordinate-for-coordinate
-across 79 golden cases.
+BayonetBox, NotesHolder, TypeTray, TrayLayout, TrayInsert, DividerTray,
+CompartmentBox, DrillBox, DisplayShelf, StorageRack, StorageShelf, PaintStorage
+— plus the RectangularWall part. All of them match boxes.py
+coordinate-for-coordinate across 86 golden cases.
 
 boxes.py has 169 further generators. **53 of them need no new engine
 machinery at all** — every method, settings family and edge they touch is
@@ -453,6 +460,7 @@ section is a record of what the engine now has and where the sharp edges were.
 | `Settings.clone()` | `copy.deepcopy` | `src/lib/edges/settings.ts` — RegularBox |
 | `hexHolesRectangle`, `HexHolesSettings` | | `src/lib/hexholes.ts` — PaintStorage |
 | `CrossingFingerHoleEdge` | `edges.py:1138` | `src/lib/edges/crossingfingerhole.ts` — TrayLayout, its only user in the whole library |
+| `HandleEdge`, `HandleHoleEdge` (`y`, `Y`) | `edges.py:2611` | `src/lib/edges/handle.ts` — DividerTray's bottom-panel handle; not offered as a top edge |
 
 `_polygonWallExtend` was the awkward one and is worth knowing about if you touch
 it. It sizes the part before drawing it, so it walks the border list twice: once
@@ -522,6 +530,10 @@ depends on them:
   `addParts` registers all four. The side walls drawn afterwards get the
   narrowed edge. Our `edgeObjects` guards with `if (i < chars.length)`, which is
   the same semantics; `ref_compartmentbox_stackable` pins it.
+- **DividerTray's `Divider_play` is millimetres.** `DividerSettings` declares
+  `play` as relative to thickness, but the generator reads `self.Divider_play`,
+  which `parseArgs` set to the raw argument — the settings object is never
+  built. So `0.05` means 0.05 mm at any thickness. The port uses it as mm.
 - **StorageRack shadows `t`.** `render()` binds `t = self.thickness` and then
   rebinds `t = self.top_edge`; every later `t` is an edge character, not a
   number. The port uses `te`/`be`. It also passes `adjustSize(self.sh,
@@ -536,7 +548,7 @@ conditional are truthy. The float is discarded. The port passes a literal `true`
 ### Not ported, and nothing above needs it
 
 Flex / living hinge, `CabinetHinge`, `ChestHinge`, `Click`, `SlideOnLid`,
-`DoveTail`, `Grooved`, `HandleEdge`, gears, pulleys, servos, wall
+`DoveTail`, `Grooved`, gears, pulleys, servos, wall
 edges, QR codes, `fillHoles`, DXF and PostScript output.
 
 `polygonWalls` (plural) is not ported. `hexHolesRectangle` is; `hexHolesPlate`,

@@ -304,6 +304,68 @@ export const STACKABLE_PARAMS: ParamSpec[] = [
 ];
 
 /**
+ * Pull-handle options, for generators that put a `y`/`Y` handle edge on a
+ * panel. Distinct from HANDLE_PARAMS, which tune the triangular `t` handle.
+ */
+export const HANDLE_EDGE_PARAMS: ParamSpec[] = [
+  {
+    key: 'he_height',
+    kind: 'length',
+    label: 'Handle height',
+    unit: 'mm',
+    default: 20.0,
+    min: 5,
+    max: 100,
+    step: 1,
+    group: 'top',
+    help: 'How far the handle stands above the edge it is on.',
+  },
+  {
+    key: 'he_radius',
+    kind: 'length',
+    label: 'Handle corner radius',
+    unit: 'mm',
+    default: 10.0,
+    min: 0,
+    max: 50,
+    step: 1,
+    group: 'top',
+  },
+  {
+    key: 'he_hole_width',
+    kind: 'text',
+    label: 'Finger hole widths',
+    default: '40:40',
+    group: 'top',
+    help: 'One percentage per hole, as a share of the handle length. "40:40" cuts two; "0" leaves it solid.',
+  },
+  {
+    key: 'he_hole_height',
+    kind: 'number',
+    label: 'Finger hole height',
+    unit: '%',
+    default: 75,
+    min: 0,
+    max: 100,
+    step: 5,
+    group: 'top',
+    help: 'Share of the handle height the holes take up. Zero leaves it solid.',
+  },
+  {
+    key: 'he_outset',
+    kind: 'number',
+    label: 'Handle outset',
+    unit: '× thickness',
+    default: 1.0,
+    min: 0,
+    max: 5,
+    step: 0.5,
+    group: 'top',
+    help: 'Extends the handle past each end of its edge.',
+  },
+];
+
+/**
  * Lid options, for generators that support one. Spread into a generator's own
  * params rather than added globally, since most generators have no lid.
  */
@@ -418,6 +480,19 @@ export function toBoxesConfig(values: ParamValues): BoxesConfig {
     if (v !== undefined && typeof v !== 'boolean') handle[settingKey] = v;
   }
 
+  const handleEdge: Record<string, number | string> = {};
+  const handleEdgeMap: Record<string, string> = {
+    he_height: 'height',
+    he_radius: 'radius',
+    he_hole_width: 'hole_width',
+    he_hole_height: 'hole_height',
+    he_outset: 'outset',
+  };
+  for (const [formKey, settingKey] of Object.entries(handleEdgeMap)) {
+    const v = values[formKey];
+    if (v !== undefined && typeof v !== 'boolean') handleEdge[settingKey] = v;
+  }
+
   return {
     ...DEFAULT_CONFIG,
     thickness: num('thickness', 3.0),
@@ -434,6 +509,7 @@ export function toBoxesConfig(values: ParamValues): BoxesConfig {
       Lid: lid,
       RoundedTriangleEdge: handle,
       Stackable: stackable,
+      HandleEdge: handleEdge,
     },
   };
 }

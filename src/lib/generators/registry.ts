@@ -13,6 +13,7 @@ import { closedBox } from './closedbox';
 import { compartmentBox } from './compartmentbox';
 import { console2 } from './console2';
 import { displayShelf } from './displayshelf';
+import { dividerTray } from './dividertray';
 import { drillBox } from './drillbox';
 import { notesHolder } from './notesholder';
 import { openBox } from './openbox';
@@ -39,6 +40,7 @@ const DEFS: GeneratorDef[] = [
   typeTray,
   trayLayout,
   trayInsert,
+  dividerTray,
   compartmentBox,
   drillBox,
   displayShelf,

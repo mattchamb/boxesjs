@@ -17,6 +17,7 @@ import { FingerHoles, FingerJointSettings } from './edges/fingerjoint';
 import { StackableSettings } from './edges/stackable';
 import { GripSettings } from './edges/grip';
 import { RoundedTriangleEdgeSettings } from './edges/roundedtriangle';
+import { HandleEdgeSettings } from './edges/handle';
 import { MountingSettings } from './edges/mounting';
 import { Lid, LidSettings } from './lids';
 import { HexHolesSettings, type HexHoleSkip } from './hexholes';
@@ -194,6 +195,7 @@ export abstract class Boxes {
     new StackableSettings(t, true, this.settingsFor('Stackable')).edgeObjects(this, 'sSšŠ', true, fj);
     new RoundedTriangleEdgeSettings(t, true, this.settingsFor('RoundedTriangleEdge')).edgeObjects(this);
     new MountingSettings(t, true, this.settingsFor('Mounting')).edgeObjects(this);
+    new HandleEdgeSettings(t, true, this.settingsFor('HandleEdge')).edgeObjects(this);
 
     this.lidSettings = new LidSettings(t, true, this.settingsFor('Lid'));
     this.lidObj = new Lid(this, this.lidSettings);

@@ -1336,5 +1336,113 @@
       "thickness": 3,
       "burn": 0.1
     }
+  },
+  {
+    "name": "ref_dividertray",
+    "generator": "dividertray",
+    "pythonClass": "DividerTray",
+    "params": {
+      "sx": "50*3",
+      "sy": "50*3",
+      "h": 100,
+      "outside": false,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_dividertray_thick",
+    "generator": "dividertray",
+    "pythonClass": "DividerTray",
+    "params": {
+      "sx": "60*2",
+      "sy": "40*4",
+      "h": 80,
+      "outside": false,
+      "thickness": 6,
+      "burn": 0.05
+    }
+  },
+  {
+    "name": "ref_dividertray_outside_bottom",
+    "generator": "dividertray",
+    "pythonClass": "DividerTray",
+    "params": {
+      "sx": "70*2",
+      "sy": "60*3",
+      "h": 100,
+      "outside": true,
+      "thickness": 3,
+      "burn": 0.1,
+      "bottom": true,
+      "handle": true,
+      "lid_style": "overthetop"
+    }
+  },
+  {
+    "name": "ref_dividertray_angled",
+    "generator": "dividertray",
+    "pythonClass": "DividerTray",
+    "params": {
+      "sx": "80:40",
+      "sy": "0:40*3:0",
+      "h": 120,
+      "outside": false,
+      "thickness": 3,
+      "burn": 0.1,
+      "Slot_angle": 20,
+      "Slot_radius": 3,
+      "Divider_bottom_margin": 2,
+      "Divider_play": 0.1
+    }
+  },
+  {
+    "name": "ref_dividertray_onesided",
+    "generator": "dividertray",
+    "pythonClass": "DividerTray",
+    "params": {
+      "sx": "60*2",
+      "sy": "45*3",
+      "h": 100,
+      "outside": true,
+      "thickness": 3,
+      "burn": 0.1,
+      "left_wall": false,
+      "notches_in_wall": false,
+      "Slot_angle": 10
+    }
+  },
+  {
+    "name": "ref_dividertray_handle",
+    "generator": "dividertray",
+    "pythonClass": "DividerTray",
+    "params": {
+      "sx": "50*3",
+      "sy": "50*2",
+      "h": 100,
+      "outside": false,
+      "thickness": 3,
+      "burn": 0.1,
+      "bottom": true,
+      "handle": true,
+      "he_height": 25,
+      "he_hole_width": "30:30:30",
+      "he_outset": 0.5
+    }
+  },
+  {
+    "name": "ref_dividertray_labelled",
+    "generator": "dividertray",
+    "pythonClass": "DividerTray",
+    "params": {
+      "sx": "60*2",
+      "sy": "50*2",
+      "h": 100,
+      "outside": false,
+      "thickness": 3,
+      "burn": 0.1,
+      "bottom": true,
+      "labels": true
+    }
   }
 ]
