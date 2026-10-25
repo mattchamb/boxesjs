@@ -425,12 +425,12 @@ this reason).
 
 ## 9. State of the port
 
-**Every generator on the list is done.** Nineteen generators are registered —
+**Every generator on the list is done.** Twenty generators are registered —
 ABox, ClosedBox, OpenBox, CardBox, Console2, UniversalBox, RegularBox,
 BayonetBox, NotesHolder, TypeTray, TrayLayout, TrayInsert, DividerTray,
-CompartmentBox, DrillBox, DisplayShelf, StorageRack, StorageShelf, PaintStorage
-— plus the RectangularWall part. All of them match boxes.py
-coordinate-for-coordinate across 96 golden cases, regenerated against
+CompartmentBox, DrillBox, DisplayShelf, StorageRack, StorageShelf, PaintStorage,
+FrameLoom — plus the RectangularWall part. All of them match boxes.py
+coordinate-for-coordinate across 102 golden cases, regenerated against
 boxes.py master at `84e392b` (2026-10-22).
 
 When the boxes.py checkout moves, regenerate and diff before porting anything
@@ -512,7 +512,7 @@ state, not local values, and anything drawn afterwards sees the redefinition.
 
 ### Deliberate divergences
 
-Four, each recorded at the site. Note what they have in common: every one is a
+Five, each recorded at the site. Note what they have in common: every one is a
 configuration boxes.py itself refuses to render, so none of them can have a
 golden and the invariant tests are the only cover.
 
@@ -524,6 +524,10 @@ golden and the invariant tests are the only cover.
 - **CompartmentBox with a negative margin.** boxes.py raises `ValueError`. The
   sliders cannot produce one but a hand-edited permalink can, so the port warns
   on the field and clamps to zero rather than failing to render.
+- **FrameLoom with a warp spacing outside 2–5.5 mm.** boxes.py raises from
+  `frame()` and draws nothing. Only the frame's pins depend on it, so the port
+  warns on `warpspacing` and draws the other parts. The slider cannot reach
+  this; a hand-edited permalink can.
 - **TrayInsert's `x`/`y`.** boxes.py uses `-1` as the "not given" sentinel. The
   parameter default here is `0`, which behaves identically — anything at or
   below the compartment total is ignored either way — and reads better as the

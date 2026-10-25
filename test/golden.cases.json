@@ -1615,5 +1615,92 @@
       "bottom": true,
       "labels": true
     }
+  },
+  {
+    "name": "ref_frameloom",
+    "generator": "frameloom",
+    "pythonClass": "FrameLoom",
+    "params": {
+      "warpthreads": 38,
+      "warpspacing": 3.5,
+      "outerframelength": 235,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_frameloom_thick",
+    "generator": "frameloom",
+    "pythonClass": "FrameLoom",
+    "params": {
+      "warpthreads": 24,
+      "warpspacing": 5,
+      "outerframelength": 300,
+      "thickness": 6,
+      "burn": 0.05,
+      "combpins": 8,
+      "numshuttles": 3
+    }
+  },
+  {
+    "name": "ref_frameloom_patterns",
+    "generator": "frameloom",
+    "pythonClass": "FrameLoom",
+    "params": {
+      "warpthreads": 38,
+      "warpspacing": 3.5,
+      "outerframelength": 235,
+      "thickness": 3,
+      "burn": 0.1,
+      "include2by2heddle": true,
+      "includediamondheddle": true,
+      "includeheddle": false
+    }
+  },
+  {
+    "name": "ref_frameloom_narrow",
+    "generator": "frameloom",
+    "pythonClass": "FrameLoom",
+    "params": {
+      "warpthreads": 10,
+      "warpspacing": 2.2,
+      "outerframelength": 180,
+      "thickness": 3,
+      "burn": 0.1,
+      "include2by2heddle": true,
+      "includediamondheddle": true,
+      "combpins": 9
+    }
+  },
+  {
+    "name": "ref_frameloom_noframe",
+    "generator": "frameloom",
+    "pythonClass": "FrameLoom",
+    "params": {
+      "warpthreads": 38,
+      "warpspacing": 4,
+      "outerframelength": 235,
+      "thickness": 3,
+      "burn": 0.1,
+      "includeframe": false,
+      "includeneedles": false,
+      "combpins": 20
+    }
+  },
+  {
+    "name": "ref_frameloom_labelled",
+    "generator": "frameloom",
+    "pythonClass": "FrameLoom",
+    "params": {
+      "warpthreads": 38,
+      "warpspacing": 3.5,
+      "outerframelength": 235,
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true,
+      "numshuttles": 0,
+      "includeneedles": false,
+      "include2by2heddle": true
+    }
   }
 ]

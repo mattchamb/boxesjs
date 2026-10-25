@@ -15,6 +15,7 @@ import { console2 } from './console2';
 import { displayShelf } from './displayshelf';
 import { dividerTray } from './dividertray';
 import { drillBox } from './drillbox';
+import { frameLoom } from './frameloom';
 import { notesHolder } from './notesholder';
 import { openBox } from './openbox';
 import { paintStorage } from './paintstorage';
@@ -47,6 +48,7 @@ const DEFS: GeneratorDef[] = [
   storageRack,
   storageShelf,
   paintStorage,
+  frameLoom,
   rectangularWall,
 ];
 
