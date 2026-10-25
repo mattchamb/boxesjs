@@ -2736,5 +2736,107 @@
       "burn": 0.1,
       "labels": true
     }
+  },
+  {
+    "name": "ref_closedbox_bolted",
+    "generator": "closedbox",
+    "pythonClass": "ClosedBox",
+    "params": {
+      "x": 100,
+      "y": 100,
+      "h": 100,
+      "thickness": 3,
+      "assembly": "bolts"
+    },
+    "bedBoltSettings": [
+      3.2,
+      5.7,
+      2.6,
+      18,
+      12.4
+    ]
+  },
+  {
+    "name": "ref_closedbox_bolted_m4",
+    "generator": "closedbox",
+    "pythonClass": "ClosedBox",
+    "params": {
+      "x": 150,
+      "y": 120,
+      "h": 80,
+      "thickness": 4,
+      "assembly": "bolts",
+      "bolt_size": "M4",
+      "bolt_length": 25,
+      "labels": true
+    },
+    "bedBoltSettings": [
+      4.2,
+      7.2,
+      3.4,
+      22,
+      15.6
+    ]
+  },
+  {
+    "name": "ref_closedbox_bolted_upstream_default",
+    "generator": "closedbox",
+    "pythonClass": "ClosedBox",
+    "params": {
+      "x": 120,
+      "y": 90,
+      "h": 70,
+      "thickness": 3,
+      "outside": false,
+      "assembly": "bolts",
+      "bolt_size": "custom",
+      "bolt_d": 3,
+      "bolt_nut_width": 5.5,
+      "bolt_nut_height": 2,
+      "bolt_length": 22,
+      "bolt_clearance": 0
+    }
+  },
+  {
+    "name": "ref_universalbox_bolted",
+    "generator": "universalbox",
+    "pythonClass": "UniversalBox",
+    "params": {
+      "x": 100,
+      "y": 100,
+      "h": 100,
+      "thickness": 3,
+      "assembly": "bolts"
+    },
+    "bedBoltSettings": [
+      3.2,
+      5.7,
+      2.6,
+      18,
+      12.4
+    ]
+  },
+  {
+    "name": "ref_universalbox_bolted_corner",
+    "generator": "universalbox",
+    "pythonClass": "UniversalBox",
+    "params": {
+      "x": 140,
+      "y": 110,
+      "h": 60,
+      "thickness": 3,
+      "assembly": "bolts",
+      "bottom_edge": "F",
+      "vertical_edges": "finger holes",
+      "top_edge": "f",
+      "labels": true
+    },
+    "bedBoltSettings": [
+      3.2,
+      5.7,
+      2.6,
+      18,
+      12.4
+    ]
   }
 ]

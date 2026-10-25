@@ -172,7 +172,7 @@ describe('a W edge', () => {
 });
 
 describe('StorageShelf with wedged tenons', () => {
-  const base: ParamValues = { ...defaultsFor('storageshelf'), wedged: true, burn: 0, labels: false };
+  const base: ParamValues = { ...defaultsFor('storageshelf'), assembly: 'wedges', burn: 0, labels: false };
 
   const s = new WedgedTenonSettings(3, true, {});
   // Outside measurements: the recessed back costs its W edge's width.
@@ -227,14 +227,14 @@ describe('StorageShelf with wedged tenons', () => {
 
   // That the switched-off shelf is unchanged is the storageshelf goldens' job.
   it('draws no wedges when switched off', () => {
-    const off = buildDrawing('storageshelf', { ...base, wedged: false });
+    const off = buildDrawing('storageshelf', { ...base, assembly: 'glue' });
     expect(off.parts.some((p) => p.name === 'wedge')).toBe(false);
   });
 });
 
 describe('DisplayShelf with wedged tenons', () => {
   const s = new WedgedTenonSettings(3, true, {});
-  const base: ParamValues = { ...defaultsFor('displayshelf'), wedged: true, burn: 0, labels: false };
+  const base: ParamValues = { ...defaultsFor('displayshelf'), assembly: 'wedges', burn: 0, labels: false };
   const closed: ParamValues = { ...base, include_back: true, include_front: true, include_bottom: true };
   const isTenonHole = (h: Box) => {
     const dims = [h.maxX - h.minX, h.maxY - h.minY].sort((a, b) => a - b);
@@ -253,7 +253,7 @@ describe('DisplayShelf with wedged tenons', () => {
     const perFloor = wedgeSlots(floors[0]!);
     expect(perFloor).toBeGreaterThan(0);
     expect(d.parts.filter((p) => p.name === 'wedge')).toHaveLength(3 * perFloor);
-    const off = buildDrawing('displayshelf', { ...base, wedged: false });
+    const off = buildDrawing('displayshelf', { ...base, assembly: 'glue' });
     expect(off.parts.some((p) => p.name === 'wedge')).toBe(false);
   });
 
@@ -384,16 +384,16 @@ function wedgeAccounts(id: string, values: ParamValues) {
 
 describe('every wedged generator', () => {
   const cases: Array<[string, ParamValues]> = [
-    ['storageshelf', { wedged: true, x: 200, sh: '120*3', sy: '150*2' }],
-    ['displayshelf', { wedged: true }],
-    ['displayshelf', { wedged: true, slope_top: true, include_back: true, include_front: true, include_bottom: true }],
-    ['storagerack', { wedged: true }],
-    ['storagerack', { wedged: true, bottom_edge: 'F', top_edge: 'h' }],
-    ['storagerack', { wedged: true, bottom_edge: 'e', top_edge: 'e' }],
-    ['storagerack', { wedged: true, bottom_edge: 's', top_edge: 'Š' }],
-    ['paintstorage', { wedged: true, canheight: 100, additional_bottom: true, additional_top: true }],
-    ['wallhopper', { wedged: true }],
-    ['wallhopper', { wedged: true, sx: '60*3', label: false, walltype: 'skadis' }],
+    ['storageshelf', { assembly: 'wedges', x: 200, sh: '120*3', sy: '150*2' }],
+    ['displayshelf', { assembly: 'wedges' }],
+    ['displayshelf', { assembly: 'wedges', slope_top: true, include_back: true, include_front: true, include_bottom: true }],
+    ['storagerack', { assembly: 'wedges' }],
+    ['storagerack', { assembly: 'wedges', bottom_edge: 'F', top_edge: 'h' }],
+    ['storagerack', { assembly: 'wedges', bottom_edge: 'e', top_edge: 'e' }],
+    ['storagerack', { assembly: 'wedges', bottom_edge: 's', top_edge: 'Š' }],
+    ['paintstorage', { assembly: 'wedges', canheight: 100, additional_bottom: true, additional_top: true }],
+    ['wallhopper', { assembly: 'wedges' }],
+    ['wallhopper', { assembly: 'wedges', sx: '60*3', label: false, walltype: 'skadis' }],
   ];
   for (const [id, values] of cases) {
     it(`${id} ${JSON.stringify(values)}: a hole and a wedge for every tenon`, () => {
@@ -408,14 +408,14 @@ describe('every wedged generator', () => {
 
 describe('StorageRack with wedged tenons', () => {
   const s = new WedgedTenonSettings(3, true, {});
-  const base: ParamValues = { ...defaultsFor('storagerack'), wedged: true, burn: 0, labels: false };
+  const base: ParamValues = { ...defaultsFor('storagerack'), assembly: 'wedges', burn: 0, labels: false };
 
   it('recesses the back and keeps the outside depth', () => {
     const d = buildDrawing('storagerack', base);
     const side = d.parts.find((p) => p.name === 'left side')!;
     const out = outlineBox(side);
     // The open front's outset edge adds a thickness, wedged or not.
-    const plain = outlineBox(buildDrawing('storagerack', { ...base, wedged: false }).parts.find((p) => p.name === 'left side')!);
+    const plain = outlineBox(buildDrawing('storagerack', { ...base, assembly: 'glue' }).parts.find((p) => p.name === 'left side')!);
     expect(out.maxX - out.minX).toBeCloseTo(plain.maxX - plain.minX, 6);
     const backHoles = holes(side).filter((h) => isDims([h.maxX - h.minX, h.maxY - h.minY].sort((a, b) => a - b) as [number, number], 3 + s.slack, s.width + s.slack) && h.maxY - h.minY > h.maxX - h.minX);
     expect(backHoles.length).toBeGreaterThan(0);
@@ -438,17 +438,17 @@ describe('StorageRack with wedged tenons', () => {
   });
 
   it('draws no wedges when switched off', () => {
-    expect(buildDrawing('storagerack', { ...base, wedged: false }).parts.some((p) => p.name === 'wedge')).toBe(false);
+    expect(buildDrawing('storagerack', { ...base, assembly: 'glue' }).parts.some((p) => p.name === 'wedge')).toBe(false);
   });
 });
 
 describe('PaintStorage with wedged tenons', () => {
-  const base: ParamValues = { ...defaultsFor('paintstorage'), wedged: true, burn: 0, labels: false };
+  const base: ParamValues = { ...defaultsFor('paintstorage'), assembly: 'wedges', burn: 0, labels: false };
 
   it('wedges the main shelf only; the extra shelves fit dry', () => {
     const d = buildDrawing('paintstorage', { ...base, canheight: 100, additional_bottom: true, additional_top: true });
     const slots = (name: string) => d.parts.find((p) => p.name === name)!.paths.filter((x) => x.layer === 'inner').length;
-    expect(wedgeAccounts('paintstorage', { wedged: true, canheight: 100, additional_bottom: true, additional_top: true }).slots).toBeGreaterThan(0);
+    expect(wedgeAccounts('paintstorage', { assembly: 'wedges', canheight: 100, additional_bottom: true, additional_top: true }).slots).toBeGreaterThan(0);
     const top = d.parts.find((p) => p.name === 'Top')!;
     const floor = d.parts.find((p) => p.name === 'Floor')!;
     // The shelf's tenons stand out across its width; the dry shelf's fingers barely do.
@@ -465,18 +465,18 @@ describe('PaintStorage with wedged tenons', () => {
 
   it('says so when built as a drawer, which has nothing to wedge', () => {
     const r = renderPreview('paintstorage', { ...base, drawer: true });
-    expect(r.warnings.map((w) => w.param)).toEqual(['wedged']);
+    expect(r.warnings.map((w) => w.param)).toEqual(['assembly']);
     expect(buildDrawing('paintstorage', { ...base, drawer: true }).parts.some((p) => p.name === 'wedge')).toBe(false);
   });
 });
 
 describe('WallHopper with wedged tenons', () => {
   const s = new WedgedTenonSettings(3, true, {});
-  const base: ParamValues = { ...defaultsFor('wallhopper'), wedged: true, burn: 0, labels: false };
+  const base: ParamValues = { ...defaultsFor('wallhopper'), assembly: 'wedges', burn: 0, labels: false };
 
   it('keeps the hooks on the sides for every wall type', () => {
-    for (const walltype of ['plain', 'slatwall', 'dinrail', 'frenchcleat', 'skadis']) {
-      const plain = buildDrawing('wallhopper', { ...base, walltype, wedged: false }).parts.find((p) => p.name === 'left')!;
+    for (const walltype of ['plain', 'plain reinforced', 'slatwall', 'dinrail', 'french cleat', 'skadis']) {
+      const plain = buildDrawing('wallhopper', { ...base, walltype, assembly: 'glue' }).parts.find((p) => p.name === 'left')!;
       const wedged = buildDrawing('wallhopper', { ...base, walltype }).parts.find((p) => p.name === 'left')!;
       // The hooks reach behind the back edge by the same amount either way.
       const reach = (p: DrawingPart) => outlineBox(p).maxX - outlineBox(p).minX;

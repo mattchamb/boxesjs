@@ -73,6 +73,16 @@ read this one file:
 
 Then `./scripts/gen-golden.sh && npx vitest run test/golden.test.ts`.
 
+**Bolted cases.** boxes.py wires captive-nut bolts into ClosedBox,
+UniversalBox and a few others, then switches them off with `d2 = d3 = None`.
+A case with `"assembly": "bolts"` makes `gen-golden.py` load the generator's
+source with that line taken out, so the reference is boxes.py's own bolted
+geometry. The bolt itself goes in a top-level `"bedBoltSettings": [d, d_nut,
+h_nut, l, l1]`, which must be what `bedBoltSettingsFor` derives from the case's
+`bolt_*` params; leave it out to get boxes.py's built-in `(3, 5.5, 2, 20, 15)`.
+The script applies it after `open()`, which resets it. `assembly`, `bolts` and
+`bolt_*` are the port's own keys and never reach boxes.py's argument parser.
+
 ### Parameter name mapping
 
 `scripts/gen-golden.py` rewrites our flat form keys into boxes.py's prefixed
@@ -442,7 +452,7 @@ WallEdges, WallConsole, WallPlaneHolder, WallPliersHolder, WallStairs,
 WallChiselHolder, WallSlottedHolder, WallWrenchHolder, WallPinRow,
 WallTypeTray, WallStackableBin, WallCaliper, WallHook, WallRollHolder,
 WallDrillBox) — plus the RectangularWall part. All of them match boxes.py
-coordinate-for-coordinate across 189 golden cases, regenerated against
+coordinate-for-coordinate across 194 golden cases, regenerated against
 boxes.py master at `84e392b` (2026-10-22).
 
 When the boxes.py checkout moves, regenerate and diff before porting anything
@@ -495,6 +505,7 @@ section is a record of what the engine now has and where the sharp edges were.
 | `roundedPlate`, `_splitWall` | `__init__.py:2299` | `boxes.ts` — WallRollHolder. Without `holesMargin` (see below) |
 | DrillStand's part methods | `generators/drillstand.py` | `drillstand.ts`, as a mixin over `Boxes` (DrillStand) or `WallMountedBox` (WallDrillBox), standing in for boxes.py's multiple inheritance |
 | `HandleEdge`, `HandleHoleEdge` (`y`, `Y`) | `edges.py:2611` | `src/lib/edges/handle.ts` — DividerTray's bottom-panel handle; not offered as a top edge |
+| `Bolts`, `bedBoltHole`, `bedBolts` on `f`/`F`/`h`/`e` | `edges.py:122`, `__init__.py:994` | `BoltsPolicy` in `fingerjoint.ts`, `bedBoltHole` in `boxes.ts` — ClosedBox and UniversalBox with `assembly: 'bolts'`, as wired upstream (five bolted goldens); RectangularWall's `bolts`. Choosing the bolt is `src/lib/edges/bolts.ts` |
 
 `_polygonWallExtend` was the awkward one and is worth knowing about if you touch
 it. It sizes the part before drawing it, so it walks the border list twice: once
@@ -578,6 +589,41 @@ only. Add new generators to it. `test/generators.test.ts` has a
 `VARIANTS` list so options that are off at defaults still get the overlap and
 naming checks; add to it when you add an option like this. Keep these off by
 default, so every golden-covered default stays exactly boxes.py's.
+
+**Captive-nut bolts** are boxes.py's, but choosing them is not: upstream wires
+them in and switches them off, with no way to pick a bolt. `edges/bolts.ts`
+turns a metric size (ISO 4032 nuts), a bolt length and a clearance into
+boxes.py's five numbers: the slot runs a millimetre past the bolt's tip, which
+is its length less the other panel's thickness, and the nut sits with two
+millimetres of thread beyond it. A custom size of 3 / 5.5 / 2 mm, 22 mm long at
+3 mm with no clearance, gives boxes.py's own default exactly, and a golden pins
+that. Three checks warn where bolts cannot work: a bolt too short to reach
+through its nut, T-slots in one panel crossing (`slotsClash`, from
+`boltPositions`, which places bolts as the edges draw them), and a joint with no
+bolts at all. That last one is boxes.py's policy, not a bug: it never bolts the
+end gaps, nor the middle one for an even count, so at 7 mm a 100 mm ClosedBox
+bolts its depth edges and nothing else. UniversalBox bolts only its bottom, as
+upstream does, and only on an `F` or `h` bottom edge: a stackable edge draws its
+slots without the bolts, so upstream would cut T-slots its walls have no holes
+for. RectangularWall puts `bolts` on its `f`, `F` and `h` edges and not on
+plain ones, which would take them as a butt joint but are usually meant plain.
+
+**How the panel presents joints** is the port's too:
+
+- How a piece is held together is one choice, `assembly` (`assemblyParam` in
+  `common.ts`: glue, wedges, bolts), never a pair of switches that could both
+  be on. It leads its group, and each way's help shows only while it is
+  chosen. Links that carried the old `wedged` switch are read into it
+  (`RENAMED` in `permalink.ts`).
+- A joint family's tuning has a `section`, which the panel draws collapsed,
+  and a `showIf`, so it shows only when that joint is in use: wedges and bolts
+  with their `assembly` choice (or, on RectangularWall, an edge or `bolts`
+  that uses them), dovetails and stackable edges with an edge that uses them,
+  each wall system's settings with that system. Hidden fields keep their
+  values. A collapsed heading with a warning inside shows a mark, and a
+  warning on a hidden field goes to the general list.
+- `test/params.test.ts` pins which fields show, and that every warning the
+  generators raise in its cases lands on a field the panel shows.
 
 ### Wall edges
 
@@ -710,7 +756,10 @@ would go in `src/lib/parts.ts` beside it.
 - **Part labels matter.** Pass `label:` to every wall call. They become part
   names in the preview hover, group ids in the export, and T1 text in LightBurn.
 - Use `this.warn(message, paramKey)` for recoverable problems; the UI shows them
-  inline on the offending field.
+  inline on the offending field. That field must be shown when the warning
+  fires: check its `showIf`.
+- **A new way of holding parts together is an `assembly` choice**, through
+  `assemblyParam`, with its tuning in a `section` shown only while chosen.
 
 ## Commands
 

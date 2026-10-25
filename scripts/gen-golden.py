@@ -17,12 +17,37 @@ import importlib
 import json
 import os
 import sys
+import types
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
 BOXES_PY = Path(os.environ.get("BOXES_PY", Path.home() / "src" / "boxes"))
 CASES = ROOT / "test" / "golden.cases.json"
 OUT_DIR = ROOT / "test" / "golden"
+
+
+# What boxes.py writes to switch its bolts off, in every generator that wires
+# them up. Bolted cases run the generator with this line taken out.
+BOLTS_OFF = "d2 = d3 = None"
+
+# The port's own keys: how the bolts are chosen is the port's, so boxes.py
+# takes the result (`bedBoltSettings` on the case) rather than these.
+PORT_ONLY = ("assembly", "bolts", "bolt_")
+
+
+def load_generator(module_name: str, cls_name: str, bolted: bool):
+    module = importlib.import_module(f"boxes.generators.{module_name}")
+    if bolted:
+        source = Path(module.__file__).read_text()
+        if BOLTS_OFF not in source:
+            raise SystemExit(f"{module_name}: no '{BOLTS_OFF}' to take out; nothing to switch on")
+        patched = types.ModuleType(module.__name__)
+        patched.__file__ = module.__file__
+        patched.__package__ = module.__package__
+        # `pass` keeps the indentation of the line it replaces valid.
+        exec(compile(source.replace(BOLTS_OFF, "pass"), module.__file__, "exec"), patched.__dict__)
+        module = patched
+    return getattr(module, cls_name)
 
 
 def main() -> int:
@@ -37,11 +62,13 @@ def main() -> int:
     for case in cases:
         cls_name = case["pythonClass"]
         module_name = case.get("pythonModule", cls_name.lower())
-        module = importlib.import_module(f"boxes.generators.{module_name}")
-        box = getattr(module, cls_name)()
+        bolted = case["params"].get("assembly") == "bolts"
+        box = load_generator(module_name, cls_name, bolted)()
 
         argv: list[str] = []
         for key, value in case["params"].items():
+            if key.startswith(PORT_ONLY):
+                continue
             if isinstance(value, bool):
                 value = "1" if value else "0"
             # Our flat form keys map onto boxes.py's prefixed settings args.
@@ -79,6 +106,9 @@ def main() -> int:
         # rewrites all of these files and a real change hides in the churn.
         box.metadata["reproducible"] = True
         box.open()
+        # After open(), which resets it to boxes.py's own default.
+        if "bedBoltSettings" in case:
+            box.bedBoltSettings = tuple(case["bedBoltSettings"])
         box.render()
         data = box.close()
 

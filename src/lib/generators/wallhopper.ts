@@ -14,7 +14,7 @@
 import { type BoxesConfig, type Callback, type EdgeSpec } from '../boxes';
 import type { FingerJointSettings } from '../edges/fingerjoint';
 import { legTenonFootprints, walkBorders, wedgeClearance, type FaceRect } from '../edges/wedgedtenon';
-import { WALL_PARAMS, WEDGED_TENON_PARAMS } from '../params/common';
+import { WALL_PARAMS, WEDGED_TENON_PARAMS, assemblyParam } from '../params/common';
 import { parseSections } from '../params/sections';
 import type { ParamValues } from '../params/schema';
 import { WallMountedBox, type WallType } from '../walledges';
@@ -386,18 +386,10 @@ export const wallHopper: GeneratorDef = {
       help: 'If the slope and label together take the whole front, both are scaled back.',
     },
     ...WALL_PARAMS,
-    {
-      key: 'wedged',
-      kind: 'bool',
-      label: 'Wedged tenons',
-      default: false,
-      group: 'joints',
-      help:
-        'The bottom, slope, front and back pass through the sides and are locked by wedges outside ' +
-        'them, so the hopper can be taken apart again without glue; the label strip and dividers fit ' +
-        'dry. The back is recessed to make room for its wedges, so the sides carry the hooks alone: ' +
-        'on a plain wall, screw through a spacer behind the back. Not part of boxes.py.',
-    },
+    assemblyParam(
+      ['wedges'],
+      'The bottom, slope, front and back pass through the sides; the label strip and dividers fit dry. The back is recessed, so the sides carry the hooks: on a plain wall, screw through a spacer behind the back.',
+    ),
     ...WEDGED_TENON_PARAMS,
   ],
   create: (v: ParamValues, config: BoxesConfig) =>
@@ -412,7 +404,7 @@ export const wallHopper: GeneratorDef = {
         slopeAngle: n(v, 'slope_angle', 30),
         label: b(v, 'label', true),
         labelRatio: n(v, 'label_ratio', 0.2),
-        wedged: b(v, 'wedged', false),
+        wedged: s(v, 'assembly', 'glue') === 'wedges',
       },
       s(v, 'walltype', 'plain') as WallType,
       config,

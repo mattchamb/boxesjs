@@ -4,10 +4,17 @@
  * The box with the most options: any supported top edge, any bottom edge, and a
  * choice of how the corners join. Everything it draws comes from the shared
  * `_TopEdge` machinery in `src/lib/topedge.ts`.
+ *
+ * boxes.py wires captive-nut bolts into the bottom's joints and then switches
+ * them off (`d2 = d3 = None`); `assembly: 'bolts'` switches them back on. Only
+ * the bottom is bolted, as there: the walls pass their bolt policies for edge
+ * 0 alone.
  */
 import { Boxes, type BoxesConfig, type EdgeSpec } from '../boxes';
+import { checkBolts } from '../edges/bolts';
+import { BoltsPolicy, type FingerJointSettings } from '../edges/fingerjoint';
 import { Color } from '../geom/colors';
-import { HANDLE_PARAMS, LID_PARAMS } from '../params/common';
+import { BOLT_PARAMS, HANDLE_PARAMS, LID_PARAMS, assemblyParam } from '../params/common';
 import type { ParamValues } from '../params/schema';
 import { BOTTOM_EDGE_CHOICES, TOP_EDGE_CHOICES, drawLid, topEdges } from '../topedge';
 import { b, n, s, type GeneratorDef } from './types';
@@ -20,7 +27,15 @@ interface UniversalBoxOptions {
   bottomEdge: string;
   topEdge: string;
   verticalEdges: 'finger joints' | 'finger holes';
+  bolted: boolean;
 }
+
+/**
+ * Bottom edges that pass bolts on to their slots. A stackable edge draws its
+ * slots without them, so a bolted bottom would get T-slots its walls have no
+ * holes for; boxes.py would draw exactly that, had it left bolts on.
+ */
+const BOLTABLE_BOTTOMS = 'Fh';
 
 class UniversalBox extends Boxes {
   constructor(private o: UniversalBoxOptions, config: Partial<BoxesConfig>) {
@@ -63,6 +78,19 @@ class UniversalBox extends Boxes {
 
     const sideedge = this.o.verticalEdges === 'finger joints' ? 'F' : 'h';
 
+    let bolted = this.o.bolted;
+    if (bolted && !BOLTABLE_BOTTOMS.includes(this.o.bottomEdge)) {
+      bolted = false;
+      this.warn(
+        this.o.bottomEdge === 'e'
+          ? 'Only the bottom is bolted, and there is no bottom panel.'
+          : 'Only the bottom is bolted, and this bottom edge has no room for bolts. Use finger joints or finger holes.',
+        'assembly',
+      );
+    }
+    const d2 = bolted ? new BoltsPolicy(2) : null;
+    const d3 = bolted ? new BoltsPolicy(3) : null;
+
     if (this.o.outside) {
       x = this.adjustSize(x, sideedge, sideedge);
       y = this.adjustSize(y);
@@ -76,17 +104,19 @@ class UniversalBox extends Boxes {
     this.savedContext(() => {
       this.rectangularWall(x, h, [b, sideedge, tf, sideedge], {
         ignoreWidths,
+        bedBolts: [d2],
         move: 'up',
         label: 'Front',
       });
       this.rectangularWall(x, h, [b, sideedge, tb, sideedge], {
         ignoreWidths,
+        bedBolts: [d2],
         move: 'up',
         label: 'Back',
       });
 
       if (this.o.bottomEdge !== 'e') {
-        this.rectangularWall(x, y, 'ffff', { move: 'up', label: 'Bottom' });
+        this.rectangularWall(x, y, 'ffff', { bedBolts: [d2, d3, d2, d3], move: 'up', label: 'Bottom' });
       }
       if ('fF'.includes(this.o.topEdge)) {
         // Magenta, following boxes.py: this plate is a spacer rather than a
@@ -108,8 +138,20 @@ class UniversalBox extends Boxes {
       ignoreWidths,
       move: 'right only',
     });
-    this.rectangularWall(y, h, [b, 'f', tl, 'f'], { ignoreWidths, move: 'up', label: 'Left' });
-    this.rectangularWall(y, h, [b, 'f', tr, 'f'], { ignoreWidths, move: 'up', label: 'Right' });
+    this.rectangularWall(y, h, [b, 'f', tl, 'f'], { ignoreWidths, bedBolts: [d3], move: 'up', label: 'Left' });
+    this.rectangularWall(y, h, [b, 'f', tr, 'f'], { ignoreWidths, bedBolts: [d3], move: 'up', label: 'Right' });
+
+    if (bolted) {
+      checkBolts(
+        this,
+        this.getEdge('f').settings as FingerJointSettings,
+        [{ label: 'the bottom', w: x, h: y, edges: [d2, d3, d2, d3] }],
+        [
+          { label: 'the bottom’s width edges', length: x, policy: d2! },
+          { label: 'the bottom’s depth edges', length: y, policy: d3! },
+        ],
+      );
+    }
   }
 }
 
@@ -164,6 +206,8 @@ export const universalBox: GeneratorDef = {
     },
     ...HANDLE_PARAMS,
     ...LID_PARAMS,
+    assemblyParam(['bolts'], 'Only the bottom is bolted, so it comes off; the walls stay glued.'),
+    ...BOLT_PARAMS,
   ],
   create: (v: ParamValues, config: BoxesConfig) =>
     new UniversalBox(
@@ -177,6 +221,7 @@ export const universalBox: GeneratorDef = {
         verticalEdges: s(v, 'vertical_edges', 'finger joints') as
           | 'finger joints'
           | 'finger holes',
+        bolted: s(v, 'assembly', 'glue') === 'bolts',
       },
       config,
     ),

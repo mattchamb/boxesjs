@@ -7,7 +7,15 @@
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { LAYERS, LAYER_INFO, type Layer } from '../lib/geom/colors';
-import { GROUPS_OPEN_BY_DEFAULT, GROUP_LABELS, type ParamGroup, type ParamSpec, type ParamValue, type ParamValues } from '../lib/params/schema';
+import {
+  GROUPS_OPEN_BY_DEFAULT,
+  GROUP_LABELS,
+  visibleParams,
+  type ParamGroup,
+  type ParamSpec,
+  type ParamValue,
+  type ParamValues,
+} from '../lib/params/schema';
 import { paramsFor } from '../lib/generators/registry';
 import { RenderClient } from '../lib/render-client';
 import { decodeParams, encodeParams, permalinkFor } from '../lib/permalink';
@@ -35,9 +43,14 @@ interface Props {
 export default function App({ generator, name, summary, initial }: Props) {
   const specs = useMemo(() => paramsFor(generator), [generator]);
 
-  const [values, setValues] = useState<ParamValues>(() =>
-    decodeParams(generator, typeof location !== 'undefined' ? location.hash : ''),
-  );
+  // The server renders the defaults, and hydration keeps the server's
+  // attributes rather than patching them; so start from the same defaults and
+  // apply the link's values as an ordinary update below, or a shared link shows
+  // its geometry with the default choices still highlighted.
+  const [values, setValues] = useState<ParamValues>(() => decodeParams(generator, ''));
+  useEffect(() => {
+    if (location.hash) setValues(decodeParams(generator, location.hash));
+  }, [generator]);
   const [data, setData] = useState<PreviewData | null>(initial ?? null);
   const [error, setError] = useState<string | null>(null);
   const [visibleLayers, setVisibleLayers] = useState<Set<Layer>>(() => new Set(LAYERS));
@@ -145,9 +158,24 @@ export default function App({ generator, name, summary, initial }: Props) {
     }
   };
 
-  const grouped = useMemo(() => groupSpecs(specs), [specs]);
+  // Only what applies to the current choices; the rest keep their values.
+  const visible = useMemo(() => visibleParams(specs, values), [specs, values]);
+  const grouped = useMemo(() => groupSpecs(visible), [visible]);
+  const shown = useMemo(() => new Set(visible.map((s) => s.key)), [visible]);
   const warningFor = (key: string) => data?.warnings.find((w) => w.param === key)?.message;
-  const generalWarnings = data?.warnings.filter((w) => !w.param) ?? [];
+  // A warning on a hidden field would otherwise go unseen.
+  const generalWarnings = data?.warnings.filter((w) => !w.param || !shown.has(w.param)) ?? [];
+  const warned = (items: ParamSpec[]) => items.some((s) => warningFor(s.key));
+
+  const control = (spec: ParamSpec) => (
+    <Control
+      key={spec.key}
+      spec={spec}
+      value={values[spec.key] ?? spec.default}
+      onChange={(v) => setValue(spec.key, v)}
+      warning={warningFor(spec.key)}
+    />
+  );
 
   return (
     <div class="app">
@@ -157,9 +185,12 @@ export default function App({ generator, name, summary, initial }: Props) {
           <p>{summary}</p>
         </div>
 
-        {grouped.map(({ group, items }) => (
+        {grouped.map(({ group, items, sections }) => (
           <details class="group" key={group} open={GROUPS_OPEN_BY_DEFAULT.includes(group)}>
-            <summary>{GROUP_LABELS[group]}</summary>
+            <summary>
+              {GROUP_LABELS[group]}
+              {warned([...items, ...sections.flatMap((x) => x.items)]) && <WarnMark />}
+            </summary>
             <div class="group-body">
               {group === 'material' && material && (
                 <div class="field">
@@ -183,14 +214,15 @@ export default function App({ generator, name, summary, initial }: Props) {
                   </p>
                 </div>
               )}
-              {items.map((spec) => (
-                <Control
-                  key={spec.key}
-                  spec={spec}
-                  value={values[spec.key] ?? spec.default}
-                  onChange={(v) => setValue(spec.key, v)}
-                  warning={warningFor(spec.key)}
-                />
+              {items.map(control)}
+              {sections.map(({ section, items: sectionItems }) => (
+                <details class="subgroup" key={section}>
+                  <summary>
+                    {section}
+                    {warned(sectionItems) && <WarnMark />}
+                  </summary>
+                  <div class="subgroup-body">{sectionItems.map(control)}</div>
+                </details>
               ))}
             </div>
           </details>
@@ -280,6 +312,15 @@ export default function App({ generator, name, summary, initial }: Props) {
   );
 }
 
+/** Marks a collapsed heading whose fields carry a warning. */
+function WarnMark() {
+  return (
+    <span class="warn-mark" title="A setting in here has a warning" aria-label="has a warning">
+      !
+    </span>
+  );
+}
+
 function Stat({ k, v }: { k: string; v: string }) {
   return (
     <span class="stat">
@@ -291,12 +332,29 @@ function Stat({ k, v }: { k: string; v: string }) {
 
 const GROUP_ORDER: ParamGroup[] = ['dimensions', 'material', 'joints', 'top', 'advanced'];
 
-function groupSpecs(specs: ParamSpec[]): { group: ParamGroup; items: ParamSpec[] }[] {
-  const map = new Map<ParamGroup, ParamSpec[]>();
+interface Grouped {
+  group: ParamGroup;
+  /** The group's own fields: the decisions, shown first. */
+  items: ParamSpec[];
+  /** Tuning for one kind of joint each, collapsed, in first-seen order. */
+  sections: { section: string; items: ParamSpec[] }[];
+}
+
+function groupSpecs(specs: ParamSpec[]): Grouped[] {
+  const map = new Map<ParamGroup, Grouped>();
   for (const s of specs) {
-    const list = map.get(s.group) ?? [];
-    list.push(s);
-    map.set(s.group, list);
+    let g = map.get(s.group);
+    if (!g) map.set(s.group, (g = { group: s.group, items: [], sections: [] }));
+    if (!s.section) {
+      // How the piece is held together decides what the rest of the group
+      // means, so it leads whatever order the generator declared.
+      if (s.key === 'assembly') g.items.unshift(s);
+      else g.items.push(s);
+      continue;
+    }
+    let sec = g.sections.find((x) => x.section === s.section);
+    if (!sec) g.sections.push((sec = { section: s.section, items: [] }));
+    sec.items.push(s);
   }
-  return GROUP_ORDER.filter((g) => map.has(g)).map((g) => ({ group: g, items: map.get(g)! }));
+  return GROUP_ORDER.filter((g) => map.has(g)).map((g) => map.get(g)!);
 }

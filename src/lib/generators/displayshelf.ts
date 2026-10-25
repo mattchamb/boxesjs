@@ -15,7 +15,7 @@
  */
 import { Boxes, type BoxesConfig, type EdgeSpec, type PolygonBorder } from '../boxes';
 import { tenonFootprints, wedgeClearance, type FaceRect } from '../edges/wedgedtenon';
-import { WEDGED_TENON_PARAMS } from '../params/common';
+import { WEDGED_TENON_PARAMS, assemblyParam } from '../params/common';
 import { parseSections } from '../params/sections';
 import type { ParamValues } from '../params/schema';
 import { b, n, s, type GeneratorDef } from './types';
@@ -581,18 +581,10 @@ export const displayShelf: GeneratorDef = {
       group: 'dimensions',
       help: 'Cuts the top front corner off the sides so the shelf steps back as it rises.',
     },
-    {
-      key: 'wedged',
-      kind: 'bool',
-      label: 'Wedged tenons',
-      default: false,
-      group: 'joints',
-      help:
-        'The floors, and any back, front and bottom panels, pass through the sides and are locked ' +
-        'by wedges outside them, so the shelf can be taken apart again without glue. The front ' +
-        'lips and dividers fit dry and are held in place by the rest. Back and front panels are ' +
-        'recessed so their wedges stay within the depth. Not part of boxes.py.',
-    },
+    assemblyParam(
+      ['wedges'],
+      'The floors and any back, front and bottom pass through the sides, the back and front recessed so their wedges stay within the depth; the lips and dividers fit dry.',
+    ),
     ...WEDGED_TENON_PARAMS,
   ],
   create: (v: ParamValues, config: BoxesConfig) =>
@@ -612,7 +604,7 @@ export const displayShelf: GeneratorDef = {
         dividerWallHeight: n(v, 'divider_wall_height', 20),
         bottomDistance: n(v, 'bottom_distance', 0),
         topDistance: n(v, 'top_distance', 0),
-        wedged: b(v, 'wedged', false),
+        wedged: s(v, 'assembly', 'glue') === 'wedges',
       },
       config,
     ),

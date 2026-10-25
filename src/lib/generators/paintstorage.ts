@@ -16,9 +16,9 @@
 import { Boxes, type BoxesConfig } from '../boxes';
 import { StackableBaseEdge, type StackableSettings } from '../edges/stackable';
 import { tenonFootprints, wedgeClearance, type FaceRect } from '../edges/wedgedtenon';
-import { STACKABLE_PARAMS, WEDGED_TENON_PARAMS } from '../params/common';
+import { STACKABLE_PARAMS, WEDGED_TENON_PARAMS, assemblyParam } from '../params/common';
 import type { ParamValues } from '../params/schema';
-import { b, n, type GeneratorDef } from './types';
+import { b, n, s, type GeneratorDef } from './types';
 
 interface PaintStorageOptions {
   x: number;
@@ -209,7 +209,7 @@ class PaintStorage extends Boxes {
       }
     } else {
       if (this.o.wedged) {
-        this.warn('The drawer has no shelves to wedge; its joints stay as they are.', 'wedged');
+        this.warn('The drawer has no shelves to wedge; its joints stay as they are.', 'assembly');
       }
       this.rectangularWall(y, h, 'efff', { move: 'up', label: 'Drawer front' });
       this.rectangularWall(y, h, 'efff', { move: 'up', label: 'Drawer back' });
@@ -322,18 +322,10 @@ export const paintStorage: GeneratorDef = {
       help: 'Replaces the drilled shelf with plain sides, making a stackable open tray.',
     },
     ...STACKABLE_PARAMS,
-    {
-      key: 'wedged',
-      kind: 'bool',
-      label: 'Wedged tenons',
-      default: false,
-      group: 'joints',
-      help:
-        'The main shelf passes through the side walls and is locked by wedges outside them, so the ' +
-        'rack can be taken apart again without glue; the bottom and any extra shelves fit dry and ' +
-        'are held by it. The wedges need tall enough walls: with the default wedges, pots from about 75 mm. ' +
-        'Not part of boxes.py.',
-    },
+    assemblyParam(
+      ['wedges'],
+      'Only the main shelf is wedged; the bottom and extra shelves fit dry. The walls must be taller than the wedges: with the default wedges, pots from about 75 mm.',
+    ),
     ...WEDGED_TENON_PARAMS,
   ],
   create: (v: ParamValues, config: BoxesConfig) =>
@@ -348,7 +340,7 @@ export const paintStorage: GeneratorDef = {
         additionalTop: b(v, 'additional_top', false),
         hexpattern: b(v, 'hexpattern', false),
         drawer: b(v, 'drawer', false),
-        wedged: b(v, 'wedged', false),
+        wedged: s(v, 'assembly', 'glue') === 'wedges',
       },
       config,
     ),

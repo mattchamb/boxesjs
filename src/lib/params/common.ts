@@ -4,7 +4,16 @@
  * makes it different.
  */
 import { DEFAULT_CONFIG, type BoxesConfig } from '../boxes';
-import type { ParamSpec, ParamValues } from './schema';
+import { BOLT_SIZES, bedBoltSettingsFor } from '../edges/bolts';
+import { anyEdgeIn, type EnumParam, type ParamSpec, type ParamValues } from './schema';
+
+/**
+ * Puts a block of tuning into a collapsed section, shown only when it applies.
+ * A parameter's own condition, where it has one, is its whole condition.
+ */
+function inSection(section: string, showIf: ((v: ParamValues) => boolean) | null, specs: ParamSpec[]): ParamSpec[] {
+  return specs.map((spec) => ({ ...spec, section, ...(spec.showIf ? {} : showIf ? { showIf } : {}) }));
+}
 
 export const COMMON_PARAMS: ParamSpec[] = [
   {
@@ -42,6 +51,7 @@ export const COMMON_PARAMS: ParamSpec[] = [
     max: 10,
     step: 0.1,
     group: 'joints',
+    section: 'Finger joints',
     help: 'Width of each finger, in multiples of material thickness.',
   },
   {
@@ -54,6 +64,7 @@ export const COMMON_PARAMS: ParamSpec[] = [
     max: 10,
     step: 0.1,
     group: 'joints',
+    section: 'Finger joints',
     help: 'Gap between fingers, in multiples of material thickness.',
   },
   {
@@ -66,6 +77,7 @@ export const COMMON_PARAMS: ParamSpec[] = [
     max: 0.5,
     step: 0.01,
     group: 'joints',
+    section: 'Finger joints',
     help: 'Extra slack in the joints. Raise this if parts will not go together.',
   },
   {
@@ -78,6 +90,7 @@ export const COMMON_PARAMS: ParamSpec[] = [
     max: 5,
     step: 0.5,
     group: 'joints',
+    section: 'Finger joints',
     help: 'Space left at each end of a joint before the first finger.',
   },
   {
@@ -90,6 +103,7 @@ export const COMMON_PARAMS: ParamSpec[] = [
     max: 3,
     step: 0.05,
     group: 'joints',
+    section: 'Finger joints',
     help: 'Width of finger slots cut through a panel.',
   },
   {
@@ -102,6 +116,7 @@ export const COMMON_PARAMS: ParamSpec[] = [
     max: 5,
     step: 0.1,
     group: 'joints',
+    section: 'Finger joints',
     help: 'Material left between finger slots and the edge of the panel.',
   },
   {
@@ -116,6 +131,7 @@ export const COMMON_PARAMS: ParamSpec[] = [
       { value: 'snap', label: 'Snap' },
     ],
     group: 'joints',
+    section: 'Finger joints',
     help: 'Rectangular is the standard joint. The others grip without glue.',
   },
 
@@ -240,7 +256,7 @@ export const HANDLE_PARAMS: ParamSpec[] = [
  * built around stacking — where the foot height is subtracted from the usable
  * interior — needs these reachable.
  */
-export const STACKABLE_PARAMS: ParamSpec[] = [
+export const STACKABLE_PARAMS: ParamSpec[] = inSection('Stackable edges', (v) => anyEdgeIn(v, 'sSšŠ'), [
   {
     key: 'st_height',
     kind: 'number',
@@ -301,7 +317,7 @@ export const STACKABLE_PARAMS: ParamSpec[] = [
     group: 'joints',
     help: 'Adds a separate strip under each foot to spread the load. Zero leaves them off.',
   },
-];
+]);
 
 /**
  * Pull-handle options, for generators that put a `y`/`Y` handle edge on a
@@ -369,7 +385,23 @@ export const HANDLE_EDGE_PARAMS: ParamSpec[] = [
  * Wall-mounting options, for generators built on WallMountedBox. Only the
  * settings for the chosen wall system are read; the rest are ignored.
  */
-export const WALL_PARAMS: ParamSpec[] = [
+/** Each wall system's settings show only while that system is chosen. */
+const WALL_SYSTEMS: Record<string, string> = {
+  slatwall_: 'slatwall',
+  dinrail_: 'dinrail',
+  frenchcleat_: 'french cleat',
+  skadis_: 'skadis',
+};
+function forWallSystems(specs: ParamSpec[]): ParamSpec[] {
+  return specs.map((spec) => {
+    const prefix = Object.keys(WALL_SYSTEMS).find((p) => spec.key.startsWith(p));
+    if (!prefix) return spec;
+    const system = WALL_SYSTEMS[prefix]!;
+    return { ...spec, section: 'Wall system', showIf: (v: ParamValues) => v['walltype'] === system };
+  });
+}
+
+export const WALL_PARAMS: ParamSpec[] = forWallSystems([
   {
     key: 'walltype',
     kind: 'enum',
@@ -502,12 +534,12 @@ export const WALL_PARAMS: ParamSpec[] = [
     step: 0.1,
     group: 'joints',
   },
-];
+]);
 
 /**
  * Dovetail joint options, for generators that offer the `d`/`D` edges.
  */
-export const DOVETAIL_PARAMS: ParamSpec[] = [
+export const DOVETAIL_PARAMS: ParamSpec[] = inSection('Dovetails', (v) => anyEdgeIn(v, 'dD'), [
   {
     key: 'dt_angle',
     kind: 'number',
@@ -556,13 +588,13 @@ export const DOVETAIL_PARAMS: ParamSpec[] = [
     group: 'joints',
     help: 'Rounds all four corners of each tail. Never smaller than the kerf.',
   },
-];
+]);
 
 /**
  * Wedged through-tenon options (`w`/`W`). Not from boxes.py — see
  * edges/wedgedtenon.ts for the geometry these describe.
  */
-export const WEDGED_TENON_PARAMS: ParamSpec[] = [
+export const WEDGED_TENON_PARAMS: ParamSpec[] = inSection('Wedged tenons', (v) => ('assembly' in v ? v['assembly'] === 'wedges' : anyEdgeIn(v, 'wW')), [
   {
     key: 'wt_width',
     kind: 'number',
@@ -657,7 +689,122 @@ export const WEDGED_TENON_PARAMS: ParamSpec[] = [
     group: 'joints',
     help: 'How far the wedge slot starts inside the mating panel, so the wedge pulls the joint tight.',
   },
-];
+]);
+
+export type Assembly = 'glue' | 'wedges' | 'bolts';
+
+const ASSEMBLY_CHOICES: Record<Assembly, { label: string; help: string }> = {
+  glue: { label: 'Glue', help: 'Finger joints, glued for good.' },
+  wedges: {
+    label: 'Wedges',
+    help: 'Tenons pass through the sides and are locked by wedges outside them. Knock the wedges out to take it apart.',
+  },
+  bolts: {
+    label: 'Bolts',
+    help: 'Finger joints held by bolts into captive nuts. Comes apart with a screwdriver.',
+  },
+};
+
+/**
+ * How the piece is held together, as one choice: the ways are alternatives,
+ * and a pair of switches would let both be on. Offered with the ways a
+ * generator supports; glue is always the default, so every golden-covered
+ * default stays boxes.py's. `note` says what this generator does with the
+ * way it offers, and shows with that choice; it is the panel's first field
+ * in its group, ahead of the edge choices it overrides.
+ */
+export function assemblyParam(options: Assembly[], note = ''): EnumParam {
+  const ways: Assembly[] = ['glue', ...options];
+  return {
+    key: 'assembly',
+    kind: 'enum',
+    label: 'Held together with',
+    default: 'glue',
+    choices: ways.map((w) => ({
+      value: w,
+      label: ASSEMBLY_CHOICES[w].label,
+      help: [ASSEMBLY_CHOICES[w].help, w === 'glue' ? '' : note].filter(Boolean).join(' '),
+    })),
+    group: 'joints',
+  };
+}
+
+const boltsChosen = (v: ParamValues) => ('assembly' in v ? v['assembly'] === 'bolts' : Number(v['bolts']) > 0);
+const customBolt = (v: ParamValues) => boltsChosen(v) && v['bolt_size'] === 'custom';
+
+/** The bolt and its nut, for captive-nut joints. All in mm, not thicknesses. */
+export const BOLT_PARAMS: ParamSpec[] = inSection('Bolts and nuts', boltsChosen, [
+  {
+    key: 'bolt_size',
+    kind: 'enum',
+    label: 'Bolt size',
+    default: 'M3',
+    choices: [...Object.keys(BOLT_SIZES).map((k) => ({ value: k, label: k })), { value: 'custom', label: 'Custom' }],
+    group: 'joints',
+    help: 'Metric bolts with standard hex nuts. Custom takes the dimensions below.',
+  },
+  {
+    key: 'bolt_length',
+    kind: 'length',
+    label: 'Bolt length',
+    unit: 'mm',
+    default: 20,
+    min: 6,
+    max: 80,
+    step: 1,
+    group: 'joints',
+    help: 'Under the head. The slot and nut pocket are placed so the bolt passes through the nut with thread to spare.',
+  },
+  {
+    key: 'bolt_clearance',
+    kind: 'length',
+    label: 'Clearance',
+    unit: 'mm',
+    default: 0.2,
+    min: 0,
+    max: 1,
+    step: 0.05,
+    group: 'joints',
+    help: 'Added to the bolt slot and the nut pocket, so the bolt slides and the nut drops in.',
+  },
+  {
+    key: 'bolt_d',
+    kind: 'length',
+    label: 'Bolt diameter',
+    unit: 'mm',
+    default: 3,
+    min: 1,
+    max: 12,
+    step: 0.1,
+    group: 'joints',
+    showIf: customBolt,
+  },
+  {
+    key: 'bolt_nut_width',
+    kind: 'length',
+    label: 'Nut width',
+    unit: 'mm',
+    default: 5.5,
+    min: 2,
+    max: 20,
+    step: 0.1,
+    group: 'joints',
+    help: 'Across the flats.',
+    showIf: customBolt,
+  },
+  {
+    key: 'bolt_nut_height',
+    kind: 'length',
+    label: 'Nut thickness',
+    unit: 'mm',
+    default: 2.4,
+    min: 0.5,
+    max: 10,
+    step: 0.1,
+    group: 'joints',
+    showIf: customBolt,
+  },
+]);
 
 /**
  * Lid options, for generators that support one. Spread into a generator's own
@@ -801,6 +948,20 @@ export function toBoxesConfig(values: ParamValues): BoxesConfig {
   const num = (k: string, d: number) => (typeof values[k] === 'number' ? (values[k] as number) : d);
   const str = (k: string, d: string) => (typeof values[k] === 'string' ? (values[k] as string) : d);
 
+  // Bolts are sized in mm from the chosen bolt, not scaled with the material.
+  const bedBoltSettings =
+    'bolt_size' in values
+      ? bedBoltSettingsFor(
+          {
+            size: str('bolt_size', 'M3'),
+            length: num('bolt_length', 20),
+            clearance: num('bolt_clearance', 0.2),
+            custom: [num('bolt_d', 3), num('bolt_nut_width', 5.5), num('bolt_nut_height', 2.4)],
+          },
+          num('thickness', DEFAULT_CONFIG.thickness),
+        )
+      : undefined;
+
   const fingerJoint: Record<string, number | string> = {};
   const map: Record<string, string> = {
     fj_finger: 'finger',
@@ -923,6 +1084,7 @@ export function toBoxesConfig(values: ParamValues): BoxesConfig {
     tabs: num('tabs', 0),
     innerCorners: str('inner_corners', 'loop') as BoxesConfig['innerCorners'],
     debug: false,
+    ...(bedBoltSettings ? { bedBoltSettings } : {}),
     edgeSettings: {
       FingerJoint: fingerJoint,
       Lid: lid,

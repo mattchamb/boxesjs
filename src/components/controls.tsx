@@ -42,9 +42,19 @@ export function Control({ spec, value, onChange, warning }: ControlProps) {
       )}
 
       {spec.help && <p class="field-help">{spec.help}</p>}
+      {spec.kind === 'enum' && <ChoiceHelp spec={spec} value={String(value)} />}
       {warning && <p class="field-warning">{warning}</p>}
     </div>
   );
+}
+
+/**
+ * What the selected choice means. Explaining every choice at once buries the
+ * one that matters; the others explain themselves when picked.
+ */
+function ChoiceHelp({ spec, value }: { spec: Extract<ParamSpec, { kind: 'enum' }>; value: string }) {
+  const help = spec.choices.find((c) => c.value === value)?.help;
+  return help ? <p class="field-help">{help}</p> : null;
 }
 
 /* ------------------------------------------------------------------ number */

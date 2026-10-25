@@ -20,14 +20,29 @@ export const GROUP_LABELS: Record<ParamGroup, string> = {
   advanced: 'Advanced',
 };
 
-/** Groups shown expanded by default; the rest start collapsed. */
-export const GROUPS_OPEN_BY_DEFAULT: ParamGroup[] = ['dimensions', 'material'];
+/**
+ * Groups shown expanded by default; the rest start collapsed. Joints is open
+ * because how the piece is held together is a first decision, not tuning; the
+ * tuning inside it sits in collapsed sections.
+ */
+export const GROUPS_OPEN_BY_DEFAULT: ParamGroup[] = ['dimensions', 'material', 'joints'];
 
 interface ParamBase {
   key: string;
   label: string;
   help?: string;
   group: ParamGroup;
+  /**
+   * A collapsed sub-section of the group, for tuning that belongs to one kind
+   * of joint ("Finger joints", "Wedged tenons"). Unsectioned parameters come
+   * first, so the decisions sit above the fine print.
+   */
+  section?: string;
+  /**
+   * Whether the control applies to the current values. Hidden parameters keep
+   * their value, so switching back restores it; this only declutters.
+   */
+  showIf?: (values: ParamValues) => boolean;
 }
 
 export interface LengthParam extends ParamBase {
@@ -70,7 +85,8 @@ export interface EdgeParam extends ParamBase {
 
 export interface EnumParam extends ParamBase {
   kind: 'enum';
-  choices: { value: string; label: string }[];
+  /** `help` on a choice is shown while that choice is selected. */
+  choices: { value: string; label: string; help?: string }[];
   default: string;
 }
 
@@ -92,6 +108,21 @@ export type ParamSpec =
 
 export type ParamValue = number | string | boolean;
 export type ParamValues = Record<string, ParamValue>;
+
+/** The parameters that apply to `values`, in their declared order. */
+export function visibleParams(specs: ParamSpec[], values: ParamValues): ParamSpec[] {
+  return specs.filter((s) => !s.showIf || s.showIf(values));
+}
+
+/**
+ * Whether any edge choice in `values` is one of `chars`. A generator with no
+ * edge choices at all always uses whatever these settings tune, so that counts
+ * as yes.
+ */
+export function anyEdgeIn(values: ParamValues, chars: string): boolean {
+  const edges = Object.entries(values).filter(([k, v]) => k.endsWith('_edge') && typeof v === 'string');
+  return edges.length === 0 || edges.some(([, v]) => chars.includes(v as string));
+}
 
 export function defaultValues(specs: ParamSpec[]): ParamValues {
   const out: ParamValues = {};

@@ -14,7 +14,7 @@
  */
 import { Boxes, type BoxesConfig, type EdgeSpec } from '../boxes';
 import { tenonFootprints, wedgeClearance, type FaceRect } from '../edges/wedgedtenon';
-import { STACKABLE_PARAMS, WEDGED_TENON_PARAMS } from '../params/common';
+import { STACKABLE_PARAMS, WEDGED_TENON_PARAMS, assemblyParam } from '../params/common';
 import { parseSections } from '../params/sections';
 import type { ParamValues } from '../params/schema';
 import { b, n, s, type GeneratorDef } from './types';
@@ -303,17 +303,10 @@ export const storageRack: GeneratorDef = {
     // Shelf heights are scaled to fit the outside height, so the depth of the
     // stackable feet changes how much room the shelves actually get.
     ...STACKABLE_PARAMS,
-    {
-      key: 'wedged',
-      kind: 'bool',
-      label: 'Wedged tenons',
-      default: false,
-      group: 'joints',
-      help:
-        'The floors, rails and back pass through the side walls and are locked by wedges outside ' +
-        'them, so the rack can be taken apart again without glue. The back is recessed so its ' +
-        'wedges stay within the depth. A floor on a stackable edge stays finger-jointed. Not part of boxes.py.',
-    },
+    assemblyParam(
+      ['wedges'],
+      'The floors, rails and back pass through the sides, the back recessed; a floor on a stackable edge stays finger-jointed.',
+    ),
     ...WEDGED_TENON_PARAMS,
   ],
   create: (v: ParamValues, config: BoxesConfig) =>
@@ -326,7 +319,7 @@ export const storageRack: GeneratorDef = {
         outside: b(v, 'outside', true),
         bottomEdge: s(v, 'bottom_edge', 'h'),
         topEdge: s(v, 'top_edge', 'F'),
-        wedged: b(v, 'wedged', false),
+        wedged: s(v, 'assembly', 'glue') === 'wedges',
       },
       config,
     ),

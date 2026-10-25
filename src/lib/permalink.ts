@@ -24,6 +24,15 @@ export function encodeParams(generator: string, values: ParamValues): string {
   return parts.join('&');
 }
 
+/**
+ * Keys that links once carried and no longer do, read into what replaced
+ * them. The wedged-tenon switch became one choice of how the piece is held
+ * together.
+ */
+const RENAMED: Record<string, (raw: string) => [string, ParamValue] | null> = {
+  wedged: (raw) => (raw === '1' || raw === 'true' ? ['assembly', 'wedges'] : null),
+};
+
 /** Merge hash parameters over the generator's defaults. */
 export function decodeParams(generator: string, hash: string): ParamValues {
   const defaults = defaultsFor(generator);
@@ -38,7 +47,11 @@ export function decodeParams(generator: string, hash: string): ParamValues {
     if (idx < 0) continue;
     const key = decodeURIComponent(pair.slice(0, idx));
     const raw = decodeURIComponent(pair.slice(idx + 1));
-    if (!(key in defaults)) continue;
+    if (!(key in defaults)) {
+      const renamed = RENAMED[key]?.(raw);
+      if (renamed && renamed[0] in defaults) values[renamed[0]] = renamed[1];
+      continue;
+    }
 
     // The default's type tells us how to read the value back.
     const d = defaults[key];

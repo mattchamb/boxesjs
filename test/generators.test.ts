@@ -185,15 +185,20 @@ describe.each(generators.map((g) => g.meta))('$id', (meta) => {
  * especially one with no boxes.py golden behind it.
  */
 const VARIANTS: { id: string; name: string; values: ParamValues }[] = [
-  { id: 'storageshelf', name: 'wedged tenons', values: { wedged: true, x: 200, sh: '120*3', sy: '150*2' } },
+  { id: 'storageshelf', name: 'wedged tenons', values: { assembly: 'wedges', x: 200, sh: '120*3', sy: '150*2' } },
   { id: 'rectangularwall', name: 'wedged tenons', values: { bottom_edge: 'w', right_edge: 'W', top_edge: 'w', left_edge: 'W' } },
-  { id: 'displayshelf', name: 'wedged tenons', values: { wedged: true, include_back: true, include_front: true, include_bottom: true } },
-  { id: 'displayshelf', name: 'wedged tenons, sloped', values: { wedged: true, slope_top: true, include_back: true, include_front: true, include_bottom: true } },
-  { id: 'storagerack', name: 'wedged tenons', values: { wedged: true } },
-  { id: 'storagerack', name: 'wedged tenons, open bottom, stackable top', values: { wedged: true, bottom_edge: 'e', top_edge: 'S' } },
-  { id: 'paintstorage', name: 'wedged tenons', values: { wedged: true, canheight: 100, additional_bottom: true, additional_top: true } },
-  { id: 'wallhopper', name: 'wedged tenons', values: { wedged: true, sx: '60*2', walltype: 'frenchcleat' } },
-  { id: 'wallhopper', name: 'wedged tenons, no label', values: { wedged: true, sx: '60*3', label: false } },
+  { id: 'displayshelf', name: 'wedged tenons', values: { assembly: 'wedges', include_back: true, include_front: true, include_bottom: true } },
+  { id: 'displayshelf', name: 'wedged tenons, sloped', values: { assembly: 'wedges', slope_top: true, include_back: true, include_front: true, include_bottom: true } },
+  { id: 'storagerack', name: 'wedged tenons', values: { assembly: 'wedges' } },
+  { id: 'storagerack', name: 'wedged tenons, open bottom, stackable top', values: { assembly: 'wedges', bottom_edge: 'e', top_edge: 'S' } },
+  { id: 'paintstorage', name: 'wedged tenons', values: { assembly: 'wedges', canheight: 100, additional_bottom: true, additional_top: true } },
+  { id: 'wallhopper', name: 'wedged tenons', values: { assembly: 'wedges', sx: '60*2', walltype: 'french cleat' } },
+  { id: 'wallhopper', name: 'wedged tenons, no label', values: { assembly: 'wedges', sx: '60*3', label: false } },
+  { id: 'closedbox', name: 'bolted', values: { assembly: 'bolts' } },
+  { id: 'closedbox', name: 'bolted, M5', values: { assembly: 'bolts', bolt_size: 'M5', bolt_length: 25, x: 200, y: 160, h: 120 } },
+  { id: 'universalbox', name: 'bolted', values: { assembly: 'bolts' } },
+  { id: 'universalbox', name: 'bolted, finger-jointed bottom', values: { assembly: 'bolts', bottom_edge: 'F', vertical_edges: 'finger holes' } },
+  { id: 'rectangularwall', name: 'bolted', values: { bolts: 2, bottom_edge: 'f', right_edge: 'F', top_edge: 'h', left_edge: 'f' } },
 ];
 
 describe.each(VARIANTS)('$id with $name', ({ id, values }) => {

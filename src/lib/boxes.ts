@@ -64,6 +64,8 @@ export interface BoxesConfig {
   debug: boolean;
   /** Per-edge-family setting overrides, keyed by family name. */
   edgeSettings: Record<string, SettingsOverrides>;
+  /** `[d, d_nut, h_nut, l, l1]` for captive-nut bolts; see edges/bolts.ts. */
+  bedBoltSettings?: readonly number[];
 }
 
 export const DEFAULT_CONFIG: BoxesConfig = {
@@ -123,6 +125,7 @@ export abstract class Boxes {
     this.spacingFactor = c.spacingFactor;
     this.spacingExtra = c.spacingExtra;
     this.edgeSettings = c.edgeSettings ?? {};
+    if (c.bedBoltSettings) this.bedBoltSettings = c.bedBoltSettings;
   }
 
   abstract render(): void;

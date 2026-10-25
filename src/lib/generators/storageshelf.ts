@@ -13,7 +13,7 @@
 import { Boxes, type BoxesConfig, type EdgeSpec } from '../boxes';
 import { SlottedEdge } from '../edges/slots';
 import { tenonFootprints, wedgeClearance, type FaceRect } from '../edges/wedgedtenon';
-import { HANDLE_PARAMS, STACKABLE_PARAMS, WEDGED_TENON_PARAMS } from '../params/common';
+import { HANDLE_PARAMS, STACKABLE_PARAMS, WEDGED_TENON_PARAMS, assemblyParam } from '../params/common';
 import { parseSections } from '../params/sections';
 import type { ParamValues } from '../params/schema';
 import { BOTTOM_EDGE_CHOICES, drawLid, isClosedTop, topEdges, TOP_EDGE_CHOICES } from '../topedge';
@@ -343,17 +343,10 @@ export const storageShelf: GeneratorDef = {
     // Shelf heights are scaled to fit the outside height, so the depth of the
     // stackable feet changes how much room the shelves actually get.
     ...STACKABLE_PARAMS,
-    {
-      key: 'wedged',
-      kind: 'bool',
-      label: 'Wedged tenons on the shelves',
-      default: false,
-      group: 'joints',
-      help:
-        'The shelves and the back pass through the side walls and are locked by wedges outside ' +
-        'them, so the shelf can be taken apart again without glue. The back is recessed so its ' +
-        'wedges stay within the depth. Not part of boxes.py.',
-    },
+    assemblyParam(
+      ['wedges'],
+      'The shelves and the back pass through the sides, the back recessed so its wedges stay within the depth; the bottom stays finger-jointed.',
+    ),
     ...WEDGED_TENON_PARAMS,
   ],
   create: (v: ParamValues, config: BoxesConfig) =>
@@ -367,7 +360,7 @@ export const storageShelf: GeneratorDef = {
         topEdge: s(v, 'top_edge', 'e'),
         retainer: n(v, 'retainer', 0),
         retainerHoleEdge: b(v, 'retainer_hole_edge', false),
-        wedged: b(v, 'wedged', false),
+        wedged: s(v, 'assembly', 'glue') === 'wedges',
       },
       config,
     ),
