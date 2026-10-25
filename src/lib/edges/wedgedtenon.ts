@@ -292,11 +292,33 @@ function overlaps(a: FaceRect, b: FaceRect): boolean {
   return true;
 }
 
+/** Distance from (x, y) to the segment from a to b. */
+function segmentDistance(x: number, y: number, [ax, ay]: [number, number], [bx, by]: [number, number]): number {
+  const dx = bx - ax, dy = by - ay;
+  const l2 = dx * dx + dy * dy;
+  const u = l2 ? Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / l2)) : 0;
+  return Math.hypot(x - (ax + u * dx), y - (ay + u * dy));
+}
+
+/** Inside or on the outline; ray casting, so the outline need not be convex. */
+function insideOutline(x: number, y: number, outline: [number, number][]): boolean {
+  let inside = false;
+  for (let k = 0; k < outline.length; k++) {
+    const a = outline[k]!;
+    const b = outline[(k + 1) % outline.length]!;
+    if (segmentDistance(x, y, a, b) < 1e-6) return true;
+    if (a[1] > y !== b[1] > y && x < a[0] + ((y - a[1]) * (b[0] - a[0])) / (b[1] - a[1])) inside = !inside;
+  }
+  return inside;
+}
+
 /**
  * Checks the tenons and wedges on one panel's outer face: whether any two
  * tenons' footprints meet, and whether any wedge hangs off the panel, where it
  * would bear on one side of its tenon only. `outline` is the panel's outline
- * as a convex polygon, counter-clockwise, in the same frame as the footprints.
+ * as a polygon in the same frame as the footprints. Only the footprints'
+ * corners are tested against it, which is exact for a convex outline and
+ * close enough for the shallow notches the generators have.
  */
 export function wedgeClearance(
   tenons: FaceRect[][],
@@ -308,11 +330,59 @@ export function wedgeClearance(
       clash = tenons[i]!.some((a) => tenons[j]!.some((b) => overlaps(a, b)));
     }
   }
-  const inside = ([x, y]: [number, number]) =>
-    outline.every(([x0, y0], k) => {
-      const [x1, y1] = outline[(k + 1) % outline.length]!;
-      return (x1 - x0) * (y - y0) - (y1 - y0) * (x - x0) >= -1e-9;
-    });
-  const overhang = tenons.some((fs) => fs.some((r) => !corners(r).every(inside)));
+  const overhang = tenons.some((fs) => fs.some((r) => !corners(r).every(([x, y]) => insideOutline(x, y, outline))));
   return { clash, overhang };
+}
+
+/** Where a polygonWall leg starts, and which way it runs, in degrees. */
+export interface LegFrame {
+  x: number;
+  y: number;
+  angle: number;
+}
+
+/**
+ * Walks `polygonWall` borders as the turtle does, without drawing: the frame
+ * each leg starts in (where its callback runs, less the kerf), and the outline,
+ * with rounded corners as short chords. Legs run counter-clockwise from the
+ * origin, so a leg's inside is to its left.
+ */
+export function walkBorders(borders: Array<number | [number, number]>): { legs: LegFrame[]; outline: [number, number][] } {
+  const legs: LegFrame[] = [];
+  const outline: [number, number][] = [];
+  let x = 0, y = 0, heading = 0;
+  for (let i = 0; i < borders.length; i += 2) {
+    const l = borders[i] as number;
+    legs.push({ x, y, angle: heading });
+    outline.push([x, y]);
+    x += l * Math.cos((heading * Math.PI) / 180);
+    y += l * Math.sin((heading * Math.PI) / 180);
+    const turn = borders[i + 1] ?? 0;
+    const [a, r] = Array.isArray(turn) ? turn : [turn, 0];
+    if (r > 0) {
+      // The arc's centre is r to the side it turns towards; step round it.
+      const steps = 8;
+      const sg = Math.sign(a);
+      const cx = x - sg * r * Math.sin((heading * Math.PI) / 180);
+      const cy = y + sg * r * Math.cos((heading * Math.PI) / 180);
+      for (let k = 1; k <= steps; k++) {
+        const h = heading + (a * k) / steps;
+        outline.push([x, y]);
+        x = cx + sg * r * Math.sin((h * Math.PI) / 180);
+        y = cy - sg * r * Math.cos((h * Math.PI) / 180);
+      }
+    }
+    heading += a;
+  }
+  return { legs, outline };
+}
+
+/**
+ * The footprints of a line of tenon holes drawn by a leg's callback at
+ * `holeInset` in from the leg, as `W` would draw them.
+ */
+export function legTenonFootprints(s: WedgedTenonSettings, leg: LegFrame, length: number): FaceRect[][] {
+  const a = (leg.angle * Math.PI) / 180;
+  const d = s.holeInset();
+  return tenonFootprints(s, leg.x - d * Math.sin(a), leg.y + d * Math.cos(a), length, leg.angle);
 }

@@ -334,3 +334,182 @@ describe('DisplayShelf with wedged tenons', () => {
     }
   });
 });
+
+/**
+ * The two side lengths of a rectangular hole, shortest first, whatever its
+ * angle. A hole starts part-way along a side, so collinear runs are merged.
+ */
+function rectDims(path: DrawingPath): [number, number] | null {
+  const pts = path.cmds.filter((c) => 'x' in c).map((c) => [(c as { x: number }).x, (c as { y: number }).y] as const);
+  const segs: Array<[number, number]> = [];
+  for (let i = 1; i < pts.length; i++) {
+    const dx = pts[i]![0] - pts[i - 1]![0];
+    const dy = pts[i]![1] - pts[i - 1]![1];
+    if (Math.hypot(dx, dy) < 1e-6) continue;
+    const last = segs.at(-1);
+    if (last && Math.abs(last[0] * dy - last[1] * dx) < 1e-6 && last[0] * dx + last[1] * dy > 0) {
+      last[0] += dx;
+      last[1] += dy;
+    } else {
+      segs.push([dx, dy]);
+    }
+  }
+  const first = segs[0];
+  const last = segs.at(-1);
+  if (segs.length === 5 && first && last && Math.abs(first[0] * last[1] - first[1] * last[0]) < 1e-6) {
+    first[0] += last[0];
+    first[1] += last[1];
+    segs.pop();
+  }
+  if (segs.length !== 4) return null;
+  const lens = segs.map(([x, y]) => Math.hypot(x, y)).sort((a, b) => a - b);
+  return [lens[0]!, lens[3]!];
+}
+
+const isDims = (d: [number, number] | null, a: number, b: number) =>
+  d !== null && Math.abs(d[0] - a) < 1e-6 && Math.abs(d[1] - b) < 1e-6;
+
+/** Tenon holes, wedge slots and wedges in a drawing, at 3 mm and no kerf. */
+function wedgeAccounts(id: string, values: ParamValues) {
+  const s = new WedgedTenonSettings(3, true, {});
+  const d = buildDrawing(id, { ...defaultsFor(id), burn: 0, labels: false, ...values });
+  const inner = d.parts.flatMap((p) => p.paths.filter((x) => x.layer === 'inner').map(rectDims));
+  return {
+    drawing: d,
+    holes: inner.filter((x) => isDims(x, 3 + s.slack, s.width + s.slack)).length,
+    slots: inner.filter((x) => isDims(x, 3 + s.slack, s.gap + s.draw)).length,
+    wedges: d.parts.filter((p) => p.name === 'wedge').length,
+  };
+}
+
+describe('every wedged generator', () => {
+  const cases: Array<[string, ParamValues]> = [
+    ['storageshelf', { wedged: true, x: 200, sh: '120*3', sy: '150*2' }],
+    ['displayshelf', { wedged: true }],
+    ['displayshelf', { wedged: true, slope_top: true, include_back: true, include_front: true, include_bottom: true }],
+    ['storagerack', { wedged: true }],
+    ['storagerack', { wedged: true, bottom_edge: 'F', top_edge: 'h' }],
+    ['storagerack', { wedged: true, bottom_edge: 'e', top_edge: 'e' }],
+    ['storagerack', { wedged: true, bottom_edge: 's', top_edge: 'Š' }],
+    ['paintstorage', { wedged: true, canheight: 100, additional_bottom: true, additional_top: true }],
+    ['wallhopper', { wedged: true }],
+    ['wallhopper', { wedged: true, sx: '60*3', label: false, walltype: 'skadis' }],
+  ];
+  for (const [id, values] of cases) {
+    it(`${id} ${JSON.stringify(values)}: a hole and a wedge for every tenon`, () => {
+      const a = wedgeAccounts(id, values);
+      expect(a.slots).toBeGreaterThan(0);
+      expect(a.holes).toBe(a.slots);
+      expect(a.wedges).toBe(a.slots);
+      expect(a.drawing.warnings).toEqual([]);
+    });
+  }
+});
+
+describe('StorageRack with wedged tenons', () => {
+  const s = new WedgedTenonSettings(3, true, {});
+  const base: ParamValues = { ...defaultsFor('storagerack'), wedged: true, burn: 0, labels: false };
+
+  it('recesses the back and keeps the outside depth', () => {
+    const d = buildDrawing('storagerack', base);
+    const side = d.parts.find((p) => p.name === 'left side')!;
+    const out = outlineBox(side);
+    // The open front's outset edge adds a thickness, wedged or not.
+    const plain = outlineBox(buildDrawing('storagerack', { ...base, wedged: false }).parts.find((p) => p.name === 'left side')!);
+    expect(out.maxX - out.minX).toBeCloseTo(plain.maxX - plain.minX, 6);
+    const backHoles = holes(side).filter((h) => isDims([h.maxX - h.minX, h.maxY - h.minY].sort((a, b) => a - b) as [number, number], 3 + s.slack, s.width + s.slack) && h.maxY - h.minY > h.maxX - h.minX);
+    expect(backHoles.length).toBeGreaterThan(0);
+    for (const h of backHoles) {
+      const c = (h.minX + h.maxX) / 2;
+      expect(Math.min(c - out.minX, out.maxX - c)).toBeCloseTo(s.holeInset(), 6);
+    }
+  });
+
+  it('leaves a floor on a stackable edge finger-jointed', () => {
+    const d = buildDrawing('storagerack', { ...base, bottom_edge: 's' });
+    const floor = d.parts.find((p) => p.name === 'floor 1')!;
+    expect(floor.paths.filter((x) => x.layer === 'inner')).toHaveLength(0);
+    expect(outlineBox(floor).maxX - outlineBox(floor).minX).toBeLessThan(Number(base['depth']) + 3 * 3);
+  });
+
+  it('warns when the shelf levels are too close for their wedges', () => {
+    const r = renderPreview('storagerack', { ...base, sh: '15*5' });
+    expect(r.warnings.map((w) => w.param)).toContain('wt_pitch');
+  });
+
+  it('draws no wedges when switched off', () => {
+    expect(buildDrawing('storagerack', { ...base, wedged: false }).parts.some((p) => p.name === 'wedge')).toBe(false);
+  });
+});
+
+describe('PaintStorage with wedged tenons', () => {
+  const base: ParamValues = { ...defaultsFor('paintstorage'), wedged: true, burn: 0, labels: false };
+
+  it('wedges the main shelf only; the extra shelves fit dry', () => {
+    const d = buildDrawing('paintstorage', { ...base, canheight: 100, additional_bottom: true, additional_top: true });
+    const slots = (name: string) => d.parts.find((p) => p.name === name)!.paths.filter((x) => x.layer === 'inner').length;
+    expect(wedgeAccounts('paintstorage', { wedged: true, canheight: 100, additional_bottom: true, additional_top: true }).slots).toBeGreaterThan(0);
+    const top = d.parts.find((p) => p.name === 'Top')!;
+    const floor = d.parts.find((p) => p.name === 'Floor')!;
+    // The shelf's tenons stand out across its width; the dry shelf's fingers barely do.
+    const s = new WedgedTenonSettings(3, true, {});
+    const width = (p: DrawingPart) => outlineBox(p).maxX - outlineBox(p).minX;
+    expect(width(top) - width(floor)).toBeCloseTo(2 * (s.protrusion() - 3), 6);
+    expect(slots('Top')).toBeGreaterThan(slots('Floor'));
+  });
+
+  it('warns that small pots leave no room for the wedges, and not on tall ones', () => {
+    expect(renderPreview('paintstorage', base).warnings.map((w) => w.param)).toContain('wt_wedge_length');
+    expect(renderPreview('paintstorage', { ...base, canheight: 80 }).warnings).toEqual([]);
+  });
+
+  it('says so when built as a drawer, which has nothing to wedge', () => {
+    const r = renderPreview('paintstorage', { ...base, drawer: true });
+    expect(r.warnings.map((w) => w.param)).toEqual(['wedged']);
+    expect(buildDrawing('paintstorage', { ...base, drawer: true }).parts.some((p) => p.name === 'wedge')).toBe(false);
+  });
+});
+
+describe('WallHopper with wedged tenons', () => {
+  const s = new WedgedTenonSettings(3, true, {});
+  const base: ParamValues = { ...defaultsFor('wallhopper'), wedged: true, burn: 0, labels: false };
+
+  it('keeps the hooks on the sides for every wall type', () => {
+    for (const walltype of ['plain', 'slatwall', 'dinrail', 'frenchcleat', 'skadis']) {
+      const plain = buildDrawing('wallhopper', { ...base, walltype, wedged: false }).parts.find((p) => p.name === 'left')!;
+      const wedged = buildDrawing('wallhopper', { ...base, walltype }).parts.find((p) => p.name === 'left')!;
+      // The hooks reach behind the back edge by the same amount either way.
+      const reach = (p: DrawingPart) => outlineBox(p).maxX - outlineBox(p).minX;
+      expect(reach(wedged) - reach(plain), walltype).toBeCloseTo(2 * s.holeInset() + 3 - (3 + 3 + 3), 6);
+    }
+  });
+
+  it('sets every hole line in from the sides\' edges by the hole inset', () => {
+    // The back, bottom and front holes are axis-aligned; each lies holeInset
+    // from the outline edge it runs along.
+    const side = buildDrawing('wallhopper', base).parts.find((p) => p.name === 'left')!;
+    const out = outlineBox(side);
+    const aligned = holes(side).filter((h) => isDims([h.maxX - h.minX, h.maxY - h.minY].sort((a, b) => a - b) as [number, number], 3 + s.slack, s.width + s.slack));
+    const bottom = aligned.filter((h) => h.maxX - h.minX > h.maxY - h.minY);
+    expect(bottom.length).toBeGreaterThan(0);
+    for (const h of bottom) {
+      const c = (h.minY + h.maxY) / 2;
+      expect(Math.min(c - out.minY, out.maxY - c)).toBeCloseTo(s.holeInset(), 6);
+    }
+  });
+
+  it('keeps the label strip finger-jointed', () => {
+    const d = buildDrawing('wallhopper', base);
+    const label = d.parts.find((p) => p.name === 'label')!;
+    expect(label.paths.filter((x) => x.layer === 'inner')).toHaveLength(0);
+  });
+
+  it('survives the extremes of every tenon setting', () => {
+    for (const spec of paramsFor('wallhopper')) {
+      if (!spec.key.startsWith('wt_') || (spec.kind !== 'number' && spec.kind !== 'length')) continue;
+      for (const v of [spec.min, spec.max]) {
+        expect(() => renderPreview('wallhopper', { ...base, [spec.key]: v }), `${spec.key}=${v}`).not.toThrow();
+      }
+    }
+  });
+});

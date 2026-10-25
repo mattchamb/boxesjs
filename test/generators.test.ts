@@ -189,6 +189,11 @@ const VARIANTS: { id: string; name: string; values: ParamValues }[] = [
   { id: 'rectangularwall', name: 'wedged tenons', values: { bottom_edge: 'w', right_edge: 'W', top_edge: 'w', left_edge: 'W' } },
   { id: 'displayshelf', name: 'wedged tenons', values: { wedged: true, include_back: true, include_front: true, include_bottom: true } },
   { id: 'displayshelf', name: 'wedged tenons, sloped', values: { wedged: true, slope_top: true, include_back: true, include_front: true, include_bottom: true } },
+  { id: 'storagerack', name: 'wedged tenons', values: { wedged: true } },
+  { id: 'storagerack', name: 'wedged tenons, open bottom, stackable top', values: { wedged: true, bottom_edge: 'e', top_edge: 'S' } },
+  { id: 'paintstorage', name: 'wedged tenons', values: { wedged: true, canheight: 100, additional_bottom: true, additional_top: true } },
+  { id: 'wallhopper', name: 'wedged tenons', values: { wedged: true, sx: '60*2', walltype: 'frenchcleat' } },
+  { id: 'wallhopper', name: 'wedged tenons, no label', values: { wedged: true, sx: '60*3', label: false } },
 ];
 
 describe.each(VARIANTS)('$id with $name', ({ id, values }) => {

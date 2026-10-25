@@ -12,6 +12,7 @@
  */
 import { Boxes, type BoxesConfig, type EdgeSpec } from '../boxes';
 import { SlottedEdge } from '../edges/slots';
+import { tenonFootprints, wedgeClearance, type FaceRect } from '../edges/wedgedtenon';
 import { HANDLE_PARAMS, STACKABLE_PARAMS, WEDGED_TENON_PARAMS } from '../params/common';
 import { parseSections } from '../params/sections';
 import type { ParamValues } from '../params/schema';
@@ -101,33 +102,33 @@ class StorageShelf extends Boxes {
    * edge and the shelves' wedges stand vertically. On a shallow shelf the two
    * can meet; a part that cannot be assembled is worth a warning.
    */
-  private checkWedgeClearance(x: number, h: number): void {
+  private checkWedgeClearance(x: number, h: number, bottom: EdgeSpec, top: EdgeSpec): void {
     const s = this.wedgedTenonSettings;
     const t = this.thickness;
-    const half = s.wedge_length / 2;
-    const backCentre = s.holeInset();
-    // Measured from the side wall's back edge: the back's wedges span its
-    // hole line ± half a wedge; each shelf wedge is a wedge thickness wide,
-    // centred on its tenon, which is measured from the back's inner face.
-    const shelfStart = s.holeInset() + t / 2;
-    const backWedges = s.centres(h).map((z) => ({ x0: backCentre - half, x1: backCentre + half, z0: z - t / 2, z1: z + t / 2 }));
+    // From the back's inner face forwards, and up from the inner bottom.
+    const tenons: FaceRect[][] = tenonFootprints(s, -t / 2, 0, h, 90);
     let posh = -0.5 * t;
     for (const level of this.sh.slice(0, -1)) {
       posh += level + t;
-      for (const c of s.centres(x)) {
-        const sx0 = shelfStart + c - t / 2;
-        const sx1 = shelfStart + c + t / 2;
-        for (const b of backWedges) {
-          if (sx0 < b.x1 && b.x0 < sx1 && posh - half < b.z1 && b.z0 < posh + half) {
-            this.warn(
-              'A shelf wedge meets one of the back’s wedges outside the side walls. ' +
-                'Make the shelf deeper or change the tenon spacing.',
-              'wt_pitch',
-            );
-            return;
-          }
-        }
-      }
+      tenons.push(...tenonFootprints(s, 0, posh, x, 0));
+    }
+    const back = this.getEdge('W').startWidth();
+    const below = this.getEdge(bottom).startWidth();
+    const above = this.getEdge(top).startWidth();
+    const { clash, overhang } = wedgeClearance(tenons, [[-back, -below], [x, -below], [x, h + above], [-back, h + above]]);
+    if (clash) {
+      this.warn(
+        'A shelf wedge meets one of the back’s wedges outside the side walls. ' +
+          'Make the shelf deeper or change the tenon spacing.',
+        'wt_pitch',
+      );
+    }
+    if (overhang) {
+      this.warn(
+        'Some wedges hang off the edge of the side walls, so they bear on one side of their tenon only. ' +
+          'Make the shelves taller or shorten the wedges.',
+        'wt_wedge_length',
+      );
     }
   }
 
@@ -245,7 +246,7 @@ class StorageShelf extends Boxes {
     }
 
     if (this.o.wedged) {
-      this.checkWedgeClearance(x, h);
+      this.checkWedgeClearance(x, h, bottom, t1);
       // Two side edges per inner shelf, and the back's two side edges.
       this.wedges(this.tenonCount(x) * 2 * (this.sh.length - 1) + this.tenonCount(h) * 2, 'up');
     }

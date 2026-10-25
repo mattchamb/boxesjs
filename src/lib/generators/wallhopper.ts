@@ -6,10 +6,15 @@
  * into a dispensing tray at the bottom, like a cereal or screw dispenser. The
  * front of the tray can carry a label strip. Compartments side by side are
  * separated by dividers shaped like the sides.
+ *
+ * `wedged` is this port's own: the panels pass through the sides and are held
+ * by wedges outside them, so the hopper comes apart again. The back is
+ * recessed to make room for its wedges, so the hooks are left on the sides.
  */
-import { type BoxesConfig } from '../boxes';
+import { type BoxesConfig, type Callback, type EdgeSpec } from '../boxes';
 import type { FingerJointSettings } from '../edges/fingerjoint';
-import { WALL_PARAMS } from '../params/common';
+import { legTenonFootprints, walkBorders, wedgeClearance, type FaceRect } from '../edges/wedgedtenon';
+import { WALL_PARAMS, WEDGED_TENON_PARAMS } from '../params/common';
 import { parseSections } from '../params/sections';
 import type { ParamValues } from '../params/schema';
 import { WallMountedBox, type WallType } from '../walledges';
@@ -27,6 +32,8 @@ interface WallHopperOptions {
   slopeAngle: number;
   label: boolean;
   labelRatio: number;
+  /** This port's own option: panels held by wedged through-tenons. */
+  wedged: boolean;
 }
 
 class WallHopper extends WallMountedBox {
@@ -45,7 +52,9 @@ class WallHopper extends WallMountedBox {
       let posx = -0.5 * t;
       for (const x of sx.slice(0, -1)) {
         posx += x + t;
-        if (wall) this.wallHolesAt(posx, 0, l, 90);
+        // Wedged, the back is recessed and the dividers stop at it, so they
+        // meet plain slots rather than the hooks' wall holes.
+        if (wall && !this.o.wedged) this.wallHolesAt(posx, 0, l, 90);
         else this.fingerHolesAt(posx, 0, l, 90);
       }
     };
@@ -102,6 +111,11 @@ class WallHopper extends WallMountedBox {
     slopeToLabel.setValues(t, true, { angle: a });
     slopeToLabel.edgeObjects(this, 'kK');
 
+    if (o.wedged) {
+      this.renderWedged({ x, h, hd, df, dh, sl, tl, lr, a, bAngle });
+      return;
+    }
+
     this.savedContext(() => {
       this.rectangularWall(x, hd + df, 'ffGf', {
         callback: [this.wallCB(sx, hd + df)],
@@ -156,6 +170,116 @@ class WallHopper extends WallMountedBox {
     for (let i = 0; i < sx.length - 1; i++) {
       this.polygonWall(middleEdges, { edge: 'efffefebe', correctCorners: false, label: 'divider', move: 'up' });
     }
+  }
+
+  /**
+   * The hopper with wedged joints. Each panel's side edges are tenons through
+   * the sides where one fits, and fit dry where none does; the label strip is
+   * always too short. The sides keep boxes.py's outline, with the tenon holes'
+   * inset `ww` taking the place of the finger holes' `wh` and of the back's
+   * thickness. The bottom also passes through the back, as in DisplayShelf.
+   */
+  private renderWedged(g: {
+    x: number; h: number; hd: number; df: number; dh: number;
+    sl: number; tl: number; lr: number; a: number; bAngle: number;
+  }): void {
+    const { x, h, hd, df, dh, sl, tl, lr, a, bAngle } = g;
+    const o = this.o;
+    const sx = o.sx;
+    const s = this.wedgedTenonSettings;
+    const ww = this.getEdge('W').startWidth();
+    const inset = s.holeInset();
+    const fits = (l: number) => this.tenonCount(l) > 0;
+    const joint = (l: number): EdgeSpec => (fits(l) ? 'w' : 'f');
+
+    this.savedContext(() => {
+      this.rectangularWall(x, hd + df, ['w', joint(hd + df), 'G', joint(hd + df)], {
+        callback: [this.wallCB(sx, hd + df)],
+        label: 'bottom',
+        move: 'up',
+      });
+      if (o.label) {
+        this.rectangularWall(x, sl, ['g', joint(sl), 'k', joint(sl)], { callback: [this.wallCB(sx, sl)], label: 'slope', move: 'up' });
+        this.rectangularWall(x, dh * lr, 'Kfef', {
+          callback: [this.wallCB(sx, dh * lr)],
+          label: 'label',
+          move: 'up',
+        });
+      } else {
+        this.rectangularWall(x, sl, ['g', joint(sl), 'e', joint(sl)], { callback: [this.wallCB(sx, sl)], label: 'slope', move: 'up' });
+      }
+      this.rectangularWall(x, h, ['W', joint(h), 'e', joint(h)], { callback: [this.wallCB(sx, h, true)], label: 'back', move: 'up' });
+      this.rectangularWall(x, h - dh, ['e', joint(h - dh), 'e', joint(h - dh)], {
+        callback: [this.wallCB(sx, h - dh)],
+        label: 'front',
+        move: 'up',
+      });
+    });
+
+    // Not drawn; moves the side walls to the right of the panels above, which
+    // tenons make wider than boxes.py's step allows for.
+    const wider = this.getEdge('w').spacing() > this.getEdge('D').spacing() ? 'wwww' : 'DDDD';
+    this.rectangularWall(x, 3, wider, { label: 'movement', move: 'right only' });
+
+    const sideEdges: Array<number | [number, number]> = [
+      ww, 0,
+      hd + df, [90 - a, ww],
+      sl, [a, ww],
+      dh * lr, bAngle,
+      tl, -bAngle,
+      h - dh, 90,
+      hd + ww + ww, 90,
+      h, 0,
+      ww, 90,
+    ];
+    // Per leg, the panel that meets it and that panel's length there.
+    const panels: Array<[number, number]> = [[1, hd + df], [2, sl], [3, dh * lr], [5, h - dh], [7, h]];
+    const callbacks: Callback = Array.from({ length: 9 }, () => null);
+    for (const [leg, l] of panels) {
+      // The label strip is never wedged: see above.
+      const wedge = leg !== 3 && fits(l);
+      callbacks[leg] = () => {
+        if (wedge) this.tenonHolesAt(0, inset, l, 0);
+        else this.fingerHolesAt(0, inset, l, 0);
+      };
+    }
+    // The hooks stay on the sides' back edge (`a`), with no joint between them.
+    this.polygonWall(sideEdges, { edge: 'eeeeeeeae', callback: callbacks, correctCorners: false, label: 'left', move: 'up' });
+    this.polygonWall(sideEdges, { edge: 'eeeeeeeae', callback: callbacks, correctCorners: false, label: 'right', move: 'up mirror' });
+
+    // As the sides, but stopping at the recessed back, and jointed to the
+    // panels rather than slotted for them.
+    const middleEdges: Array<number | [number, number]> = [
+      hd + df, 90 - a,
+      sl, a,
+      dh * lr, bAngle,
+      tl, -bAngle,
+      h - dh, 90,
+      hd, 90,
+      h, 90,
+    ];
+    for (let i = 0; i < sx.length - 1; i++) {
+      this.polygonWall(middleEdges, { edge: 'fffefef', correctCorners: false, label: 'divider', move: 'up' });
+    }
+
+    const { legs, outline } = walkBorders(sideEdges);
+    const tenons: FaceRect[][] = panels
+      .filter(([leg, l]) => leg !== 3 && fits(l))
+      .flatMap(([leg, l]) => legTenonFootprints(s, legs[leg]!, l));
+    const { clash, overhang } = wedgeClearance(tenons, outline);
+    if (clash) {
+      this.warn(
+        'Some of the wedges outside the sides meet each other. Change the tenon spacing or the hopper’s proportions.',
+        'wt_pitch',
+      );
+    }
+    if (overhang) {
+      this.warn('Some wedges hang off the edge of the sides. Shorten the wedges.', 'wt_wedge_length');
+    }
+
+    let count = this.tenonCount(x) + 2 * this.tenonCount(hd + df) + 2 * this.tenonCount(h) + 2 * this.tenonCount(h - dh);
+    count += 2 * this.tenonCount(sl);
+    this.wedges(count, 'up');
   }
 }
 
@@ -262,6 +386,19 @@ export const wallHopper: GeneratorDef = {
       help: 'If the slope and label together take the whole front, both are scaled back.',
     },
     ...WALL_PARAMS,
+    {
+      key: 'wedged',
+      kind: 'bool',
+      label: 'Wedged tenons',
+      default: false,
+      group: 'joints',
+      help:
+        'The bottom, slope, front and back pass through the sides and are locked by wedges outside ' +
+        'them, so the hopper can be taken apart again without glue; the label strip and dividers fit ' +
+        'dry. The back is recessed to make room for its wedges, so the sides carry the hooks alone: ' +
+        'on a plain wall, screw through a spacer behind the back. Not part of boxes.py.',
+    },
+    ...WEDGED_TENON_PARAMS,
   ],
   create: (v: ParamValues, config: BoxesConfig) =>
     new WallHopper(
@@ -275,6 +412,7 @@ export const wallHopper: GeneratorDef = {
         slopeAngle: n(v, 'slope_angle', 30),
         label: b(v, 'label', true),
         labelRatio: n(v, 'label_ratio', 0.2),
+        wedged: b(v, 'wedged', false),
       },
       s(v, 'walltype', 'plain') as WallType,
       config,

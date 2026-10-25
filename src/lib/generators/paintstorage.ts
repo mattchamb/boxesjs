@@ -9,10 +9,14 @@
  * The `drawer` flag reuses the same parts as a stackable drawer instead: the
  * drilled shelf is replaced by two plain sides, and the walls gain finger
  * joints where they had plain outset edges.
+ *
+ * `wedged` is this port's own: the shelves pass through the side walls and
+ * are held by wedges outside them, so the rack comes apart again.
  */
 import { Boxes, type BoxesConfig } from '../boxes';
 import { StackableBaseEdge, type StackableSettings } from '../edges/stackable';
-import { STACKABLE_PARAMS } from '../params/common';
+import { tenonFootprints, wedgeClearance, type FaceRect } from '../edges/wedgedtenon';
+import { STACKABLE_PARAMS, WEDGED_TENON_PARAMS } from '../params/common';
 import type { ParamValues } from '../params/schema';
 import { b, n, type GeneratorDef } from './types';
 
@@ -26,6 +30,8 @@ interface PaintStorageOptions {
   additionalTop: boolean;
   hexpattern: boolean;
   drawer: boolean;
+  /** This port's own option: shelves held by wedged through-tenons. */
+  wedged: boolean;
 }
 
 class PaintStorage extends Boxes {
@@ -84,27 +90,68 @@ class PaintStorage extends Boxes {
     }
   }
 
-  /** Hand hole in each side wall, plus the slots the shelves pass through. */
-  private sidesCb(): void {
-    const { x, canheight } = this.o;
-    const t = this.thickness;
+  /** The hand hole in a side wall, as [x, y, dx, dy, r]. */
+  private handHole(): [number, number, number, number, number] {
+    const { x } = this.o;
     const h = this.wallHeight;
-
     const hx = 0.5 * x;
     const hh = h / 4.0;
-    const hr = Math.min(hx, hh) / 2;
+    return [h / 3, x / 2.0 - this.thickness, hh, hx, Math.min(hx, hh) / 2];
+  }
+
+  /** Where each shelf crosses a side wall, measured from the wall's top edge. */
+  private shelfPositions(): number[] {
+    const { canheight } = this.o;
+    const t = this.thickness;
+    const pos = [(canheight / 3) * 2 - t * 2];
+    if (this.o.additionalBottom) pos.push(canheight / 6 - t / 2);
+    if (this.o.additionalTop) pos.push(canheight - (canheight / 6 + t));
+    return pos;
+  }
+
+  /** Hand hole in each side wall, plus the slots the shelves pass through. */
+  private sidesCb(): void {
+    const { x } = this.o;
+    const t = this.thickness;
 
     // boxes.py repeats this call identically in both branches of `drawer`.
-    this.rectangularHole(h / 3, x / 2.0 - t, hh, hx, hr);
+    this.rectangularHole(...this.handHole());
 
     if (this.o.drawer) return;
 
-    this.fingerHolesAt((canheight / 3) * 2 - t * 2, -t, x, 90);
-    if (this.o.additionalBottom) {
-      this.fingerHolesAt(canheight / 6 - t / 2, -t, x, 90);
+    this.shelfPositions().forEach((pos, i) => {
+      if (this.o.wedged && i === 0) this.tenonHolesAt(pos, -t, x, 90);
+      else this.fingerHolesAt(pos, -t, x, 90);
+    });
+  }
+
+  /**
+   * The shelf's wedges stand across a side wall, which on small pots is not
+   * much taller than a wedge, just below the hand hole. A wedge over the hand
+   * hole, or off the wall, cannot do its job.
+   */
+  private checkWedgeClearance(): void {
+    const s = this.wedgedTenonSettings;
+    const t = this.thickness;
+    const { x } = this.o;
+    const h = this.wallHeight;
+    const [hx, hy, hdx, hdy] = this.handHole();
+    const groups: FaceRect[][] = tenonFootprints(s, this.shelfPositions()[0]!, -t, x, 90);
+    groups.push([{ cx: hx, cy: hy, angle: 0, along: hdx, across: hdy }]);
+    // The wall's own outline, between its stackable top and feet, and over
+    // the outset edges at front and back.
+    const { clash, overhang } = wedgeClearance(groups, [[0, -t], [h, -t], [h, x - t], [0, x - t]]);
+    if (clash) {
+      this.warn(
+        'The shelf’s wedges cross the hand hole. Make the pots taller or the wedges shorter.',
+        'wt_wedge_length',
+      );
     }
-    if (this.o.additionalTop) {
-      this.fingerHolesAt(canheight - (canheight / 6 + t), -t, x, 90);
+    if (overhang) {
+      this.warn(
+        'The shelf’s wedges hang off the side walls. Make the pots taller or the wedges shorter.',
+        'wt_wedge_length',
+      );
     }
   }
 
@@ -145,14 +192,25 @@ class PaintStorage extends Boxes {
 
     if (!drawer) {
       const holes = [() => this.paintholes()];
-      this.rectangularWall(y, x, 'efef', { callback: holes, move: 'up', label: 'Top' });
+      // Wedged, the main shelf passes through the sides. The extra shelves
+      // sit at fixed fractions of the wall, where their wedges would cross the
+      // hand hole or the main shelf's; they, and the bottom in the feet, fit
+      // dry and are held by the wedged sides.
+      this.rectangularWall(y, x, this.o.wedged ? 'ewew' : 'efef', { callback: holes, move: 'up', label: 'Top' });
       if (this.o.additionalBottom) {
         this.rectangularWall(y, x, 'efef', { callback: holes, move: 'up', label: 'Floor' });
       }
       if (this.o.additionalTop) {
         this.rectangularWall(y, x, 'efef', { callback: holes, move: 'up', label: 'Shelf' });
       }
+      if (this.o.wedged) {
+        this.checkWedgeClearance();
+        this.wedges(2 * this.tenonCount(x), 'up');
+      }
     } else {
+      if (this.o.wedged) {
+        this.warn('The drawer has no shelves to wedge; its joints stay as they are.', 'wedged');
+      }
       this.rectangularWall(y, h, 'efff', { move: 'up', label: 'Drawer front' });
       this.rectangularWall(y, h, 'efff', { move: 'up', label: 'Drawer back' });
     }
@@ -264,6 +322,19 @@ export const paintStorage: GeneratorDef = {
       help: 'Replaces the drilled shelf with plain sides, making a stackable open tray.',
     },
     ...STACKABLE_PARAMS,
+    {
+      key: 'wedged',
+      kind: 'bool',
+      label: 'Wedged tenons',
+      default: false,
+      group: 'joints',
+      help:
+        'The main shelf passes through the side walls and is locked by wedges outside them, so the ' +
+        'rack can be taken apart again without glue; the bottom and any extra shelves fit dry and ' +
+        'are held by it. The wedges need tall enough walls: with the default wedges, pots from about 75 mm. ' +
+        'Not part of boxes.py.',
+    },
+    ...WEDGED_TENON_PARAMS,
   ],
   create: (v: ParamValues, config: BoxesConfig) =>
     new PaintStorage(
@@ -277,6 +348,7 @@ export const paintStorage: GeneratorDef = {
         additionalTop: b(v, 'additional_top', false),
         hexpattern: b(v, 'hexpattern', false),
         drawer: b(v, 'drawer', false),
+        wedged: b(v, 'wedged', false),
       },
       config,
     ),

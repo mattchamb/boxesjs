@@ -510,7 +510,8 @@ inside the box — callers depend on that.
 Everything else in this document is a port. **Wedged through-tenons** (`w`,
 `W`, `src/lib/edges/wedgedtenon.ts`) are not: boxes.py has no such joint, and
 `w`/`W` are unused there, so the characters cannot clash with a future port.
-They are offered on RectangularWall (any side), DisplayShelf (below) and StorageShelf (`wedged`:
+They are offered on RectangularWall (any side), on DisplayShelf, StorageRack,
+PaintStorage and WallHopper (below), and on StorageShelf (`wedged`:
 the shelves and the back pass through the side walls, so nothing needs glue;
 the bottom stays finger-jointed because a wedge hangs half its length below
 its tenon, which under the bottom panel is the floor, and is captured once the
@@ -520,7 +521,7 @@ a wall; the back is recessed by that much. That makes the side walls wider
 than the `ffff` panel boxes.py's layout steps over, so the wedged shelf steps
 over `fWff` instead. Outside each side wall the back's wedges lie flat and the
 shelves' stand up, and on a shallow shelf they can meet; StorageShelf warns
-on `wt_pitch` when they do. The settings are `wt_*`, mapped to a `WedgedTenon` family that
+on `wt_pitch` when they do, through the general check described below. The settings are `wt_*`, mapped to a `WedgedTenon` family that
 `gen-golden.py` never sees.
 
 DisplayShelf (`wedged`) wedges the floors and any back, front and bottom
@@ -537,13 +538,43 @@ leg so its hole edge spans exactly the bottom panel. Its clearance check is
 the general one, `tenonFootprints` and `wedgeClearance` in `wedgedtenon.ts`: it
 lays every tenon end and wedge on the side's outer face, in the frame the holes
 are drawn in, and warns on `wt_pitch` when two meet and on `wt_wedge_length`
-when one hangs off the side. Use those for the next generator rather than
-another special case like StorageShelf's.
+when one hangs off the side. Every wedged generator uses it.
+
+The rule across them: wedge what holds the sides apart, and where a part's
+wedges cannot fit, leave its fingers in their slots, fitted dry. A dry part
+is trapped once the wedged parts clamp the sides to their shoulders.
+
+- **StorageRack** wedges every level (rails and inner floors alike), the back,
+  and a floor on an `h` or `F` top or bottom edge, which becomes `W`. A
+  stackable edge carries its floor's slots in its own profile, so that floor
+  stays finger-jointed. The rails meet the back's slots dry. A floor's tenoned
+  back stands wider than the side walls can, depending on the settings, so the
+  column step takes whichever of `W` and `w` is wider.
+- **PaintStorage** wedges the main shelf only. Its walls are short, and the
+  extra shelves sit at fixed fractions of them, where their wedges cross the
+  hand hole or the main shelf's wedges at any pot height. They and the bottom
+  fit dry. The hand hole is part of the clearance check; with the default
+  wedges, pots under about 74 mm warn. A drawer has nothing to wedge, and
+  says so on `wedged`.
+- **WallHopper** wedges the bottom, slope, front and back. The label strip is
+  never tall enough for a tenon, and any panel that gets no tenon fits dry.
+  The back is recessed, so it cannot carry the hooks: the sides' back edge
+  becomes the plain wall edge `a`, keeping the hooks between straight runs,
+  and the dividers stop at the back's inner face with plain fingers. The side
+  outline is boxes.py's with the tenon inset in place of the finger-hole
+  edge's width and the back's thickness; it closes for any inset. Its hole
+  lines are drawn from the legs' callbacks rather than as `W` edges, since one
+  line (the label's) is finger slots at the same inset. `walkBorders` walks
+  the legs, rounded corners included, so the clearance check can place each
+  line on the side's face.
 
 With no golden to compare against, the geometry is pinned by
 `test/wedgedtenon.test.ts`: tenons and holes line up, the slot starts `draw`
 inside the mating panel and leaves `end_margin` at the tip (also under kerf),
-each wedge is exactly `gap` wide at its middle. `test/generators.test.ts` has a
+each wedge is exactly `gap` wide at its middle. One test runs over every
+wedged generator: tenon holes, wedge slots and wedges must come out equal in
+number, with no warnings, which catches a part wedged on one side of a joint
+only. Add new generators to it. `test/generators.test.ts` has a
 `VARIANTS` list so options that are off at defaults still get the overlap and
 naming checks; add to it when you add an option like this. Keep these off by
 default, so every golden-covered default stays exactly boxes.py's.

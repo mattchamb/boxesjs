@@ -8,9 +8,13 @@
  * drawer slides in on its own bottom and the rack stays light.
  *
  * The back wall ties the sides together and takes the slots for those rails.
+ *
+ * `wedged` is this port's own: the floors, rails and back pass through the
+ * sides and are held by wedges outside them, so the rack comes apart again.
  */
 import { Boxes, type BoxesConfig, type EdgeSpec } from '../boxes';
-import { STACKABLE_PARAMS } from '../params/common';
+import { tenonFootprints, wedgeClearance, type FaceRect } from '../edges/wedgedtenon';
+import { STACKABLE_PARAMS, WEDGED_TENON_PARAMS } from '../params/common';
 import { parseSections } from '../params/sections';
 import type { ParamValues } from '../params/schema';
 import { b, n, s, type GeneratorDef } from './types';
@@ -23,7 +27,16 @@ interface StorageRackOptions {
   outside: boolean;
   bottomEdge: string;
   topEdge: string;
+  /** This port's own option: floors, rails and back held by wedged through-tenons. */
+  wedged: boolean;
 }
+
+/**
+ * A top or bottom edge whose floor can be wedged: a finger-hole edge or a
+ * corner joint becomes a line of tenon holes. A stackable edge carries its
+ * floor's slots inside its own profile, so that floor stays finger-jointed.
+ */
+const wedgeable = (e: string) => e === 'h' || e === 'F';
 
 class StorageRack extends Boxes {
   /** Mutated by the `outside` adjustment in render(), as boxes.py does. */
@@ -46,7 +59,62 @@ class StorageRack extends Boxes {
     let posh = -0.5 * this.thickness;
     for (const h of this.sh.slice(0, -1)) {
       posh += h + this.thickness;
-      this.fingerHolesAt(posh, 0, this.depth);
+      if (this.o.wedged) this.tenonHolesAt(posh, 0, this.depth);
+      else this.fingerHolesAt(posh, 0, this.depth);
+    }
+  }
+
+  /** A top or bottom edge as drawn: under `wedged`, a line of tenon holes where it can be. */
+  private outerEdge(e: string): string {
+    return this.o.wedged && wedgeable(e) ? 'W' : e;
+  }
+
+  /**
+   * A full floor's edges. One that closes the rack at a wedged top or bottom
+   * is wedged to the back as well; one on an inner level meets the back's
+   * slots, fitted dry, as the rails do.
+   */
+  private floorEdges(e: string): EdgeSpec[] {
+    if (!this.o.wedged) return Array.from('fffE');
+    if (e === 'e') return ['w', 'f', 'w', 'E'];
+    if (wedgeable(e)) return ['w', 'w', 'w', 'E'];
+    return Array.from('fffE');
+  }
+
+  /**
+   * Outside each side wall lie the wedges of every level, of the back near
+   * the back edge, and of any wedged top and bottom floors. Where they meet,
+   * or hang off the side, the rack cannot be assembled as drawn.
+   */
+  private checkWedgeClearance(h: number, d: number, be: string, te: string): void {
+    const s = this.wedgedTenonSettings;
+    const t = this.thickness;
+    // From the back's inner face forwards, and up from the inner bottom.
+    const tenons: FaceRect[][] = tenonFootprints(s, -t / 2, 0, h, 90);
+    let posh = -0.5 * t;
+    for (const level of this.sh.slice(0, -1)) {
+      posh += level + t;
+      tenons.push(...tenonFootprints(s, 0, posh, d, 0));
+    }
+    if (be === 'W') tenons.push(...tenonFootprints(s, 0, -t / 2, d, 0));
+    if (te === 'W') tenons.push(...tenonFootprints(s, 0, h + t / 2, d, 0));
+
+    const back = this.getEdge('W').startWidth();
+    const below = this.getEdge(be).startWidth();
+    const above = this.getEdge(te).startWidth();
+    const { clash, overhang } = wedgeClearance(tenons, [[-back, -below], [d, -below], [d, h + above], [-back, h + above]]);
+    if (clash) {
+      this.warn(
+        'Some of the wedges outside the side walls meet each other. Change the shelf heights or the tenon spacing.',
+        'wt_pitch',
+      );
+    }
+    if (overhang) {
+      this.warn(
+        'Some wedges hang off the edge of the side walls, so they bear on one side of their tenon only. ' +
+          'Make the shelves taller or shorten the wedges.',
+        'wt_wedge_length',
+      );
     }
   }
 
@@ -79,8 +147,9 @@ class StorageRack extends Boxes {
 
     if (this.o.outside) {
       // Only the back of the rack has material to lose; the front is open.
-      this.depth = this.adjustSize(this.depth, true, false);
-      this.sh = this.adjustSize(this.sh, te, be);
+      // A wedged back is recessed into the sides, which costs more depth.
+      this.depth = this.adjustSize(this.depth, this.o.wedged ? 'W' : true, false);
+      this.sh = this.adjustSize(this.sh, this.outerEdge(te), this.outerEdge(be));
       this.x = this.adjustSize(this.x);
     }
 
@@ -93,22 +162,28 @@ class StorageRack extends Boxes {
     // generator reads it, so it is left out rather than carried as dead state.
 
     const hHoles = [null, () => this.hHoles()];
+    const wedged = this.o.wedged;
+    // With wedged tenons the back passes through the sides near their back
+    // edges, and a wedged top or bottom floor through a line of holes.
+    const backJoint = wedged ? 'W' : 'F';
+    const sbe = this.outerEdge(be);
+    const ste = this.outerEdge(te);
 
     this.savedContext(() => {
-      this.rectangularWall(d, h, [be, 'F', te, 'E'] as EdgeSpec[], {
+      this.rectangularWall(d, h, [sbe, backJoint, ste, 'E'] as EdgeSpec[], {
         callback: hHoles,
         move: 'up',
         label: 'left side',
       });
-      this.rectangularWall(d, h, [be, 'E', te, 'F'] as EdgeSpec[], {
+      this.rectangularWall(d, h, [sbe, 'E', ste, backJoint] as EdgeSpec[], {
         callback: hHoles,
         move: 'up',
         label: 'right side',
       });
 
       // Full floors close the top and bottom of the stack.
-      this.rectangularWall(d, x, 'fffE', { move: 'up', label: 'floor 1' });
-      this.rectangularWall(d, x, 'fffE', { move: 'up', label: 'floor 2' });
+      this.rectangularWall(d, x, this.floorEdges(be), { move: 'up', label: 'floor 1' });
+      this.rectangularWall(d, x, this.floorEdges(te), { move: 'up', label: 'floor 2' });
 
       // An open top or bottom edge means that level is a full floor too, so it
       // needs no rails.
@@ -117,17 +192,34 @@ class StorageRack extends Boxes {
       if (te === 'e') num -= 1;
 
       for (let i = 0; i < num; i++) {
-        this.rectangularWall(d, this.o.rail, 'ffee', { move: 'up', label: `left rail ${i + 1}` });
-        this.rectangularWall(d, this.o.rail, 'feef', { move: 'up', label: `right rail ${i + 1}` });
+        // Wedged rails pass through the sides; their ends meet the back's
+        // slots dry, held there by the wedged sides.
+        const side = wedged ? 'w' : 'f';
+        this.rectangularWall(d, this.o.rail, [side, 'f', 'e', 'e'], { move: 'up', label: `left rail ${i + 1}` });
+        this.rectangularWall(d, this.o.rail, [side, 'e', 'e', 'f'], { move: 'up', label: `right rail ${i + 1}` });
       }
     });
-    this.rectangularWall(d, h, 'ffff', { move: 'right only' });
+    // Wedged, the sides and the floors' tenoned backs both stand wider than
+    // the 'ffff' panel boxes.py steps over; step over the wider of the two.
+    const wider = this.getEdge('W').spacing() > this.getEdge('w').spacing() ? 'W' : 'w';
+    this.rectangularWall(d, h, wedged ? ['f', wider, 'f', 'f'] : 'ffff', { move: 'right only' });
 
-    this.rectangularWall(x, h, [be, 'f', te, 'f'] as EdgeSpec[], {
+    const backSides = wedged ? 'w' : 'f';
+    this.rectangularWall(x, h, [sbe, backSides, ste, backSides] as EdgeSpec[], {
       callback: [() => this.backHoles()],
       move: 'up',
       label: 'back wall',
     });
+
+    if (wedged) {
+      this.checkWedgeClearance(h, d, sbe, ste);
+      const n = (l: number) => this.tenonCount(l);
+      // Two side edges per inner level, whether rails or a floor; the back's
+      // two sides; and a wedged top or bottom floor's sides and back.
+      let count = (this.sh.length - 1) * 2 * n(d) + 2 * n(h);
+      for (const e of [sbe, ste]) if (e === 'W') count += 2 * n(d) + n(x);
+      this.wedges(count, 'up');
+    }
   }
 }
 
@@ -211,6 +303,18 @@ export const storageRack: GeneratorDef = {
     // Shelf heights are scaled to fit the outside height, so the depth of the
     // stackable feet changes how much room the shelves actually get.
     ...STACKABLE_PARAMS,
+    {
+      key: 'wedged',
+      kind: 'bool',
+      label: 'Wedged tenons',
+      default: false,
+      group: 'joints',
+      help:
+        'The floors, rails and back pass through the side walls and are locked by wedges outside ' +
+        'them, so the rack can be taken apart again without glue. The back is recessed so its ' +
+        'wedges stay within the depth. A floor on a stackable edge stays finger-jointed. Not part of boxes.py.',
+    },
+    ...WEDGED_TENON_PARAMS,
   ],
   create: (v: ParamValues, config: BoxesConfig) =>
     new StorageRack(
@@ -222,6 +326,7 @@ export const storageRack: GeneratorDef = {
         outside: b(v, 'outside', true),
         bottomEdge: s(v, 'bottom_edge', 'h'),
         topEdge: s(v, 'top_edge', 'F'),
+        wedged: b(v, 'wedged', false),
       },
       config,
     ),
