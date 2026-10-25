@@ -205,6 +205,55 @@
     }
   },
   {
+    "name": "ref_abox_lid_chest",
+    "generator": "abox",
+    "pythonClass": "ABox",
+    "params": {
+      "x": 100,
+      "y": 100,
+      "h": 50,
+      "outside": true,
+      "bottom_edge": "F",
+      "lid_style": "chest",
+      "lid_handle": "long_rounded",
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_abox_lid_chest_thick",
+    "generator": "abox",
+    "pythonClass": "ABox",
+    "params": {
+      "x": 150,
+      "y": 80,
+      "h": 50,
+      "outside": true,
+      "bottom_edge": "F",
+      "lid_style": "chest",
+      "lid_handle": "knob",
+      "thickness": 5,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_abox_lid_chest_labelled",
+    "generator": "abox",
+    "pythonClass": "ABox",
+    "params": {
+      "x": 100,
+      "y": 100,
+      "h": 50,
+      "outside": true,
+      "bottom_edge": "F",
+      "lid_style": "chest",
+      "lid_handle": "none",
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
+  },
+  {
     "name": "ref_displayshelf",
     "generator": "displayshelf",
     "pythonClass": "DisplayShelf",
@@ -810,6 +859,27 @@
       "thickness": 3,
       "burn": 0.1,
       "labels": true
+    }
+  },
+  {
+    "name": "ref_universalbox_chest_flex",
+    "generator": "universalbox",
+    "pythonClass": "UniversalBox",
+    "params": {
+      "x": 100,
+      "y": 100,
+      "h": 100,
+      "outside": true,
+      "bottom_edge": "h",
+      "top_edge": "e",
+      "vertical_edges": "finger joints",
+      "thickness": 3,
+      "burn": 0.1,
+      "lid_style": "chest",
+      "lid_handle": "long_rounded",
+      "flex_distance": 0.8,
+      "flex_connection": 1.5,
+      "flex_width": 3
     }
   },
   {

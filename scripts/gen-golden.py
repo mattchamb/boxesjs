@@ -53,6 +53,8 @@ def main() -> int:
                 key = "RoundedTriangleEdge_" + key[3:]
             elif key.startswith("st_"):
                 key = "Stackable_" + key[3:]
+            elif key.startswith("flex_"):
+                key = "Flex_" + key[5:]
             elif key.startswith("he_"):
                 key = "HandleEdge_" + key[3:]
             argv += [f"--{key}", str(value)]

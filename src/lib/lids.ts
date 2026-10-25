@@ -7,15 +7,18 @@
  * its corners; `overthetop` is a shallow box that slips over the outside;
  * `ontop` is the same box at the box's own size, resting on the walls.
  *
- * The `chest` style from boxes.py is not ported — it needs the flex/living-hinge
- * edges, which are not in this build. It is absent from the style list rather
- * than silently falling back to something else.
+ * `chest` is a half-round top on two semicircular ends, its curve made by a
+ * living hinge. Every lid style in boxes.py is ported.
  */
 import type { Boxes } from './boxes';
 import { INNER_CUT } from './geom/colors';
+import { FingerJointSettings } from './edges/fingerjoint';
+import type { FlexEdge } from './edges/flex';
 import { Settings } from './edges/settings';
 
-export type LidStyle = 'none' | 'flat' | 'overthetop' | 'ontop' | 'flatbrim' | 'flatfang';
+const DEG = Math.PI / 180;
+
+export type LidStyle = 'none' | 'flat' | 'chest' | 'overthetop' | 'ontop' | 'flatbrim' | 'flatfang';
 export type LidHandle =
   | 'none'
   | 'long_rounded'
@@ -25,7 +28,7 @@ export type LidHandle =
 
 export class LidSettings extends Settings {
   static override absoluteParams = {
-    style: ['none', 'flat', 'overthetop', 'ontop', 'flatbrim', 'flatfang'] as const,
+    style: ['none', 'flat', 'chest', 'overthetop', 'ontop', 'flatbrim', 'flatfang'] as const,
     handle: [
       'none',
       'long_rounded',
@@ -116,6 +119,11 @@ export class Lid {
       for (let i = 0; i < 4; i++) {
         b.rectangularWall(fs, s.brim_height + t, 'eeee', { move: 'right', label: 'Lid fang' });
       }
+    } else if (s.style === 'chest') {
+      this.chestSide(x, 'right', 'Lid right');
+      this.chestSide(x, 'up', 'Lid left');
+      this.chestSide(x, 'left only', 'invisible');
+      this.chestTop(x, y, [null, this.handleCallback(x, 3 * t)], 'up', 'Lid top');
     } else if (s.style === 'overthetop' || s.style === 'ontop') {
       // Over-the-top slips over the outside of the box, so it needs clearance
       // all round. On-top is the same shallow box at the box's own size,
@@ -173,6 +181,79 @@ export class Lid {
 
     this.handleParts(x, y);
     return true;
+  }
+
+  /**
+   * The chest's ends and top meet in a joint of their own, finer than the
+   * box's, because the top bends. boxes.py registers it as `a`/`A` the first
+   * time it is needed and leaves it on the box.
+   */
+  private chestJoint(): void {
+    const b = this.boxes;
+    if ('a' in b.edges) return;
+    new FingerJointSettings(b.thickness, true, { finger: 1.0, space: 1.0 }).edgeObjects(b, 'aA.');
+  }
+
+  private chestR(x: number, angle = 0): number {
+    const t = this.boxes.thickness;
+    const d = x - 2 * Math.sin(angle * DEG) * (3 * t);
+    return d / 2.0 / Math.cos(angle * DEG);
+  }
+
+  private chestSide(x: number, move: string, label: string, angle = 0): void {
+    const b = this.boxes;
+    this.chestJoint();
+    const t = b.thickness;
+    const r = this.chestR(x, angle);
+    if (b.move(x + 2 * t, 0.5 * x + 3 * t, move, true, label)) return;
+
+    b.moveTo(t, 0);
+    b.edge(x);
+    b.corner(90 + angle);
+    b.getEdge('a').call(3 * t);
+    b.corner(180 - 2 * angle, r);
+    b.getEdge('a').call(3 * t);
+    b.corner(90 + angle);
+
+    b.move(x + 2 * t, 0.5 * x + 3 * t, move, false, label);
+  }
+
+  private chestTop(
+    x: number,
+    y: number,
+    callback: Array<(() => void) | null>,
+    move: string,
+    label: string,
+    angle = 0,
+  ): void {
+    const b = this.boxes;
+    this.chestJoint();
+    const t = b.thickness;
+    // The top wraps the half-round ends, so it is as long as their arc.
+    const l = (180 - 2 * angle) * DEG * this.chestR(x, angle);
+    const tw = l + 6 * t;
+    const th = y + 2 * t;
+    if (b.move(tw, th, move, true, label)) return;
+
+    const A = b.getEdge('A');
+    b.cc(callback, 0, A.startWidth() + b.burn);
+    A.call(3 * t);
+    (b.getEdge('X') as FlexEdge).call(l, { h: y + 2 * t });
+    A.call(3 * t);
+    b.corner(90);
+    b.cc(callback, 1);
+    b.edge(y + 2 * t);
+    b.corner(90);
+    b.cc(callback, 2, A.startWidth() + b.burn);
+    A.call(3 * t);
+    b.edge(l);
+    A.call(3 * t);
+    b.corner(90);
+    b.cc(callback, 3);
+    b.edge(y + 2 * t);
+    b.corner(90);
+
+    b.move(tw, th, move, false, label);
   }
 
   /** Cuts the opening the handle passes through. */

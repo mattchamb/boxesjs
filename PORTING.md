@@ -85,6 +85,7 @@ settings arguments:
 | `rt_*` | `--RoundedTriangleEdge_*` |
 | `st_*` | `--Stackable_*` |
 | `he_*` | `--HandleEdge_*` |
+| `flex_*` | `--Flex_*` |
 | everything else | `--<key>` verbatim |
 
 If you expose a new settings family in the UI, add its prefix to that map or the
@@ -429,7 +430,7 @@ ABox, ClosedBox, OpenBox, CardBox, Console2, UniversalBox, RegularBox,
 BayonetBox, NotesHolder, TypeTray, TrayLayout, TrayInsert, DividerTray,
 CompartmentBox, DrillBox, DisplayShelf, StorageRack, StorageShelf, PaintStorage
 — plus the RectangularWall part. All of them match boxes.py
-coordinate-for-coordinate across 92 golden cases, regenerated against
+coordinate-for-coordinate across 96 golden cases, regenerated against
 boxes.py master at `84e392b` (2026-10-22).
 
 When the boxes.py checkout moves, regenerate and diff before porting anything
@@ -446,8 +447,13 @@ already here (`basedbox`, `two_piece`, `crate`, `slantedtray`, `angledbox`,
 the original survey minus the ones since ported, not a fresh one; re-survey
 before relying on it.
 
-Of the rest, the biggest single blocker is `FlexSettings` (living hinge, 19
-generators), then the `_WallMountedBox` base class (14) and `DoveTailSettings`
+Of the rest, the biggest single blocker was `FlexSettings` (living hinge, 19
+generators). The edge itself is now ported (see the table below). The flexbox
+family and RoundedBox also bend walls through `surroundingWall` (and
+`roundedPlate`), which is not; `flextest`, `flexbook`, `folder`, `breadbox`,
+`shutterbox` and `shoe` call `X` directly and may need nothing else — check
+their other dependencies before starting.
+After that come the `_WallMountedBox` base class (14) and `DoveTailSettings`
 (10). Note that a generator referencing `edges.BaseEdge` is *not* blocked — that
 is the generator-local edge pattern of §7, which already works.
 
@@ -468,6 +474,7 @@ section is a record of what the engine now has and where the sharp edges were.
 | `Settings.clone()` | `copy.deepcopy` | `src/lib/edges/settings.ts` — RegularBox |
 | `hexHolesRectangle`, `HexHolesSettings` | | `src/lib/hexholes.ts` — PaintStorage |
 | `CrossingFingerHoleEdge` | `edges.py:1138` | `src/lib/edges/crossingfingerhole.ts` — TrayLayout, its only user in the whole library |
+| `FlexSettings`, `FlexEdge` (`X`) | `edges.py` | `src/lib/edges/flex.ts` — the `chest` lid. Call it as `call(length, { h })`; boxes.py's second positional argument |
 | `HandleEdge`, `HandleHoleEdge` (`y`, `Y`) | `edges.py:2611` | `src/lib/edges/handle.ts` — DividerTray's bottom-panel handle; not offered as a top edge |
 
 `_polygonWallExtend` was the awkward one and is worth knowing about if you touch
@@ -555,7 +562,7 @@ conditional are truthy. The float is discarded. The port passes a literal `true`
 
 ### Not ported, and nothing above needs it
 
-Flex / living hinge, `CabinetHinge`, `ChestHinge`, `Click`, `SlideOnLid`,
+`surroundingWall`, `roundedPlate`, `CabinetHinge`, `ChestHinge`, `Click`, `SlideOnLid`,
 `DoveTail`, `Grooved`, gears, pulleys, servos, wall
 edges, QR codes, `fillHoles`, DXF and PostScript output.
 

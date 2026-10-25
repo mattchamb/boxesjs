@@ -378,6 +378,7 @@ export const LID_PARAMS: ParamSpec[] = [
     choices: [
       { value: 'none', label: 'None' },
       { value: 'flat', label: 'Flat plates' },
+      { value: 'chest', label: 'Chest' },
       { value: 'flatbrim', label: 'Flat with brim' },
       { value: 'flatfang', label: 'Flat with corner tabs' },
       { value: 'overthetop', label: 'Over the top' },
@@ -387,7 +388,8 @@ export const LID_PARAMS: ParamSpec[] = [
     help:
       'Flat stacks two plates. The brim and corner-tab styles are one plate that locates ' +
       'inside the walls. Over-the-top is a shallow box that slips over the outside; ' +
-      'on-top is the same box resting on the walls, located by tabs that hang inside.',
+      'on-top is the same box resting on the walls, located by tabs that hang inside. ' +
+      'Chest is a half-round top bent over a living hinge.',
   },
   {
     key: 'lid_handle',
@@ -449,6 +451,42 @@ export const LID_PARAMS: ParamSpec[] = [
     max: 10,
     step: 0.5,
     group: 'top',
+  },
+  {
+    key: 'flex_distance',
+    kind: 'number',
+    label: 'Hinge cut spacing',
+    unit: '× thickness',
+    default: 0.5,
+    min: 0.1,
+    max: 3,
+    step: 0.05,
+    group: 'top',
+    help: 'Chest lid only: distance between the rows of living-hinge cuts. Closer bends more easily.',
+  },
+  {
+    key: 'flex_connection',
+    kind: 'number',
+    label: 'Hinge bridge width',
+    unit: '× thickness',
+    default: 1.0,
+    min: 0.2,
+    max: 5,
+    step: 0.1,
+    group: 'top',
+    help: 'Chest lid only: material left uncut between the cuts in each row.',
+  },
+  {
+    key: 'flex_width',
+    kind: 'number',
+    label: 'Hinge cut length',
+    unit: '× thickness',
+    default: 5.0,
+    min: 1,
+    max: 20,
+    step: 0.5,
+    group: 'top',
+    help: 'Chest lid only: length of each cut.',
   },
   {
     key: 'lid_play',
@@ -537,6 +575,17 @@ export function toBoxesConfig(values: ParamValues): BoxesConfig {
     if (v !== undefined && typeof v !== 'boolean') handleEdge[settingKey] = v;
   }
 
+  const flex: Record<string, number | string> = {};
+  const flexMap: Record<string, string> = {
+    flex_distance: 'distance',
+    flex_connection: 'connection',
+    flex_width: 'width',
+  };
+  for (const [formKey, settingKey] of Object.entries(flexMap)) {
+    const v = values[formKey];
+    if (v !== undefined && typeof v !== 'boolean') flex[settingKey] = v;
+  }
+
   return {
     ...DEFAULT_CONFIG,
     thickness: num('thickness', 3.0),
@@ -554,6 +603,7 @@ export function toBoxesConfig(values: ParamValues): BoxesConfig {
       RoundedTriangleEdge: handle,
       Stackable: stackable,
       HandleEdge: handleEdge,
+      Flex: flex,
     },
   };
 }
