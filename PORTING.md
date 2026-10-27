@@ -97,8 +97,13 @@ settings arguments:
 | `he_*` | `--HandleEdge_*` |
 | `flex_*` | `--Flex_*` |
 | `dt_*` | `--DoveTail_*` |
+| `mount_*` | `--Mounting_*` |
 | `slatwall_*`, `dinrail_*`, `frenchcleat_*`, `skadis_*` | `--SlatWall_*`, `--DinRail_*`, `--FrenchCleat_*`, `--Skadis_*` |
 | everything else | `--<key>` verbatim |
+
+A key the generator itself defines is passed verbatim even when it has one of
+these prefixes: CoffeeCapsuleHolder's `lid_size` is its own argument, not a
+lid setting.
 
 If you expose a new settings family in the UI, add its prefix to that map or the
 golden run will pass an argument boxes.py rejects. That is three parallel edits:
@@ -466,7 +471,7 @@ this reason).
 
 ## 9. State of the port
 
-**Every generator on the list is done.** A hundred and two generators are registered —
+**Every generator on the list is done.** A hundred and six generators are registered —
 ABox, ClosedBox, OpenBox, CardBox, Console2, UniversalBox, RegularBox,
 BayonetBox, NotesHolder, TypeTray, TrayLayout, TrayInsert, DividerTray,
 CompartmentBox, DrillBox, DrillStand, DisplayShelf, StorageRack, StorageShelf,
@@ -487,8 +492,9 @@ EuroRackSkiff, RegularStarBox, ElectronicsBox, DisplayCase, BrickSorter),
 and the first Misc parts (LBeam, ZBeam, FlexTest, Display, AngledCutJig,
 JointPanel, MagazineFile, BookHolder, LaserClamp, LaserHoldfast, Linkage,
 FanHole, BottleTag, BurnTest, Desksign, Stachel, Spool, PizzaShovel,
-DrillGauge, CoinDisplay) — plus the RectangularWall part.
-All of them match boxes.py coordinate-for-coordinate across 405 golden cases,
+DrillGauge, CoinDisplay, CoffeeCapsuleHolder, BottleStack, Dispenser, Hook)
+— plus the RectangularWall part.
+All of them match boxes.py coordinate-for-coordinate across 417 golden cases,
 regenerated against boxes.py master at `84e392b` (2026-10-22).
 
 When the boxes.py checkout moves, run `./scripts/upstream-drift.py`, then
@@ -507,12 +513,12 @@ unported generator files for `self.X(` calls, `edges.X` classes,
 classes), so §4 steps 1–2 still come first. Note that `paintbox.py` is
 PaintStorage, already ported.
 
-**About 20 need no new engine machinery** (70 at the survey, less those
+**About 16 need no new engine machinery** (70 at the survey, less those
 since ported). The most useful, by boxes.py's own groups:
 
 | Group | Generators |
 | --- | --- |
-| Misc | `airpurifier`, `laptopstand`, `phoneholder`, `agricolainsert`, and some 8 small parts and test pieces |
+| Misc | `airpurifier`, `laptopstand`, `phoneholder`, `agricolainsert`, and some 4 small parts and test pieces |
 
 `silverwarebox` also needs `Boxes.handle`; `lamp` needs `holesMargin` and is
 hidden from boxes.py's own web interface. `castle` is skipped too: a fixed-size

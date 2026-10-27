@@ -71,8 +71,12 @@ def main() -> int:
                 continue
             if isinstance(value, bool):
                 value = "1" if value else "0"
-            # Our flat form keys map onto boxes.py's prefixed settings args.
-            if key.startswith("fj_"):
+            # Our flat form keys map onto boxes.py's prefixed settings args,
+            # unless the generator has an argument of that name itself
+            # (CoffeeCapsuleHolder's lid_size is not a lid setting).
+            if f"--{key}" in box.argparser._option_string_actions:
+                pass
+            elif key.startswith("fj_"):
                 key = "FingerJoint_" + key[3:]
             elif key.startswith("lid_"):
                 key = "Lid_" + key[4:]

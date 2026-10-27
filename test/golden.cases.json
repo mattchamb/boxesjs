@@ -5221,5 +5221,131 @@
       "thickness": 3,
       "labels": true
     }
+  },
+  {
+    "name": "ref_coffeecapsulesholder_default",
+    "generator": "coffeecapsulesholder",
+    "pythonClass": "CoffeeCapsuleHolder",
+    "params": {},
+    "pythonModule": "coffeecapsulesholder"
+  },
+  {
+    "name": "ref_coffeecapsulesholder_noback",
+    "generator": "coffeecapsulesholder",
+    "pythonClass": "CoffeeCapsuleHolder",
+    "params": {
+      "columns": 2,
+      "rows": 3,
+      "lid_size": 40,
+      "body_size": 32,
+      "backplate": false
+    },
+    "pythonModule": "coffeecapsulesholder"
+  },
+  {
+    "name": "ref_coffeecapsulesholder_labels",
+    "generator": "coffeecapsulesholder",
+    "pythonClass": "CoffeeCapsuleHolder",
+    "params": {
+      "columns": 3,
+      "rows": 4,
+      "labels": true
+    },
+    "pythonModule": "coffeecapsulesholder"
+  },
+  {
+    "name": "ref_bottlestack_default",
+    "generator": "bottlestack",
+    "pythonClass": "BottleStack",
+    "params": {}
+  },
+  {
+    "name": "ref_bottlestack_single",
+    "generator": "bottlestack",
+    "pythonClass": "BottleStack",
+    "params": {
+      "double": false,
+      "diameter": 70,
+      "number": 4,
+      "depth": 100,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_bottlestack_labels",
+    "generator": "bottlestack",
+    "pythonClass": "BottleStack",
+    "params": {
+      "diameter": 90,
+      "number": 2,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_dispenser_default",
+    "generator": "dispenser",
+    "pythonClass": "Dispenser",
+    "params": {}
+  },
+  {
+    "name": "ref_dispenser_feet",
+    "generator": "dispenser",
+    "pythonClass": "Dispenser",
+    "params": {
+      "x": 80,
+      "y": 60,
+      "h": 150,
+      "slotheight": 6,
+      "viewingwidth": 0,
+      "bottomheight": 30,
+      "sideedges": "h",
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_dispenser_labels",
+    "generator": "dispenser",
+    "pythonClass": "Dispenser",
+    "params": {
+      "x": 90,
+      "y": 70,
+      "h": 120,
+      "viewingwidth": 0.5,
+      "bottomheight": 20,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_hooks_default",
+    "generator": "hooks",
+    "pythonClass": "Hook",
+    "params": {},
+    "pythonModule": "hooks"
+  },
+  {
+    "name": "ref_hooks_steep",
+    "generator": "hooks",
+    "pythonClass": "Hook",
+    "params": {
+      "width": 60,
+      "height": 30,
+      "depth": 50,
+      "strength": 25,
+      "angle": 85,
+      "thickness": 4
+    },
+    "pythonModule": "hooks"
+  },
+  {
+    "name": "ref_hooks_labels",
+    "generator": "hooks",
+    "pythonClass": "Hook",
+    "params": {
+      "width": 50,
+      "height": 45,
+      "depth": 35,
+      "labels": true
+    },
+    "pythonModule": "hooks"
   }
 ]

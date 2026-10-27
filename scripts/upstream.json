@@ -628,6 +628,30 @@
         "boxes/generators/coindisplay.py"
       ],
       "sha": "84e392b39191"
+    },
+    "coffeecapsulesholder": {
+      "files": [
+        "boxes/generators/coffeecapsulesholder.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "bottlestack": {
+      "files": [
+        "boxes/generators/bottlestack.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "dispenser": {
+      "files": [
+        "boxes/generators/dispenser.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "hooks": {
+      "files": [
+        "boxes/generators/hooks.py"
+      ],
+      "sha": "84e392b39191"
     }
   }
 }
