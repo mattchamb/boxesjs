@@ -466,7 +466,7 @@ this reason).
 
 ## 9. State of the port
 
-**Every generator on the list is done.** Seventy-five generators are registered —
+**Every generator on the list is done.** Eighty-two generators are registered —
 ABox, ClosedBox, OpenBox, CardBox, Console2, UniversalBox, RegularBox,
 BayonetBox, NotesHolder, TypeTray, TrayLayout, TrayInsert, DividerTray,
 CompartmentBox, DrillBox, DrillStand, DisplayShelf, StorageRack, StorageShelf,
@@ -482,8 +482,9 @@ ShutterBox, FlexBook, Folder), and the Shelf group (WineRack, BinTray,
 SBCMicroRack, DiscRack, StackableBin), HalfBox, and the Tray group
 (SmallPartsTray, PenHolderBox, GridfinityBase), and the remaining
 wall-mounted ones (WallRack, RollHolder, KeyHolder, SkadisBoard,
-SkadisStand) — plus the RectangularWall part.
-All of them match boxes.py coordinate-for-coordinate across 328 golden cases,
+SkadisStand), and the rest of the Box group (RackBox, Rack19HalfWidth,
+EuroRackSkiff, RegularStarBox, ElectronicsBox, DisplayCase, BrickSorter) — plus the RectangularWall part.
+All of them match boxes.py coordinate-for-coordinate across 349 golden cases,
 regenerated against boxes.py master at `84e392b` (2026-10-22).
 
 When the boxes.py checkout moves, run `./scripts/upstream-drift.py`, then
@@ -502,12 +503,11 @@ unported generator files for `self.X(` calls, `edges.X` classes,
 classes), so §4 steps 1–2 still come first. Note that `paintbox.py` is
 PaintStorage, already ported.
 
-**About 45 need no new engine machinery** (70 at the survey, less those
+**About 40 need no new engine machinery** (70 at the survey, less those
 since ported). The most useful, by boxes.py's own groups:
 
 | Group | Generators |
 | --- | --- |
-| Box | `rackbox`, `rack19halfwidth`, `eurorackskiff`, `regularstarbox`, `electronicsbox`, `displaycase`, `brick_sorter` |
 | Misc | `airpurifier`, `jointpanel`, `bookholder`, `magazinefile`, `laptopstand`, `phoneholder`, `agricolainsert`, and some 25 small parts and test pieces |
 
 `silverwarebox` also needs `Boxes.handle`; `lamp` needs `holesMargin` and is
@@ -821,10 +821,11 @@ golden and the invariant tests are the only cover.
 - **FlexBox5 with diameters too different for its length.** The straight runs'
   tilt is `asin` of a ratio that can pass 1, and boxes.py raises
   `ValueError`. The port warns on `x` and draws nothing.
-- **DiscRack, WallRack and GridfinityBase settings boxes.py rejects.**
-  DiscRack's support checks end in `argparser.error`, WallRack's shelf
-  spacing check and GridfinityBase's missing size in `ValueError`. The port
-  warns on the field (`disc_outset`, `sh`, `x`/`y`) and draws nothing.
+- **DiscRack, WallRack, GridfinityBase and RegularStarBox settings boxes.py
+  rejects.** DiscRack's support checks end in `argparser.error`; WallRack's
+  shelf spacing check, GridfinityBase's missing size and RegularStarBox's
+  too-small slots in `ValueError`. The port warns on the field
+  (`disc_outset`, `sh`, `x`/`y`, `radius`) and draws nothing.
 - **A mounting edge whose screw head is no wider than its shaft.** boxes.py's
   `MountingEdge` raises `ValueError`. Both sizes are form fields since
   `MOUNTING_PARAMS`, so the port warns on `mount_d_head` and draws the edge

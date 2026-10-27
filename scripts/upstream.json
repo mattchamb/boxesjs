@@ -466,6 +466,48 @@
         "boxes/generators/skadisstand.py"
       ],
       "sha": "84e392b39191"
+    },
+    "rackbox": {
+      "files": [
+        "boxes/generators/rackbox.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "electronicsbox": {
+      "files": [
+        "boxes/generators/electronicsbox.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "eurorackskiff": {
+      "files": [
+        "boxes/generators/eurorackskiff.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "rack19halfwidth": {
+      "files": [
+        "boxes/generators/rack19halfwidth.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "regularstarbox": {
+      "files": [
+        "boxes/generators/regularstarbox.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "displaycase": {
+      "files": [
+        "boxes/generators/displaycase.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "brick_sorter": {
+      "files": [
+        "boxes/generators/brick_sorter.py"
+      ],
+      "sha": "84e392b39191"
     }
   }
 }

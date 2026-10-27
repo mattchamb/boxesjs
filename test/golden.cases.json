@@ -4433,5 +4433,225 @@
       "thickness": 3,
       "labels": true
     }
+  },
+  {
+    "name": "ref_rackbox_default",
+    "generator": "rackbox",
+    "pythonClass": "RackBox",
+    "params": {}
+  },
+  {
+    "name": "ref_rackbox_inside",
+    "generator": "rackbox",
+    "pythonClass": "RackBox",
+    "params": {
+      "x": 180,
+      "y": 120,
+      "h": 60,
+      "outside": false,
+      "triangle": 20,
+      "d1": 2.5,
+      "d2": 3.5,
+      "d3": 5,
+      "holedist": 8,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_rackbox_labels",
+    "generator": "rackbox",
+    "pythonClass": "RackBox",
+    "params": {
+      "x": 120,
+      "y": 90,
+      "h": 70,
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_electronicsbox_default",
+    "generator": "electronicsbox",
+    "pythonClass": "ElectronicsBox",
+    "params": {}
+  },
+  {
+    "name": "ref_electronicsbox_inner",
+    "generator": "electronicsbox",
+    "pythonClass": "ElectronicsBox",
+    "params": {
+      "x": 150,
+      "y": 80,
+      "h": 50,
+      "outside": false,
+      "outsidemounts": false,
+      "triangle": 20,
+      "d3": 4,
+      "holedist": 6,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_electronicsbox_labels",
+    "generator": "electronicsbox",
+    "pythonClass": "ElectronicsBox",
+    "params": {
+      "x": 110,
+      "y": 90,
+      "h": 60,
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_eurorackskiff_default",
+    "generator": "eurorackskiff",
+    "pythonClass": "EuroRackSkiff",
+    "params": {}
+  },
+  {
+    "name": "ref_eurorackskiff_labels",
+    "generator": "eurorackskiff",
+    "pythonClass": "EuroRackSkiff",
+    "params": {
+      "hp": 42,
+      "h": 60,
+      "thickness": 4,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_rack19halfwidth_default",
+    "generator": "rack19halfwidth",
+    "pythonClass": "Rack19HalfWidth",
+    "params": {}
+  },
+  {
+    "name": "ref_rack19halfwidth_2u",
+    "generator": "rack19halfwidth",
+    "pythonClass": "Rack19HalfWidth",
+    "params": {
+      "ru_count": 2,
+      "holes": "xmq pw  wwx",
+      "z": 30,
+      "deepz": 150,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_rack19halfwidth_labels",
+    "generator": "rack19halfwidth",
+    "pythonClass": "Rack19HalfWidth",
+    "params": {
+      "ru_count": 1.5,
+      "holes": "mm",
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_regularstarbox_default",
+    "generator": "regularstarbox",
+    "pythonClass": "RegularStarBox",
+    "params": {}
+  },
+  {
+    "name": "ref_regularstarbox_square",
+    "generator": "regularstarbox",
+    "pythonClass": "RegularStarBox",
+    "params": {
+      "n": 4,
+      "radius": 70,
+      "h": 60,
+      "outside": false,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_regularstarbox_triangle",
+    "generator": "regularstarbox",
+    "pythonClass": "RegularStarBox",
+    "params": {
+      "n": 3,
+      "radius": 80,
+      "h": 50
+    }
+  },
+  {
+    "name": "ref_regularstarbox_labels",
+    "generator": "regularstarbox",
+    "pythonClass": "RegularStarBox",
+    "params": {
+      "n": 5,
+      "radius": 60,
+      "h": 70,
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_displaycase_default",
+    "generator": "displaycase",
+    "pythonClass": "DisplayCase",
+    "params": {}
+  },
+  {
+    "name": "ref_displaycase_labels",
+    "generator": "displaycase",
+    "pythonClass": "DisplayCase",
+    "params": {
+      "x": 150,
+      "y": 80,
+      "h": 120,
+      "outside": false,
+      "overhang": 5,
+      "thickness": 4,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_brick_sorter_default",
+    "generator": "brick_sorter",
+    "pythonClass": "BrickSorter",
+    "pythonModule": "brick_sorter",
+    "params": {}
+  },
+  {
+    "name": "ref_brick_sorter_tiny",
+    "generator": "brick_sorter",
+    "pythonClass": "BrickSorter",
+    "pythonModule": "brick_sorter",
+    "params": {
+      "level": "tiny_sieve",
+      "x": 200,
+      "y": 180,
+      "h": 100,
+      "radius": 30,
+      "wiggle": 3,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_brick_sorter_bottom",
+    "generator": "brick_sorter",
+    "pythonClass": "BrickSorter",
+    "pythonModule": "brick_sorter",
+    "params": {
+      "level": "bottom"
+    }
+  },
+  {
+    "name": "ref_brick_sorter_labels",
+    "generator": "brick_sorter",
+    "pythonClass": "BrickSorter",
+    "pythonModule": "brick_sorter",
+    "params": {
+      "level": "medium_sieve",
+      "x": 160,
+      "y": 160,
+      "h": 90,
+      "thickness": 3,
+      "labels": true
+    }
   }
 ]
