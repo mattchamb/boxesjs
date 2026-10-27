@@ -4,12 +4,17 @@ import type { ParamSpec, ParamValue, ParamValues } from '../params/schema';
 export interface GeneratorMeta {
   id: string;
   name: string;
-  /** Gallery grouping: Box, Tray, Shelf, Part. */
+  /** Gallery grouping: Box, Tray, Shelf, Wall mounted, Misc. */
   group: string;
   /** One line, shown on the gallery card. */
   summary: string;
   /** Longer explanation shown on the generator page. */
   description?: string;
+  /**
+   * Settings for the gallery thumbnail, where the defaults would look like
+   * another generator's. Only the picture uses them.
+   */
+  thumbnail?: ParamValues;
 }
 
 export interface GeneratorDef {

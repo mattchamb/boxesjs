@@ -94,11 +94,13 @@ export const rectangularWall: GeneratorDef = {
   meta: {
     id: 'rectangularwall',
     name: 'Rectangular Panel',
-    group: 'Part',
+    group: 'Misc',
     summary: 'One panel, with any edge type on each of its four sides',
     description:
       'A single part rather than a whole box. Use it to cut a replacement panel, ' +
       'or a divider that has to mate with something you have already built.',
+    // Plain edges by default draw a bare square; show what the edges can be.
+    thumbnail: { bottom_edge: 'f', right_edge: 'F', top_edge: 'd', left_edge: 'h' },
   },
   params: [
     { key: 'x', kind: 'length', label: 'Width', unit: 'mm', default: 100, min: 10, max: 1000, step: 1, group: 'dimensions' },

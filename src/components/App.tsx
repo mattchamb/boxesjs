@@ -41,11 +41,13 @@ interface Props {
   generator: string;
   name: string;
   summary: string;
+  /** What the design is for and how it goes together, under the summary. */
+  description?: string;
   /** Server-rendered preview, inlined so the page is useful before hydration. */
   initial?: PreviewData;
 }
 
-export default function App({ generator, name, summary, initial }: Props) {
+export default function App({ generator, name, summary, description, initial }: Props) {
   const specs = useMemo(() => paramsFor(generator), [generator]);
 
   // The server renders the defaults, and hydration keeps the server's
@@ -295,6 +297,7 @@ export default function App({ generator, name, summary, initial }: Props) {
         <div class="panel-head">
           <h2>{name}</h2>
           <p>{summary}</p>
+          {description && <p class="panel-desc">{description}</p>}
         </div>
 
         <div class="panel-search">

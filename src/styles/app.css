@@ -170,6 +170,8 @@ button, input, select, textarea {
   font-size: 12.5px;
 }
 
+.panel-head .panel-desc { margin-top: 6px; font-size: 12px; color: var(--fg-faint); }
+
 .panel-search {
   position: sticky;
   top: 0;
@@ -791,7 +793,39 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 
 .gallery { max-width: 1100px; margin: 0 auto; padding: 28px 20px 60px; }
 .gallery > p.intro { color: var(--fg-muted); max-width: 62ch; margin: 0 0 26px; }
-.gallery h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-muted); margin: 28px 0 12px; }
+.gallery h2 { font-size: 13px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--fg-muted); margin: 28px 0 12px; scroll-margin-top: 64px; }
+
+/* Search and the group links stay at hand down a long page. */
+.gallery-nav {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 14px;
+  padding: 10px 0;
+  margin-bottom: 4px;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
+}
+
+.gallery-nav input[type="search"] { flex: 0 1 280px; min-width: 180px; }
+.gallery-jump { display: flex; flex-wrap: wrap; gap: 4px; }
+
+.gallery-jump a {
+  padding: 3px 10px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  font-size: 12px;
+  color: var(--fg);
+  text-decoration: none;
+}
+
+.gallery-jump a:hover { border-color: var(--accent); color: var(--accent); }
+.gallery-jump .n { color: var(--fg-faint); font-variant-numeric: tabular-nums; margin-left: 2px; }
+.gallery-jump a[hidden], .card[hidden], .gallery section[hidden] { display: none; }
+.gallery-empty { color: var(--fg-muted); margin: 24px 0; }
 
 .cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 14px; }
 
@@ -809,7 +843,12 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .card:hover { border-color: var(--accent); transform: translateY(-1px); }
 .card .thumb { aspect-ratio: 4 / 3; display: grid; place-items: center; margin-bottom: 10px; background: var(--bg); border-radius: var(--radius-sm); overflow: hidden; }
 .card .thumb svg { width: 100%; height: 100%; }
-.card .thumb svg path { fill: none; stroke: var(--fg-muted); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.card .thumb svg path { stroke-width: 1; vector-effect: non-scaling-stroke; stroke-linejoin: round; }
+/* Filled outlines read as pieces of material; even-odd leaves any hole drawn
+   on the outline layer open. */
+.card .thumb .t-cut { fill: color-mix(in srgb, var(--fg) 7%, var(--bg)); fill-rule: evenodd; stroke: var(--fg-muted); }
+.card .thumb .t-inner { fill: var(--bg); stroke: var(--accent); }
+.card .thumb .t-marks { fill: none; stroke: var(--fg-faint); }
 .card h3 { margin: 0 0 3px; font-size: 14px; }
 .card p { margin: 0; font-size: 12px; color: var(--fg-muted); line-height: 1.4; }
 

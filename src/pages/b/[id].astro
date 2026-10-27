@@ -20,5 +20,5 @@ const { gen } = Astro.props;
 ---
 
 <Base title={`${gen.name} — boxesjs`} description={gen.summary}>
-  <App client:load generator={gen.id} name={gen.name} summary={gen.summary} />
+  <App client:load generator={gen.id} name={gen.name} summary={gen.summary} description={gen.description} />
 </Base>

@@ -1,27 +1,26 @@
 ---
 /**
- * Gallery. Thumbnails are the real generator output at default parameters,
- * rendered at build time — so every card is accurate and nothing has to be
- * photographed or kept in sync by hand.
+ * Gallery. Thumbnails are the real generator output, rendered at build time —
+ * so every card is accurate and nothing has to be photographed or kept in sync
+ * by hand. See `thumbnail.ts` for why they are not the default layout.
  */
 import Base from '../layouts/Base.astro';
-import { defaultsFor, generatorsByGroup } from '../lib/generators/registry';
-import { renderPreview } from '../lib/preview';
+import { generatorsByGroup } from '../lib/generators/registry';
+import { renderThumbnail } from '../lib/thumbnail';
 import { withBase } from '../lib/base';
 
 const groups = generatorsByGroup().map(({ group, items }) => ({
   group,
+  anchor: group.toLowerCase().replace(/\W+/g, '-'),
   items: items.map((g) => {
+    let thumb = null;
     try {
-      const preview = renderPreview(g.meta.id, defaultsFor(g.meta.id));
-      return {
-        meta: g.meta,
-        d: preview.layers.cut,
-        viewBox: `0 0 ${preview.bbox.width} ${preview.bbox.height}`,
-      };
+      thumb = renderThumbnail(g.meta.id);
     } catch {
-      return { meta: g.meta, d: '', viewBox: '0 0 1 1' };
+      /* the card still links; a thumbnail is not worth failing the build */
     }
+    const search = [g.meta.name, g.meta.summary, g.meta.description, group].join(' ').toLowerCase();
+    return { meta: g.meta, thumb, search };
   }),
 }));
 ---
@@ -29,23 +28,42 @@ const groups = generatorsByGroup().map(({ group, items }) => ({
 <Base title="boxesjs — parametric laser-cut boxes">
   <main class="gallery">
     <p class="intro">
-      Parametric box generators that run entirely in your browser. Change a parameter and the
-      preview updates as you type — there is no Generate button and nothing is sent to a server.
-      Export a native <code>.lbrn2</code> file with layers, speed and power already set from your
-      material preset, or a plain SVG at true millimetre scale.
+      Parametric laser-cut boxes that run entirely in your browser. Change a setting and the
+      preview updates as you type, then download a LightBurn <code>.lbrn2</code> with layers,
+      speed and power set from your material, or a true-scale SVG.
     </p>
 
+    <nav class="gallery-nav" aria-label="Generators">
+      <input
+        type="search"
+        id="gallery-search"
+        placeholder="Find a generator"
+        aria-label="Find a generator"
+        autocomplete="off"
+        spellcheck="false"
+      />
+      <div class="gallery-jump">
+        {groups.map(({ group, anchor, items }) => (
+          <a href={`#${anchor}`} data-group={anchor}>
+            {group} <span class="n">{items.length}</span>
+          </a>
+        ))}
+      </div>
+    </nav>
+
     {
-      groups.map(({ group, items }) => (
-        <section>
+      groups.map(({ group, anchor, items }) => (
+        <section id={anchor} data-group={anchor}>
           <h2>{group}</h2>
           <div class="cards">
-            {items.map(({ meta, d, viewBox }) => (
-              <a class="card" href={withBase(`/b/${meta.id}`)}>
+            {items.map(({ meta, thumb, search }) => (
+              <a class="card" href={withBase(`/b/${meta.id}`)} data-search={search}>
                 <div class="thumb">
-                  {d ? (
-                    <svg viewBox={viewBox} preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-                      <path d={d} />
+                  {thumb ? (
+                    <svg viewBox={thumb.viewBox} preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+                      <path class="t-cut" d={thumb.cut} />
+                      {thumb.marks && <path class="t-marks" d={thumb.marks} />}
+                      {thumb.inner && <path class="t-inner" d={thumb.inner} />}
                     </svg>
                   ) : null}
                 </div>
@@ -58,6 +76,8 @@ const groups = generatorsByGroup().map(({ group, items }) => ({
       ))
     }
 
+    <p class="gallery-empty" id="gallery-empty" hidden></p>
+
     <p class="notice">
       <strong>A reimplementation of boxes.py.</strong> The geometry engine is a TypeScript port of
       Florian Festi's <a href="https://github.com/florianfesti/boxes">Boxes.py</a>, verified
@@ -69,3 +89,43 @@ const groups = generatorsByGroup().map(({ group, items }) => ({
     </p>
   </main>
 </Base>
+
+<script>
+  // Filtering works on what the build already rendered; without script the
+  // page is simply the full list, and the group links still jump.
+  const input = document.getElementById('gallery-search') as HTMLInputElement;
+  const empty = document.getElementById('gallery-empty')!;
+  const sections = [...document.querySelectorAll<HTMLElement>('.gallery section[data-group]')];
+
+  const apply = () => {
+    const terms = input.value.toLowerCase().split(/\s+/).filter(Boolean);
+    let shown = 0;
+    for (const section of sections) {
+      let inSection = 0;
+      for (const card of section.querySelectorAll<HTMLElement>('.card')) {
+        const hit = terms.every((t) => card.dataset.search!.includes(t));
+        card.hidden = !hit;
+        if (hit) inSection++;
+      }
+      section.hidden = inSection === 0;
+      const jump = document.querySelector<HTMLElement>(`.gallery-jump a[data-group="${section.dataset.group}"]`);
+      if (jump) {
+        jump.hidden = inSection === 0;
+        jump.querySelector('.n')!.textContent = String(inSection);
+      }
+      shown += inSection;
+    }
+    empty.hidden = shown > 0;
+    empty.textContent = `No generators match “${input.value.trim()}”.`;
+  };
+
+  input.addEventListener('input', apply);
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      input.value = '';
+      apply();
+    }
+  });
+  // A search typed before going back to the gallery is still in the box.
+  apply();
+</script>

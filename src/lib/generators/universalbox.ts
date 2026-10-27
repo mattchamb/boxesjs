@@ -164,6 +164,8 @@ export const universalBox: GeneratorDef = {
       'The general-purpose box. Choose how the top closes, how the bottom attaches ' +
       'and whether the corners use finger joints or finger holes, and it covers most ' +
       'of what the more specialised generators do.',
+    // At its defaults it is the Closed Box; show the edges only it offers.
+    thumbnail: { top_edge: 't', bottom_edge: 's' },
   },
   // boxes.py widens the handle triangle by one thickness so it clears the side
   // walls when the top edge is the carry handle.

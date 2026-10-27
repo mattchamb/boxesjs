@@ -8,6 +8,7 @@ import { insideRing, polylines, ringsCross, type Pt } from '~/lib/geom/crossings
 import { defaultsFor, listGenerators, paramsFor } from '~/lib/generators/registry';
 import { buildDrawing, renderPreview } from '~/lib/preview';
 import type { DrawingPart } from '~/lib/render';
+import { THUMB_ASPECT, renderThumbnail } from '~/lib/thumbnail';
 import type { ParamValues } from '~/lib/params/schema';
 
 const generators = listGenerators();
@@ -170,5 +171,17 @@ describe('registry', () => {
       const keys = paramsFor(g.meta.id).map((s) => s.key);
       expect(new Set(keys).size, `${g.meta.id} has duplicate parameter keys`).toBe(keys.length);
     }
+  });
+});
+
+describe('gallery thumbnails', () => {
+  // The fallback is the generator's own layout, a strip that shrinks to a
+  // sliver in the card; every generator should pack onto the card's shape.
+  it.each(listGenerators().map((g) => g.meta.id))('%s packs onto one card-shaped sheet', (id) => {
+    const t = renderThumbnail(id);
+    const [x, y, w, h] = t.viewBox.split(' ').map(Number);
+    expect([x, y]).toEqual([0, 0]);
+    expect(w! / h!).toBeCloseTo(THUMB_ASPECT);
+    expect(t.cut).not.toBe('');
   });
 });

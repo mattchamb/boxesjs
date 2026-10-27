@@ -116,7 +116,7 @@ export function defaultsFor(id: string): ParamValues {
 
 /** Generators grouped for the gallery, in a stable order. */
 export function generatorsByGroup(): { group: string; items: GeneratorDef[] }[] {
-  const order = ['Box', 'Tray', 'Shelf', 'Part'];
+  const order = ['Box', 'Tray', 'Shelf', 'Wall mounted', 'Misc'];
   const groups = new Map<string, GeneratorDef[]>();
   for (const g of DEFS) {
     const list = groups.get(g.meta.group) ?? [];
