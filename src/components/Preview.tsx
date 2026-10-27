@@ -31,6 +31,9 @@ interface View {
   y: number;
 }
 
+/** Outlines are filled, so they go underneath everything drawn on the parts. */
+const PAINT_ORDER: Layer[] = ['cut', ...LAYERS.filter((l) => l !== 'cut')];
+
 const MIN_SCALE = 0.05;
 const MAX_SCALE = 60;
 
@@ -209,10 +212,10 @@ export function Preview({ data, error, visibleLayers, showGrid }: Props) {
                 </g>
               ))}
 
-              {LAYERS.filter((l) => visibleLayers.has(l) && data.layers[l]).map((l) => (
+              {PAINT_ORDER.filter((l) => visibleLayers.has(l) && data.layers[l]).map((l) => (
                 <path
                   key={l}
-                  class={`layer-path${isolated ? ' dimmed' : ''}`}
+                  class={`layer-path layer-${l}${isolated ? ' dimmed' : ''}`}
                   d={data.layers[l]}
                   stroke={LAYER_INFO[l].css}
                 />

@@ -698,6 +698,12 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   stroke-linejoin: round;
 }
 
+/* Shaded like the gallery thumbnails, so parts read as pieces of material.
+   Even-odd leaves holes on the outline layer open; inner cuts are filled with
+   the sheet's colour, so a hole shows the sheet through it. */
+.layer-path.layer-cut { fill: color-mix(in srgb, var(--fg) 7%, var(--bg)); fill-rule: evenodd; }
+.layer-path.layer-inner { fill: var(--bg); }
+
 .hit rect { fill: transparent; stroke: none; }
 
 .part-outline {
