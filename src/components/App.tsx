@@ -32,6 +32,7 @@ import type { CopiesSuggestion } from '../lib/layout/pack';
 import type { PreviewData } from '../lib/preview';
 import { Control } from './controls';
 import { Preview } from './Preview';
+import { SheetBar } from './SheetBar';
 
 interface Props {
   generator: string;
@@ -180,8 +181,13 @@ export default function App({ generator, name, summary, initial }: Props) {
     }
   };
 
-  // Only what applies to the current choices; the rest keep their values.
-  const visible = useMemo(() => visibleParams(specs, values), [specs, values]);
+  // Only what applies to the current choices; the rest keep their values. The
+  // sheet layout lives in the sheet bar above the preview, not in the panel.
+  const visible = useMemo(
+    () => visibleParams(specs, values).filter((s) => s.group !== 'layout'),
+    [specs, values],
+  );
+  const packed = values['pack'] === true;
   const grouped = useMemo(() => groupSpecs(visible), [visible]);
   const shown = useMemo(() => new Set(visible.map((s) => s.key)), [visible]);
   const warningFor = (key: string) => data?.warnings.find((w) => w.param === key)?.message;
@@ -196,11 +202,7 @@ export default function App({ generator, name, summary, initial }: Props) {
       value={values[spec.key] ?? spec.default}
       onChange={(v) => setValue(spec.key, v)}
       warning={warningFor(spec.key)}
-    >
-      {spec.key === 'pack_copies' && copiesHint && (
-        <CopiesHint hint={copiesHint} onUse={() => setValue('pack_copies', copiesHint.copies)} />
-      )}
-    </Control>
+    />
   );
 
   return (
@@ -287,6 +289,15 @@ export default function App({ generator, name, summary, initial }: Props) {
 
           <div class="spacer" />
 
+          <button
+            type="button"
+            class="btn"
+            aria-pressed={packed}
+            title="Rearrange the parts onto as few sheets of your stock as possible. LightBurn gets one page per sheet."
+            onClick={() => setValue('pack', !packed)}
+          >
+            Pack onto sheets
+          </button>
           <button type="button" class="btn" aria-pressed={showGrid} onClick={() => setShowGrid((g) => !g)}>
             Grid
           </button>
@@ -305,6 +316,8 @@ export default function App({ generator, name, summary, initial }: Props) {
             Download .lbrn2
           </button>
         </div>
+
+        {packed && <SheetBar specs={specs} values={values} setValue={setValue} hint={copiesHint} />}
 
         <Preview data={data} error={error} visibleLayers={visibleLayers} showGrid={showGrid} />
 
@@ -332,22 +345,6 @@ export default function App({ generator, name, summary, initial }: Props) {
           </span>
         </div>
       </div>
-    </div>
-  );
-}
-
-/** A copy count that wastes less stock than the one chosen, and a way to take it. */
-function CopiesHint({ hint, onUse }: { hint: CopiesSuggestion; onUse: () => void }) {
-  const rate = (sheets: number, copies: number) => (sheets / copies).toFixed(2);
-  return (
-    <div class="copies-hint">
-      <p>
-        {hint.copies} copies fit on {hint.sheets} sheets: {rate(hint.sheets, hint.copies)} sheets per copy
-        ({Math.round(hint.used * 100)}% used), against {rate(hint.current.sheets, hint.current.copies)} now.
-      </p>
-      <button type="button" class="btn" onClick={onUse}>
-        Use {hint.copies}
-      </button>
     </div>
   );
 }
@@ -382,7 +379,7 @@ function lightburnName(index: number, isTool: boolean): string {
   return isTool ? `T${index - 29}` : `C${String(index).padStart(2, '0')}`;
 }
 
-const GROUP_ORDER: ParamGroup[] = ['dimensions', 'material', 'joints', 'top', 'layout', 'advanced'];
+const GROUP_ORDER: ParamGroup[] = ['dimensions', 'material', 'joints', 'top', 'advanced'];
 
 interface Grouped {
   group: ParamGroup;

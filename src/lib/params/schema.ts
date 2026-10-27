@@ -17,6 +17,7 @@ export const GROUP_LABELS: Record<ParamGroup, string> = {
   material: 'Material',
   joints: 'Joints',
   top: 'Top & Lid',
+  // Shown in the sheet bar above the preview rather than the panel.
   layout: 'Sheet layout',
   advanced: 'Advanced',
 };

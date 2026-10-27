@@ -278,27 +278,6 @@ button, input, select, textarea {
   line-height: 1.4;
 }
 
-.copies-hint {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: 6px 0 0;
-  padding: 6px 8px;
-  border-radius: var(--radius-sm);
-  border: 1px solid var(--accent);
-  font-size: 11.5px;
-  line-height: 1.4;
-}
-
-.copies-hint p {
-  margin: 0;
-  flex: 1;
-}
-
-.copies-hint .btn {
-  flex: none;
-}
-
 .field-warning {
   margin: 5px 0 0;
   font-size: 11.5px;
@@ -483,6 +462,12 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
 .btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
+.btn[aria-pressed="true"] {
+  border-color: var(--accent);
+  color: var(--accent);
+  box-shadow: inset 0 0 0 1px var(--accent);
+}
+
 .btn-primary {
   background: var(--accent);
   color: var(--accent-fg);
@@ -625,6 +610,47 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .overlay-msg .card code { font-family: var(--mono); font-size: 12px; word-break: break-word; }
 
 /* --------------------------------------------------------------- stats */
+
+.sheetbar {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 7px 12px;
+  border-bottom: 1px solid var(--border);
+  background: var(--bg-panel);
+  font-size: 12px;
+}
+
+.sheet-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px 16px;
+}
+
+.sheet-size { display: flex; align-items: center; gap: 4px; }
+.sheet-size .times { color: var(--fg-muted); }
+
+.sheet-field { display: flex; align-items: center; gap: 5px; }
+.sheet-field .k { color: var(--fg-muted); }
+.sheet-field .k:empty { display: none; }
+.sheet-field .unit { color: var(--fg-faint); }
+.sheet-field input[type="number"] { width: 64px; padding: 3px 6px; }
+
+.sheet-check { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+
+.copies-hint {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--accent);
+  line-height: 1.4;
+}
+
+.copies-hint p { margin: 0; flex: 1; }
+.copies-hint .btn { flex: none; }
 
 .statsbar {
   display: flex;

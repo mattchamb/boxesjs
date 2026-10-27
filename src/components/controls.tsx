@@ -6,7 +6,6 @@
  * have to know. Each control here is picked from the parameter's declared kind,
  * which is what makes the panel readable.
  */
-import type { ComponentChildren } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { EDGE_INFO, type ParamSpec, type ParamValue } from '../lib/params/schema';
 import { formatSections, parseSections } from '../lib/params/sections';
@@ -16,11 +15,9 @@ interface ControlProps {
   value: ParamValue;
   onChange: (v: ParamValue) => void;
   warning?: string;
-  /** Extra content under the help text, for the few fields that need more than a value. */
-  children?: ComponentChildren;
 }
 
-export function Control({ spec, value, onChange, warning, children }: ControlProps) {
+export function Control({ spec, value, onChange, warning }: ControlProps) {
   return (
     <div class="field">
       {spec.kind !== 'bool' && (
@@ -47,7 +44,6 @@ export function Control({ spec, value, onChange, warning, children }: ControlPro
       {spec.help && <p class="field-help">{spec.help}</p>}
       {spec.kind === 'enum' && <ChoiceHelp spec={spec} value={String(value)} />}
       {warning && <p class="field-warning">{warning}</p>}
-      {children}
     </div>
   );
 }
@@ -72,12 +68,37 @@ function NumberSlider({
   value: number;
   onChange: (v: ParamValue) => void;
 }) {
+  return (
+    <div class="slider-row">
+      <input
+        type="range"
+        min={spec.min}
+        max={spec.max}
+        step={spec.step ?? 1}
+        value={value}
+        aria-label={spec.label}
+        onInput={(e) => onChange(Number((e.target as HTMLInputElement).value))}
+      />
+      <NumberInput spec={spec} value={value} onChange={onChange} />
+    </div>
+  );
+}
+
+/** A number box that clamps to the parameter's range as you type. */
+export function NumberInput({
+  spec,
+  value,
+  onChange,
+}: {
+  spec: Extract<ParamSpec, { kind: 'length' | 'number' }>;
+  value: number;
+  onChange: (v: ParamValue) => void;
+}) {
   // The text box holds its own string so a partially typed number
   // (like "1." or "-") is not rewritten under the cursor.
   const [text, setText] = useState(String(value));
   useEffect(() => setText(String(value)), [value]);
 
-  const step = spec.step ?? 1;
   const commit = (raw: string) => {
     setText(raw);
     const n = Number(raw);
@@ -85,27 +106,16 @@ function NumberSlider({
   };
 
   return (
-    <div class="slider-row">
-      <input
-        type="range"
-        min={spec.min}
-        max={spec.max}
-        step={step}
-        value={value}
-        aria-label={spec.label}
-        onInput={(e) => onChange(Number((e.target as HTMLInputElement).value))}
-      />
-      <input
-        id={`p-${spec.key}`}
-        type="number"
-        min={spec.min}
-        max={spec.max}
-        step={step}
-        value={text}
-        onInput={(e) => commit((e.target as HTMLInputElement).value)}
-        onBlur={() => setText(String(value))}
-      />
-    </div>
+    <input
+      id={`p-${spec.key}`}
+      type="number"
+      min={spec.min}
+      max={spec.max}
+      step={spec.step ?? 1}
+      value={text}
+      onInput={(e) => commit((e.target as HTMLInputElement).value)}
+      onBlur={() => setText(String(value))}
+    />
   );
 }
 
