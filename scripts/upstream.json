@@ -556,6 +556,54 @@
         "boxes/generators/bookholder.py"
       ],
       "sha": "84e392b39191"
+    },
+    "laserclamp": {
+      "files": [
+        "boxes/generators/laserclamp.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "laserholdfast": {
+      "files": [
+        "boxes/generators/laserholdfast.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "linkage": {
+      "files": [
+        "boxes/generators/linkage.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "fanhole": {
+      "files": [
+        "boxes/generators/fanhole.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "bottletag": {
+      "files": [
+        "boxes/generators/bottletag.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "burntest": {
+      "files": [
+        "boxes/generators/burntest.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "desksign": {
+      "files": [
+        "boxes/generators/desksign.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "stachel": {
+      "files": [
+        "boxes/generators/stachel.py"
+      ],
+      "sha": "84e392b39191"
     }
   }
 }

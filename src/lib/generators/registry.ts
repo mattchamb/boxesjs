@@ -7,6 +7,14 @@ import { defaultValues, type ParamSpec, type ParamValues } from '../params/schem
 import type { GeneratorDef } from './types';
 
 import { aBox } from './abox';
+import { stachel } from './stachel';
+import { deskSign } from './desksign';
+import { burnTest } from './burntest';
+import { bottleTag } from './bottletag';
+import { fanHole } from './fanhole';
+import { linkage } from './linkage';
+import { laserHoldfast } from './laserholdfast';
+import { laserClamp } from './laserclamp';
 import { bookHolder } from './bookholder';
 import { magazineFile } from './magazinefile';
 import { jointPanel } from './jointpanel';
@@ -186,6 +194,14 @@ const DEFS: GeneratorDef[] = [
   jointPanel,
   magazineFile,
   bookHolder,
+  laserClamp,
+  laserHoldfast,
+  linkage,
+  fanHole,
+  bottleTag,
+  burnTest,
+  deskSign,
+  stachel,
   rectangularWall,
 ];
 

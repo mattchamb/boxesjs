@@ -1,0 +1,29 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg height="59.75mm" viewBox="0.0 0.0 75.78 59.75" width="75.78mm" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<!--
+LaserHoldfast - A holdfast for honey comb tables of laser cutters
+
+Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
+Command line (remove spaces between dashes): boxes LaserHoldfast - -num - -cutlength - -reference
+-->
+<title>LaserHoldfast</title>
+<metadata>
+<rdf:RDF><cc:Work>
+<dc:title>Part - LaserHoldfast</dc:title>
+<dc:source>boxes LaserHoldfast --num 2 --cutlength 20 --labels 1 --reference 0</dc:source>
+<dc:description>A holdfast for honey comb tables of laser cutters
+
+Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
+Command line: boxes LaserHoldfast --num 2 --cutlength 20 --labels 1 --reference 0
+Command line short: boxes LaserHoldfast --num --cutlength --reference
+</dc:description>
+</cc:Work></rdf:RDF></metadata>
+<g id="p-0" style="fill:none;stroke-linecap:round;stroke-linejoin:round;">
+  <path d="M 10.293 49.748 H 55.023 C 55.479 49.748 55.928 49.628 56.323 49.400 C 56.718 49.171 57.046 48.843 57.274 48.448 C 57.503 48.053 57.623 47.604 57.623 47.148 C 57.623 46.692 57.503 46.243 57.274 45.848 C 57.046 45.453 56.718 45.125 56.323 44.896 C 55.928 44.668 55.479 44.548 55.023 44.548 H 15.023 C 12.858 36.469 12.858 27.963 15.023 19.884 C 15.141 19.443 15.141 18.979 15.023 18.538 C 14.905 18.098 14.673 17.696 14.350 17.373 C 14.027 17.050 13.625 16.818 13.184 16.700 C 12.743 16.582 12.279 16.582 11.838 16.700 C 11.398 16.818 10.996 17.050 10.673 17.373 C 10.350 17.696 10.118 18.098 10.000 18.538 C 7.599 27.499 7.599 36.933 10.000 45.894 V 49.650 C 10.000 49.705 10.045 49.750 10.101 49.750 L 10.294 49.748 C 10.294 49.748 10.293 49.748 10.293 49.748 Z" stroke="rgb(0,0,0)" stroke-width="0.20" />
+  <path d="M 57.623 47.148 H 37.623" stroke="rgb(0,0,255)" stroke-width="0.20" />
+</g>
+<g id="p-1" style="fill:none;stroke-linecap:round;stroke-linejoin:round;">
+  <path d="M 18.450 43.048 H 63.179 C 63.636 43.048 64.084 42.928 64.479 42.700 C 64.875 42.471 65.203 42.143 65.431 41.748 C 65.659 41.353 65.779 40.904 65.779 40.448 C 65.779 39.992 65.659 39.543 65.431 39.148 C 65.203 38.753 64.875 38.425 64.479 38.196 C 64.084 37.968 63.636 37.848 63.179 37.848 H 23.179 C 21.015 29.769 21.015 21.263 23.179 13.184 C 23.297 12.743 23.297 12.279 23.179 11.838 C 23.061 11.398 22.829 10.996 22.506 10.673 C 22.184 10.350 21.782 10.118 21.341 10.000 C 20.900 9.882 20.436 9.882 19.995 10.000 C 19.554 10.118 19.152 10.350 18.829 10.673 C 18.507 10.996 18.275 11.398 18.157 11.838 C 15.756 20.799 15.756 30.233 18.157 39.194 V 42.950 C 18.157 43.005 18.202 43.050 18.257 43.050 L 18.451 43.048 C 18.450 43.048 18.450 43.048 18.450 43.048 Z" stroke="rgb(0,0,0)" stroke-width="0.20" />
+  <path d="M 65.779 40.448 H 45.779" stroke="rgb(0,0,255)" stroke-width="0.20" />
+</g>
+</svg>

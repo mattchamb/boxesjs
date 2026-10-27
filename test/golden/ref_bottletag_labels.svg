@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg height="110.20mm" viewBox="0.0 0.0 80.20 110.20" width="80.20mm" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<!--
+BottleTag - Paper slip over bottle tag
+
+Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
+Command line (remove spaces between dashes): boxes BottleTag - -width - -height - -min_diameter - -max_diameter - -radius - -segment_width - -reference
+-->
+<title>BottleTag</title>
+<metadata>
+<rdf:RDF><cc:Work>
+<dc:title>Misc - BottleTag</dc:title>
+<dc:source>boxes BottleTag --width 60 --height 90 --min_diameter 20 --max_diameter 40 --radius 10 --segment_width 4 --labels 1 --reference 0</dc:source>
+<dc:description>Paper slip over bottle tag
+
+Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
+Command line: boxes BottleTag --width 60 --height 90 --min_diameter 20 --max_diameter 40 --radius 10 --segment_width 4 --labels 1 --reference 0
+Command line short: boxes BottleTag --width --height --min_diameter --max_diameter --radius --segment_width --reference
+</dc:description>
+</cc:Work></rdf:RDF></metadata>
+<g id="p-0" style="fill:none;stroke-linecap:round;stroke-linejoin:round;">
+  <path d="M 20.100 100.200 H 60.100 C 61.873 100.200 63.615 99.733 65.150 98.847 C 66.685 97.960 67.960 96.685 68.847 95.150 C 69.733 93.615 70.200 91.873 70.200 90.100 V 40.100 C 70.200 34.816 68.809 29.626 66.167 25.050 C 63.526 20.474 59.726 16.674 55.150 14.033 C 50.574 11.391 45.384 10.000 40.100 10.000 C 34.816 10.000 29.626 11.391 25.050 14.033 C 20.474 16.674 16.674 20.474 14.033 25.050 C 11.391 29.626 10.000 34.816 10.000 40.100 V 90.100 C 10.000 91.873 10.467 93.615 11.353 95.150 C 12.240 96.685 13.515 97.960 15.050 98.847 C 16.585 99.733 18.327 100.200 20.100 100.200 Z M 40.100 50.200 C 42.036 50.200 43.932 49.643 45.560 48.597 C 47.189 47.550 48.483 46.057 49.287 44.296 C 50.092 42.534 50.373 40.579 50.097 38.663 C 49.822 36.746 49.001 34.949 47.733 33.486 C 46.465 32.023 44.803 30.955 42.945 30.409 C 41.088 29.864 39.112 29.864 37.255 30.409 C 35.397 30.955 33.735 32.023 32.467 33.486 C 31.199 34.949 30.378 36.746 30.103 38.663 C 29.827 40.579 30.108 42.534 30.913 44.296 C 31.717 46.057 33.011 47.550 34.640 48.597 C 36.268 49.643 38.164 50.200 40.100 50.200 Z M 50.100 40.200 H 60.100 V 39.700 M 60.100 40.200 V 40.700 M 49.235 36.133 L 58.371 32.065 L 58.168 31.608 M 58.371 32.065 L 58.574 32.522 M 46.791 32.769 L 53.483 25.337 L 53.111 25.003 M 53.483 25.337 L 53.854 25.672 M 43.190 30.689 L 46.280 21.179 L 45.805 21.024 M 46.280 21.179 L 46.756 21.333 M 39.055 30.255 L 38.009 20.310 L 37.512 20.362 M 38.009 20.310 L 38.507 20.257 M 35.100 31.540 L 30.100 22.879 L 29.667 23.129 M 30.100 22.879 L 30.533 22.629 M 32.010 34.322 L 23.920 28.444 L 23.626 28.849 M 23.920 28.444 L 24.214 28.040 M 30.319 38.121 L 20.537 36.042 L 20.433 36.531 M 20.537 36.042 L 20.641 35.553 M 30.319 42.279 L 20.537 44.358 L 20.641 44.847 M 20.537 44.358 L 20.433 43.869 M 32.010 46.078 L 23.920 51.956 L 24.214 52.360 M 23.920 51.956 L 23.626 51.551 M 35.100 48.860 L 30.100 57.521 L 30.533 57.771 M 30.100 57.521 L 29.667 57.271 M 39.055 50.145 L 38.009 60.090 L 38.507 60.143 M 38.009 60.090 L 37.512 60.038 M 43.190 49.711 L 46.280 59.221 L 46.756 59.067 M 46.280 59.221 L 45.805 59.376 M 46.791 47.631 L 53.483 55.063 L 53.854 54.728 M 53.483 55.063 L 53.111 55.397 M 49.235 44.267 L 58.371 48.335 L 58.574 47.878 M 58.371 48.335 L 58.168 48.792" stroke="rgb(0,0,0)" stroke-width="0.20" />
+</g>
+</svg>

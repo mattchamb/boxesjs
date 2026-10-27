@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg height="53.05mm" viewBox="0.0 0.0 67.62 53.05" width="67.62mm" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<!--
+LaserHoldfast - A holdfast for honey comb tables of laser cutters
+
+Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
+Command line (remove spaces between dashes): boxes LaserHoldfast - -reference - -labels
+-->
+<title>LaserHoldfast</title>
+<metadata>
+<rdf:RDF><cc:Work>
+<dc:title>Part - LaserHoldfast</dc:title>
+<dc:source>boxes LaserHoldfast --reference 0 --labels 0</dc:source>
+<dc:description>A holdfast for honey comb tables of laser cutters
+
+Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
+Command line: boxes LaserHoldfast --reference 0 --labels 0
+Command line short: boxes LaserHoldfast --reference --labels
+</dc:description>
+</cc:Work></rdf:RDF></metadata>
+<g id="p-0" style="fill:none;stroke-linecap:round;stroke-linejoin:round;">
+  <path d="M 10.293 43.048 H 55.023 C 55.479 43.048 55.928 42.928 56.323 42.700 C 56.718 42.471 57.046 42.143 57.274 41.748 C 57.503 41.353 57.623 40.904 57.623 40.448 C 57.623 39.992 57.503 39.543 57.274 39.148 C 57.046 38.753 56.718 38.425 56.323 38.196 C 55.928 37.968 55.479 37.848 55.023 37.848 H 15.023 C 12.858 29.769 12.858 21.263 15.023 13.184 C 15.141 12.743 15.141 12.279 15.023 11.838 C 14.905 11.398 14.673 10.996 14.350 10.673 C 14.027 10.350 13.625 10.118 13.184 10.000 C 12.743 9.882 12.279 9.882 11.838 10.000 C 11.398 10.118 10.996 10.350 10.673 10.673 C 10.350 10.996 10.118 11.398 10.000 11.838 C 7.599 20.799 7.599 30.233 10.000 39.194 V 42.950 C 10.000 43.005 10.045 43.050 10.101 43.050 L 10.294 43.048 C 10.294 43.048 10.293 43.048 10.293 43.048 Z" stroke="rgb(0,0,0)" stroke-width="0.20" />
+</g>
+</svg>

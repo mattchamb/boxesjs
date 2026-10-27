@@ -1,0 +1,64 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg height="88.28mm" viewBox="0.0 0.0 158.26 88.28" width="158.26mm" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<!--
+BurnTest - Test different burn values
+
+
+This generator will make shapes that you can use to select
+optimal value for burn parameter for other generators. After burning try to
+attach sides with the same value and use best fitting one on real projects.
+In this generator set burn in the Default Settings to the lowest value
+to be tested. To get an idea cut a rectangle with known nominal size and
+measure the shrinkage due to the width of the laser cut. Now you can
+measure the burn value that you should use in other generators. It is half
+the difference of the overall size as shrinkage is occurring on both
+sides. You can use the reference rectangle as it is rendered without burn
+correction.
+
+See also LBeam that can serve as compact BurnTest and FlexTest for testing flex settings.
+
+
+
+Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
+Command line (remove spaces between dashes): boxes BurnTest - -x - -step - -pairs - -id - -burn - -thickness - -reference - -labels
+-->
+<title>BurnTest</title>
+<metadata>
+<rdf:RDF><cc:Work>
+<dc:title>Part - BurnTest</dc:title>
+<dc:source>boxes BurnTest --x 60 --step 0.02 --pairs 1 --id ply --burn 0.05 --thickness 4 --reference 0 --labels 0</dc:source>
+<dc:description>Test different burn values
+
+This generator will make shapes that you can use to select
+optimal value for burn parameter for other generators. After burning try to
+attach sides with the same value and use best fitting one on real projects.
+In this generator set burn in the Default Settings to the lowest value
+to be tested. To get an idea cut a rectangle with known nominal size and
+measure the shrinkage due to the width of the laser cut. Now you can
+measure the burn value that you should use in other generators. It is half
+the difference of the overall size as shrinkage is occurring on both
+sides. You can use the reference rectangle as it is rendered without burn
+correction.
+
+See also LBeam that can serve as compact BurnTest and FlexTest for testing flex settings.
+
+
+Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
+Command line: boxes BurnTest --x 60 --step 0.02 --pairs 1 --id ply --burn 0.05 --thickness 4 --reference 0 --labels 0
+Command line short: boxes BurnTest --x --step --pairs --id --burn --thickness --reference --labels
+</dc:description>
+</cc:Work></rdf:RDF></metadata>
+<g id="p-0" style="fill:none;stroke-linecap:round;stroke-linejoin:round;">
+  <text dominant-baseline="hanging" font-size="7.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 44.110 62.620 )">0.050mm</text>
+  <text dominant-baseline="hanging" font-size="7.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 0.000 -1.000 1.000 0.000 62.660 44.070 )">0.070mm</text>
+  <text dominant-baseline="hanging" font-size="5.625px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 0.000 -1.000 1.000 0.000 48.535 44.070 )">ply</text>
+  <text dominant-baseline="hanging" font-size="7.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( -1.000 0.000 -0.000 -1.000 44.090 25.500 )">0.090mm</text>
+  <text dominant-baseline="hanging" font-size="7.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 0.000 1.000 -1.000 0.000 25.500 44.090 )">0.110mm</text>
+  <text dominant-baseline="hanging" font-size="7.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 1.000 0.000 0.000 1.000 114.210 66.700 )">0.050mm</text>
+  <text dominant-baseline="hanging" font-size="7.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 0.000 -1.000 1.000 0.000 136.760 44.150 )">0.070mm</text>
+  <text dominant-baseline="hanging" font-size="5.625px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 0.000 -1.000 1.000 0.000 122.635 44.150 )">ply</text>
+  <text dominant-baseline="hanging" font-size="7.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( -1.000 0.000 -0.000 -1.000 114.190 21.580 )">0.090mm</text>
+  <text dominant-baseline="hanging" font-size="7.5px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="middle" transform="matrix( 0.000 1.000 -1.000 0.000 91.600 44.170 )">0.110mm</text>
+  <path d="M 14.110 74.120 H 24.060 C 24.110 74.120 24.060 74.070 24.060 74.120 V 78.070 C 24.060 78.098 24.082 78.120 24.110 78.120 H 32.110 C 32.138 78.120 32.160 78.098 32.160 78.070 V 74.120 C 32.160 74.070 32.110 74.120 32.160 74.120 H 40.060 C 40.110 74.120 40.060 74.070 40.060 74.120 V 78.070 C 40.060 78.098 40.082 78.120 40.110 78.120 H 48.110 C 48.138 78.120 48.160 78.098 48.160 78.070 V 74.120 C 48.160 74.070 48.110 74.120 48.160 74.120 H 56.060 C 56.110 74.120 56.060 74.070 56.060 74.120 V 78.070 C 56.060 78.098 56.082 78.120 56.110 78.120 H 64.110 C 64.138 78.120 64.160 78.098 64.160 78.070 V 74.120 C 64.160 74.070 64.110 74.120 64.160 74.120 H 74.110 C 74.138 74.120 74.160 74.098 74.160 74.070 M 74.160 74.070 V 64.140 C 74.160 64.070 74.090 64.140 74.160 64.140 H 78.090 C 78.129 64.140 78.160 64.109 78.160 64.070 V 56.070 C 78.160 56.031 78.129 56.000 78.090 56.000 H 74.160 C 74.090 56.000 74.160 56.070 74.160 56.000 V 48.140 C 74.160 48.070 74.090 48.140 74.160 48.140 H 78.090 C 78.129 48.140 78.160 48.109 78.160 48.070 V 40.070 C 78.160 40.031 78.129 40.000 78.090 40.000 H 74.160 C 74.090 40.000 74.160 40.070 74.160 40.000 V 32.140 C 74.160 32.070 74.090 32.140 74.160 32.140 H 78.090 C 78.129 32.140 78.160 32.109 78.160 32.070 V 24.070 C 78.160 24.031 78.129 24.000 78.090 24.000 H 74.160 C 74.090 24.000 74.160 24.070 74.160 24.000 V 14.070 C 74.160 14.031 74.129 14.000 74.090 14.000 M 74.090 14.000 H 64.090 C 64.140 14.000 64.180 14.040 64.180 14.090 V 10.090 C 64.180 10.040 64.140 10.000 64.090 10.000 H 56.090 C 56.040 10.000 56.000 10.040 56.000 10.090 V 14.090 C 56.000 14.040 56.040 14.000 56.090 14.000 H 48.090 C 48.140 14.000 48.180 14.040 48.180 14.090 V 10.090 C 48.180 10.040 48.140 10.000 48.090 10.000 H 40.090 C 40.040 10.000 40.000 10.040 40.000 10.090 V 14.090 C 40.000 14.040 40.040 14.000 40.090 14.000 H 32.090 C 32.140 14.000 32.180 14.040 32.180 14.090 V 10.090 C 32.180 10.040 32.140 10.000 32.090 10.000 H 24.090 C 24.040 10.000 24.000 10.040 24.000 10.090 V 14.090 C 24.000 14.040 24.040 14.000 24.090 14.000 H 14.090 C 14.040 14.000 14.000 14.040 14.000 14.090 M 14.000 14.090 V 24.090 C 14.000 24.029 14.049 23.980 14.110 23.980 H 10.110 C 10.049 23.980 10.000 24.029 10.000 24.090 V 32.090 C 10.000 32.151 10.049 32.200 10.110 32.200 H 14.110 C 14.049 32.200 14.000 32.151 14.000 32.090 V 40.090 C 14.000 40.029 14.049 39.980 14.110 39.980 H 10.110 C 10.049 39.980 10.000 40.029 10.000 40.090 V 48.090 C 10.000 48.151 10.049 48.200 10.110 48.200 H 14.110 C 14.049 48.200 14.000 48.151 14.000 48.090 V 56.090 C 14.000 56.029 14.049 55.980 14.110 55.980 H 10.110 C 10.049 55.980 10.000 56.029 10.000 56.090 V 64.090 C 10.000 64.151 10.049 64.200 10.110 64.200 H 14.110 C 14.049 64.200 14.000 64.151 14.000 64.090 V 74.090 C 14.000 74.151 14.049 74.200 14.110 74.200 M 84.210 78.200 H 94.210 C 94.238 78.200 94.260 78.178 94.260 78.150 V 74.200 C 94.260 74.150 94.210 74.200 94.260 74.200 H 102.160 C 102.210 74.200 102.160 74.150 102.160 74.200 V 78.150 C 102.160 78.178 102.182 78.200 102.210 78.200 H 110.210 C 110.238 78.200 110.260 78.178 110.260 78.150 V 74.200 C 110.260 74.150 110.210 74.200 110.260 74.200 H 118.160 C 118.210 74.200 118.160 74.150 118.160 74.200 V 78.150 C 118.160 78.178 118.182 78.200 118.210 78.200 H 126.210 C 126.238 78.200 126.260 78.178 126.260 78.150 V 74.200 C 126.260 74.150 126.210 74.200 126.260 74.200 H 134.160 C 134.210 74.200 134.160 74.150 134.160 74.200 V 78.150 C 134.160 78.178 134.182 78.200 134.210 78.200 H 144.210 H 148.210 C 148.238 78.200 148.260 78.178 148.260 78.150 V 74.150 M 148.260 74.150 V 64.150 C 148.260 64.111 148.229 64.080 148.190 64.080 H 144.260 C 144.190 64.080 144.260 64.150 144.260 64.080 V 56.220 C 144.260 56.150 144.190 56.220 144.260 56.220 H 148.190 C 148.229 56.220 148.260 56.189 148.260 56.150 V 48.150 C 148.260 48.111 148.229 48.080 148.190 48.080 H 144.260 C 144.190 48.080 144.260 48.150 144.260 48.080 V 40.220 C 144.260 40.150 144.190 40.220 144.260 40.220 H 148.190 C 148.229 40.220 148.260 40.189 148.260 40.150 V 32.150 C 148.260 32.111 148.229 32.080 148.190 32.080 H 144.260 C 144.190 32.080 144.260 32.150 144.260 32.080 V 24.220 C 144.260 24.150 144.190 24.220 144.260 24.220 H 148.190 C 148.229 24.220 148.260 24.189 148.260 24.150 V 14.150 V 10.150 C 148.260 10.111 148.229 10.080 148.190 10.080 H 144.190 M 144.190 10.080 H 134.190 C 134.140 10.080 134.100 10.120 134.100 10.170 V 14.170 C 134.100 14.120 134.140 14.080 134.190 14.080 H 126.190 C 126.240 14.080 126.280 14.120 126.280 14.170 V 10.170 C 126.280 10.120 126.240 10.080 126.190 10.080 H 118.190 C 118.140 10.080 118.100 10.120 118.100 10.170 V 14.170 C 118.100 14.120 118.140 14.080 118.190 14.080 H 110.190 C 110.240 14.080 110.280 14.120 110.280 14.170 V 10.170 C 110.280 10.120 110.240 10.080 110.190 10.080 H 102.190 C 102.140 10.080 102.100 10.120 102.100 10.170 V 14.170 C 102.100 14.120 102.140 14.080 102.190 14.080 H 94.190 C 94.240 14.080 94.280 14.120 94.280 14.170 V 10.170 C 94.280 10.120 94.240 10.080 94.190 10.080 H 84.190 H 80.190 C 80.140 10.080 80.100 10.120 80.100 10.170 V 14.170 M 80.100 14.170 V 24.170 C 80.100 24.231 80.149 24.280 80.210 24.280 H 84.210 C 84.149 24.280 84.100 24.231 84.100 24.170 V 32.170 C 84.100 32.109 84.149 32.060 84.210 32.060 H 80.210 C 80.149 32.060 80.100 32.109 80.100 32.170 V 40.170 C 80.100 40.231 80.149 40.280 80.210 40.280 H 84.210 C 84.149 40.280 84.100 40.231 84.100 40.170 V 48.170 C 84.100 48.109 84.149 48.060 84.210 48.060 H 80.210 C 80.149 48.060 80.100 48.109 80.100 48.170 V 56.170 C 80.100 56.231 80.149 56.280 80.210 56.280 H 84.210 C 84.149 56.280 84.100 56.231 84.100 56.170 V 64.170 C 84.100 64.109 84.149 64.060 84.210 64.060 H 80.210 C 80.149 64.060 80.100 64.109 80.100 64.170 V 74.170 V 78.170 C 80.100 78.231 80.149 78.280 80.210 78.280 H 84.210" stroke="rgb(0,0,0)" stroke-width="0.10" />
+</g>
+</svg>
