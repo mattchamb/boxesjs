@@ -4653,5 +4653,230 @@
       "thickness": 3,
       "labels": true
     }
+  },
+  {
+    "name": "ref_lbeam_default",
+    "generator": "lbeam",
+    "pythonClass": "LBeam",
+    "params": {}
+  },
+  {
+    "name": "ref_lbeam_labels",
+    "generator": "lbeam",
+    "pythonClass": "LBeam",
+    "params": {
+      "x": 40,
+      "y": 60,
+      "h": 200,
+      "outside": false,
+      "thickness": 4,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_zbeam_default",
+    "generator": "zbeam",
+    "pythonClass": "ZBeam",
+    "params": {}
+  },
+  {
+    "name": "ref_zbeam_flanged",
+    "generator": "zbeam",
+    "pythonClass": "ZBeam",
+    "params": {
+      "flanged_ubeam": true,
+      "x": 30,
+      "y": 50,
+      "z": 40,
+      "h": 150,
+      "top_edge": "F",
+      "bottom_edge": "f",
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_zbeam_labels",
+    "generator": "zbeam",
+    "pythonClass": "ZBeam",
+    "params": {
+      "x": 40,
+      "y": 60,
+      "z": 30,
+      "h": 120,
+      "outside": false,
+      "top_edge": "f",
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_flextest_default",
+    "generator": "flextest",
+    "pythonClass": "FlexTest",
+    "params": {}
+  },
+  {
+    "name": "ref_flextest_labels",
+    "generator": "flextest",
+    "pythonClass": "FlexTest",
+    "params": {
+      "x": 80,
+      "y": 40,
+      "flex_distance": 0.8,
+      "flex_connection": 1.5,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_display_default",
+    "generator": "display",
+    "pythonClass": "Display",
+    "params": {}
+  },
+  {
+    "name": "ref_display_angle",
+    "generator": "display",
+    "pythonClass": "Display",
+    "params": {
+      "x": 120,
+      "h": 180,
+      "radius": 10,
+      "angle": 10,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_display_labels",
+    "generator": "display",
+    "pythonClass": "Display",
+    "params": {
+      "x": 100,
+      "h": 150,
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_angledcutjig_default",
+    "generator": "angledcutjig",
+    "pythonClass": "AngledCutJig",
+    "params": {}
+  },
+  {
+    "name": "ref_angledcutjig_labels",
+    "generator": "angledcutjig",
+    "pythonClass": "AngledCutJig",
+    "params": {
+      "x": 60,
+      "y": 120,
+      "angle": 30,
+      "thickness": 4,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_jointpanel_default",
+    "generator": "jointpanel",
+    "pythonClass": "JointPanel",
+    "params": {}
+  },
+  {
+    "name": "ref_jointpanel_separate",
+    "generator": "jointpanel",
+    "pythonClass": "JointPanel",
+    "params": {
+      "sx": "100:150",
+      "sy": "80*2",
+      "separate": true,
+      "dt_size": 2,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_jointpanel_labels",
+    "generator": "jointpanel",
+    "pythonClass": "JointPanel",
+    "params": {
+      "sx": "120*2",
+      "sy": "100*2",
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_magazinefile_default",
+    "generator": "magazinefile",
+    "pythonClass": "MagazineFile",
+    "params": {}
+  },
+  {
+    "name": "ref_magazinefile_mount",
+    "generator": "magazinefile",
+    "pythonClass": "MagazineFile",
+    "params": {
+      "x": 80,
+      "y": 250,
+      "h": 200,
+      "hi": 120,
+      "outside": true,
+      "top_edge": "G",
+      "mount_side": "left",
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_magazinefile_wide",
+    "generator": "magazinefile",
+    "pythonClass": "MagazineFile",
+    "params": {
+      "x": 90,
+      "y": 300,
+      "h": 150,
+      "top_edge": "G"
+    }
+  },
+  {
+    "name": "ref_magazinefile_labels",
+    "generator": "magazinefile",
+    "pythonClass": "MagazineFile",
+    "params": {
+      "x": 90,
+      "y": 180,
+      "h": 250,
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_bookholder_default",
+    "generator": "bookholder",
+    "pythonClass": "BookHolder",
+    "params": {}
+  },
+  {
+    "name": "ref_bookholder_ledge",
+    "generator": "bookholder",
+    "pythonClass": "BookHolder",
+    "params": {
+      "book_width": 150,
+      "book_height": 100,
+      "book_depth": 20,
+      "ledge_height": 10,
+      "angle": 65,
+      "bottom_support": 10,
+      "back_support": 0,
+      "radius": 2,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_bookholder_labels",
+    "generator": "bookholder",
+    "pythonClass": "BookHolder",
+    "params": {
+      "book_width": 200,
+      "book_height": 150,
+      "thickness": 3,
+      "labels": true
+    }
   }
 ]

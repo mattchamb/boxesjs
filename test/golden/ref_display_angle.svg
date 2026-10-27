@@ -1,0 +1,28 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg height="354.32mm" viewBox="0.0 0.0 207.96 354.32" width="207.96mm" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<!--
+Display - Display for flyers or leaflets
+
+Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
+Command line (remove spaces between dashes): boxes Display - -x - -h - -radius - -angle - -thickness - -reference - -labels
+-->
+<title>Display</title>
+<metadata>
+<rdf:RDF><cc:Work>
+<dc:title>Misc - Display</dc:title>
+<dc:source>boxes Display --x 120 --h 180 --radius 10 --angle 10 --thickness 4 --reference 0 --labels 0</dc:source>
+<dc:description>Display for flyers or leaflets
+
+Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
+Command line: boxes Display --x 120 --h 180 --radius 10 --angle 10 --thickness 4 --reference 0 --labels 0
+Command line short: boxes Display --x --h --radius --angle --thickness --reference --labels
+</dc:description>
+</cc:Work></rdf:RDF></metadata>
+<g id="p-0" style="fill:none;stroke-linecap:round;stroke-linejoin:round;">
+  <path d="M 21.047 344.322 H 53.047 H 85.047 C 86.819 344.322 88.561 343.856 90.097 342.969 C 91.632 342.083 92.907 340.808 93.793 339.272 C 94.680 337.737 95.147 335.995 95.147 334.222 V 234.222 C 95.147 232.449 94.680 230.708 93.793 229.172 C 92.907 227.637 91.632 226.362 90.097 225.475 C 88.561 224.589 86.819 224.122 85.047 224.122 H 21.047 C 19.274 224.122 17.532 224.589 15.997 225.475 C 14.461 226.362 13.186 227.637 12.300 229.172 C 11.413 230.708 10.947 232.449 10.947 234.222 V 334.222 C 10.947 335.995 11.413 337.737 12.300 339.272 C 13.186 340.808 14.461 342.083 15.997 342.969 C 17.532 343.856 19.274 344.322 21.047 344.322 Z" stroke="rgb(0,0,0)" stroke-width="0.20" />
+</g>
+<g id="p-1" style="fill:none;stroke-linecap:round;stroke-linejoin:round;">
+  <path d="M 103.982 189.722 H 61.882 C 61.782 189.722 61.882 189.822 61.882 189.722 V 184.722 C 61.882 184.622 61.782 184.722 61.882 184.722 H 146.082 C 146.182 184.722 146.082 184.622 146.082 184.722 V 189.722 C 146.082 189.822 146.182 189.722 146.082 189.722 H 103.982 Z" stroke="rgb(0,0,255)" stroke-width="0.20" />
+  <path d="M 53.982 223.222 H 153.982 C 155.556 223.222 157.108 222.854 158.514 222.148 C 159.921 221.442 161.143 220.416 162.083 219.154 C 163.023 217.891 163.655 216.426 163.928 214.876 L 197.963 21.854 C 198.306 19.911 198.072 17.911 197.291 16.100 C 196.509 14.288 195.215 12.746 193.567 11.662 C 191.919 10.578 189.989 10.000 188.017 10.000 H 19.947 C 17.974 10.000 16.045 10.578 14.397 11.662 C 12.748 12.746 11.454 14.288 10.673 16.100 C 9.891 17.911 9.657 19.911 10.000 21.854 L 44.035 214.876 C 44.308 216.426 44.940 217.891 45.880 219.154 C 46.820 220.416 48.042 221.442 49.449 222.148 C 50.855 222.854 52.408 223.222 53.982 223.222 Z" stroke="rgb(0,0,0)" stroke-width="0.20" />
+</g>
+</svg>

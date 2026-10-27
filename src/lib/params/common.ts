@@ -783,7 +783,8 @@ export const DOVETAIL_PARAMS: ParamSpec[] = inSection('Dovetails', (v) => anyEdg
 
 /**
  * Keyhole mounting-slot options, for generators that offer the `G` edge.
- * boxes.py's `side` setting is left out: nothing reads it.
+ * The `side` setting is MOUNTING_SIDE_PARAM, below: only `topEdges` reads
+ * it, so it means nothing to a generator that places `G` itself.
  */
 export const MOUNTING_PARAMS: ParamSpec[] = inSection('Mounting holes', (v) => anyEdgeIn(v, 'G'), [
   {
@@ -814,6 +815,22 @@ export const MOUNTING_PARAMS: ParamSpec[] = inSection('Mounting holes', (v) => a
   { key: 'mount_d_shaft', kind: 'length', label: 'Screw shaft diameter', unit: 'mm', default: 3, min: 1, max: 20, step: 0.1, group: 'advanced' },
   { key: 'mount_d_head', kind: 'length', label: 'Screw head diameter', unit: 'mm', default: 6.5, min: 2, max: 30, step: 0.1, group: 'advanced' },
 ]);
+
+/** Which wall gets the mounting slots, where `topEdges` hands out a `G` top edge. */
+export const MOUNTING_SIDE_PARAM: ParamSpec = {
+  key: 'mount_side',
+  kind: 'enum',
+  label: 'Mounting holes on',
+  default: 'back',
+  choices: [
+    { value: 'back', label: 'Back' },
+    { value: 'left', label: 'Left' },
+    { value: 'right', label: 'Right' },
+    { value: 'front', label: 'Front' },
+  ],
+  group: 'advanced',
+  section: 'Mounting holes',
+};
 
 /**
  * Wedged through-tenon options (`w`/`W`). Not from boxes.py — see

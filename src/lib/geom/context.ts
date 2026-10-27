@@ -306,6 +306,25 @@ export class Surface {
     return this._p;
   }
 
+  /**
+   * Fold every part from index `start` on into the first of them. For pieces
+   * drawn abutting as one sheet, whose shared seams would otherwise read as
+   * separate parts lying on top of each other.
+   */
+  joinPartsFrom(start: number, name: string): void {
+    const tail = this.parts.splice(start);
+    const joined = tail[0];
+    if (!joined) return;
+    for (const p of tail.slice(1)) {
+      joined.pathes.push(...p.pathes);
+      joined.path.push(...p.path);
+      joined.boltCuts.push(...p.boltCuts);
+    }
+    joined.name = name;
+    this.parts.push(joined);
+    this._p = joined;
+  }
+
   append(cmd: PathCmd): void {
     this.count++;
     if (this.count > MAX_SEGMENTS) {
@@ -571,6 +590,16 @@ export class Context {
 
   nameCurrentPart(name: string): void {
     this.dwg.nameCurrentPart(name);
+  }
+
+  /** Index the next part drawn will have; an empty current part is reused. */
+  get nextPartIndex(): number {
+    const parts = this.dwg.parts;
+    return parts.length - (this.dwg.currentPart.pathes.length === 0 ? 1 : 0);
+  }
+
+  joinPartsFrom(start: number, name: string): void {
+    this.dwg.joinPartsFrom(start, name);
   }
 
   /** Record a bolt's cut, a polygon in user coordinates, on the current part. */

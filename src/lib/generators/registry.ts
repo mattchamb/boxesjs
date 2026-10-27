@@ -7,6 +7,14 @@ import { defaultValues, type ParamSpec, type ParamValues } from '../params/schem
 import type { GeneratorDef } from './types';
 
 import { aBox } from './abox';
+import { bookHolder } from './bookholder';
+import { magazineFile } from './magazinefile';
+import { jointPanel } from './jointpanel';
+import { angledCutJig } from './angledcutjig';
+import { display } from './display';
+import { flexTest } from './flextest';
+import { zBeam } from './zbeam';
+import { lBeam } from './lbeam';
 import { brickSorter } from './bricksorter';
 import { displayCase } from './displaycase';
 import { regularStarBox } from './regularstarbox';
@@ -170,6 +178,14 @@ const DEFS: GeneratorDef[] = [
   regularStarBox,
   displayCase,
   brickSorter,
+  lBeam,
+  zBeam,
+  flexTest,
+  display,
+  angledCutJig,
+  jointPanel,
+  magazineFile,
+  bookHolder,
   rectangularWall,
 ];
 

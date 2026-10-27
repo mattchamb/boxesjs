@@ -508,6 +508,54 @@
         "boxes/generators/brick_sorter.py"
       ],
       "sha": "84e392b39191"
+    },
+    "lbeam": {
+      "files": [
+        "boxes/generators/lbeam.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "zbeam": {
+      "files": [
+        "boxes/generators/zbeam.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "flextest": {
+      "files": [
+        "boxes/generators/flextest.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "display": {
+      "files": [
+        "boxes/generators/display.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "angledcutjig": {
+      "files": [
+        "boxes/generators/angledcutjig.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "jointpanel": {
+      "files": [
+        "boxes/generators/jointpanel.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "magazinefile": {
+      "files": [
+        "boxes/generators/magazinefile.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "bookholder": {
+      "files": [
+        "boxes/generators/bookholder.py"
+      ],
+      "sha": "84e392b39191"
     }
   }
 }
