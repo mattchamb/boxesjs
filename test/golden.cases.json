@@ -2871,5 +2871,292 @@
       18,
       12.4
     ]
+  },
+  {
+    "name": "ref_twopiece_default",
+    "generator": "two_piece",
+    "pythonClass": "TwoPiece",
+    "pythonModule": "two_piece",
+    "params": {
+      "x": 100,
+      "y": 100,
+      "h": 100,
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_twopiece_inside_kerf",
+    "generator": "two_piece",
+    "pythonClass": "TwoPiece",
+    "pythonModule": "two_piece",
+    "params": {
+      "x": 140,
+      "y": 80,
+      "h": 60,
+      "hi": 75,
+      "outside": false,
+      "play": 0.3,
+      "thickness": 4,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_twopiece_ridge_labels",
+    "generator": "two_piece",
+    "pythonClass": "TwoPiece",
+    "pythonModule": "two_piece",
+    "params": {
+      "x": 120,
+      "y": 90,
+      "h": 80,
+      "hi": 30,
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_basedbox_default",
+    "generator": "basedbox",
+    "pythonClass": "BasedBox",
+    "params": {
+      "x": 100,
+      "y": 100,
+      "h": 100,
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_basedbox_open_kerf",
+    "generator": "basedbox",
+    "pythonClass": "BasedBox",
+    "params": {
+      "x": 150,
+      "y": 90,
+      "h": 60,
+      "top_edge": "e",
+      "outside": false,
+      "thickness": 4,
+      "burn": 0.15,
+      "fj_edge_width": 3
+    }
+  },
+  {
+    "name": "ref_basedbox_stackable_lid",
+    "generator": "basedbox",
+    "pythonClass": "BasedBox",
+    "params": {
+      "x": 120,
+      "y": 80,
+      "h": 70,
+      "top_edge": "S",
+      "lid_style": "overthetop",
+      "lid_handle": "knob",
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_basedbox_handle_labels",
+    "generator": "basedbox",
+    "pythonClass": "BasedBox",
+    "params": {
+      "x": 160,
+      "y": 100,
+      "h": 80,
+      "top_edge": "t",
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_angledbox_default",
+    "generator": "angledbox",
+    "pythonClass": "AngledBox",
+    "params": {
+      "x": 100,
+      "y": 100,
+      "h": 100,
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_angledbox_even_lid_kerf",
+    "generator": "angledbox",
+    "pythonClass": "AngledBox",
+    "params": {
+      "x": 90,
+      "y": 160,
+      "h": 60,
+      "n": 4,
+      "top": "angled lid",
+      "outside": false,
+      "thickness": 4,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_angledbox_rim_lid",
+    "generator": "angledbox",
+    "pythonClass": "AngledBox",
+    "params": {
+      "x": 200,
+      "y": 120,
+      "h": 80,
+      "n": 3,
+      "top": "angled lid2",
+      "bottom_edge": "F",
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_angledbox_hole_labels",
+    "generator": "angledbox",
+    "pythonClass": "AngledBox",
+    "params": {
+      "x": 180,
+      "y": 100,
+      "h": 70,
+      "n": 1,
+      "top": "angled hole",
+      "bottom_edge": "e",
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_crate_default",
+    "generator": "crate",
+    "pythonClass": "Crate",
+    "params": {
+      "x": 150,
+      "y": 200,
+      "h": 100,
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_crate_flat_kerf",
+    "generator": "crate",
+    "pythonClass": "Crate",
+    "params": {
+      "x": 180,
+      "y": 120,
+      "h": 90,
+      "MakeStackable": false,
+      "HandleWidth": 80,
+      "HandleHeight": 20,
+      "HandleRadius": 6,
+      "HandleOffset": 15,
+      "thickness": 4,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_crate_mask_labels",
+    "generator": "crate",
+    "pythonClass": "Crate",
+    "params": {
+      "x": 160,
+      "y": 220,
+      "h": 120,
+      "AddPatternMask": true,
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_crate_flat_mask",
+    "generator": "crate",
+    "pythonClass": "Crate",
+    "params": {
+      "x": 150,
+      "y": 150,
+      "h": 100,
+      "MakeStackable": false,
+      "AddPatternMask": true,
+      "fj_bottom_lip": 2,
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_spicesrack_default",
+    "generator": "spicesrack",
+    "pythonClass": "SpicesRack",
+    "params": {
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_spicesrack_kerf_inplace",
+    "generator": "spicesrack",
+    "pythonClass": "SpicesRack",
+    "params": {
+      "diameter": 45,
+      "height": 50,
+      "space": 8,
+      "numx": 4,
+      "numy": 3,
+      "in_place_supports": true,
+      "thickness": 4,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_spicesrack_feet_labels",
+    "generator": "spicesrack",
+    "pythonClass": "SpicesRack",
+    "params": {
+      "diameter": 60,
+      "numx": 3,
+      "numy": 2,
+      "feet": true,
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_spicesrack_feet_inplace",
+    "generator": "spicesrack",
+    "pythonClass": "SpicesRack",
+    "params": {
+      "numx": 4,
+      "numy": 3,
+      "feet": true,
+      "in_place_supports": true,
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_slantedtray_default",
+    "generator": "slantedtray",
+    "pythonClass": "SlantedTray",
+    "params": {
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_slantedtray_outside_kerf",
+    "generator": "slantedtray",
+    "pythonClass": "SlantedTray",
+    "params": {
+      "sx": "30:50:30",
+      "y": 70,
+      "h": 90,
+      "front_height": 0.5,
+      "outside": true,
+      "thickness": 4,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_slantedtray_labels",
+    "generator": "slantedtray",
+    "pythonClass": "SlantedTray",
+    "params": {
+      "sx": "60*4",
+      "y": 80,
+      "h": 60,
+      "thickness": 3,
+      "labels": true
+    }
   }
 ]

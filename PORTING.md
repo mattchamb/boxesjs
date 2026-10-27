@@ -466,7 +466,7 @@ this reason).
 
 ## 9. State of the port
 
-**Every generator on the list is done.** Thirty-seven generators are registered —
+**Every generator on the list is done.** Forty-three generators are registered —
 ABox, ClosedBox, OpenBox, CardBox, Console2, UniversalBox, RegularBox,
 BayonetBox, NotesHolder, TypeTray, TrayLayout, TrayInsert, DividerTray,
 CompartmentBox, DrillBox, DrillStand, DisplayShelf, StorageRack, StorageShelf,
@@ -474,9 +474,10 @@ PaintStorage, FrameLoom, and the whole wall-mounted family (WallHopper,
 WallEdges, WallConsole, WallPlaneHolder, WallPliersHolder, WallStairs,
 WallChiselHolder, WallSlottedHolder, WallWrenchHolder, WallPinRow,
 WallTypeTray, WallStackableBin, WallCaliper, WallHook, WallRollHolder,
-WallDrillBox) — plus the RectangularWall part. All of them match boxes.py
-coordinate-for-coordinate across 194 golden cases, regenerated against
-boxes.py master at `84e392b` (2026-10-22).
+WallDrillBox), and the first batch from the survey below (TwoPiece, BasedBox,
+AngledBox, Crate, SpicesRack, SlantedTray) — plus the RectangularWall part.
+All of them match boxes.py coordinate-for-coordinate across 218 golden cases,
+regenerated against boxes.py master at `84e392b` (2026-10-22).
 
 When the boxes.py checkout moves, run `./scripts/upstream-drift.py`, then
 regenerate and diff before porting anything new: a golden that changes for a
@@ -494,14 +495,14 @@ unported generator files for `self.X(` calls, `edges.X` classes,
 classes), so §4 steps 1–2 still come first. Note that `paintbox.py` is
 PaintStorage, already ported.
 
-**About 70 need no new engine machinery.** The most useful, by boxes.py's own
-groups:
+**About 65 need no new engine machinery** (70 at the survey, less the first
+batch since ported). The most useful, by boxes.py's own groups:
 
 | Group | Generators |
 | --- | --- |
-| Box | `two_piece` (upstream already passes `bedBolts`), `basedbox`, `angledbox`, `halfbox`, `crate`, `rackbox`, `rack19halfwidth`, `eurorackskiff`, `regularstarbox`, `electronicsbox`, `displaycase`, `brick_sorter` |
-| Shelf | `spicesrack`, `winerack`, `bintray`, `microrack`, `discrack`, `stackablebin` |
-| Tray | `slantedtray`, `smallpartstray`, `penholderbox`, `gridfinitybase` |
+| Box | `halfbox`, `rackbox`, `rack19halfwidth`, `eurorackskiff`, `regularstarbox`, `electronicsbox`, `displaycase`, `brick_sorter` |
+| Shelf | `winerack`, `bintray`, `microrack`, `discrack`, `stackablebin` |
+| Tray | `smallpartstray`, `penholderbox`, `gridfinitybase` |
 | FlexBox | `shutterbox`, `breadbox`, `flexbook`, `folder` — `X` directly, no `surroundingWall` |
 | WallMounted | `wallrack`, `rollholder`, `keyholder`, `skadis`, `skadisstand` |
 | Misc | `airpurifier`, `jointpanel`, `bookholder`, `magazinefile`, `laptopstand`, `phoneholder`, `agricolainsert`, and some 25 small parts and test pieces |

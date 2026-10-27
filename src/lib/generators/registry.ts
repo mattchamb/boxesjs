@@ -7,11 +7,14 @@ import { defaultValues, type ParamSpec, type ParamValues } from '../params/schem
 import type { GeneratorDef } from './types';
 
 import { aBox } from './abox';
+import { angledBox } from './angledbox';
+import { basedBox } from './basedbox';
 import { bayonetBox } from './bayonetbox';
 import { cardBox } from './cardbox';
 import { closedBox } from './closedbox';
 import { compartmentBox } from './compartmentbox';
 import { console2 } from './console2';
+import { crate } from './crate';
 import { displayShelf } from './displayshelf';
 import { dividerTray } from './dividertray';
 import { drillBox } from './drillbox';
@@ -22,9 +25,12 @@ import { openBox } from './openbox';
 import { paintStorage } from './paintstorage';
 import { rectangularWall } from './rectangularwall';
 import { regularBox } from './regularbox';
+import { slantedTray } from './slantedtray';
+import { spicesRack } from './spicesrack';
 import { storageRack } from './storagerack';
 import { storageShelf } from './storageshelf';
 import { trayInsert } from './trayinsert';
+import { twoPiece } from './twopiece';
 import { trayLayout } from './traylayout';
 import { typeTray } from './typetray';
 import { universalBox } from './universalbox';
@@ -82,6 +88,12 @@ const DEFS: GeneratorDef[] = [
   wallHook,
   wallRollHolder,
   wallDrillBox,
+  twoPiece,
+  basedBox,
+  angledBox,
+  crate,
+  spicesRack,
+  slantedTray,
   rectangularWall,
 ];
 

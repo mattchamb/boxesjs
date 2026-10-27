@@ -244,6 +244,42 @@
         "boxes/generators/wallwrenchholder.py"
       ],
       "sha": "84e392b39191"
+    },
+    "two_piece": {
+      "files": [
+        "boxes/generators/two_piece.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "basedbox": {
+      "files": [
+        "boxes/generators/basedbox.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "angledbox": {
+      "files": [
+        "boxes/generators/angledbox.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "crate": {
+      "files": [
+        "boxes/generators/crate.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "spicesrack": {
+      "files": [
+        "boxes/generators/spicesrack.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "slantedtray": {
+      "files": [
+        "boxes/generators/slantedtray.py"
+      ],
+      "sha": "84e392b39191"
     }
   }
 }

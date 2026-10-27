@@ -420,6 +420,26 @@ export const HANDLE_PARAMS: ParamSpec[] = [
 ];
 
 /**
+ * The lip a finger-hole edge leaves below its slots, for generators that start
+ * it above zero. Spread into a generator's own params: on most designs the
+ * setting does nothing visible, so it is not offered everywhere.
+ */
+export const BOTTOM_LIP_PARAMS: ParamSpec[] = inSection('Finger joints', null, [
+  {
+    key: 'fj_bottom_lip',
+    kind: 'number',
+    label: 'Bottom lip',
+    unit: '× thickness',
+    default: 0.0,
+    min: 0,
+    max: 5,
+    step: 0.1,
+    group: 'joints',
+    help: 'Material a finger-hole bottom edge leaves sticking out below its slots.',
+  },
+]);
+
+/**
  * Stackable foot options, for generators whose proportions depend on them.
  *
  * Spread into a generator's own params rather than added globally: most
@@ -1143,6 +1163,7 @@ export function toBoxesConfig(values: ParamValues): BoxesConfig {
     fj_width: 'width',
     fj_edge_width: 'edge_width',
     fj_style: 'style',
+    fj_bottom_lip: 'bottom_lip',
   };
   for (const [formKey, settingKey] of Object.entries(map)) {
     const v = values[formKey];
