@@ -115,7 +115,8 @@ export default function App({ generator, name, summary, initial }: Props) {
   const startOptimise = () => {
     if (!client.current || search.current) return;
     setOptimising({ elapsedMs: 0, best: null });
-    const run = client.current.optimise({ generator, values, budgetMs: 10_000 }, (best, elapsedMs) => {
+    const seconds = Number(values['optimise_seconds'] ?? 10);
+    const run = client.current.optimise({ generator, values, budgetMs: seconds * 1000 }, (best, elapsedMs) => {
       setNested(best);
       setOptimising({ elapsedMs, best });
     });

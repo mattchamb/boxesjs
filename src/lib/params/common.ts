@@ -349,6 +349,20 @@ export const COMMON_PARAMS: ParamSpec[] = [
     showIf: (v) => v['pack'] === true && v['pack_rotate'] !== false,
     help: 'Finest turn Optimise tries on parts that are not near rectangles. Finer steps can fit round parts closer, but search more slowly.',
   },
+  {
+    key: 'optimise_seconds',
+    kind: 'number',
+    label: 'Search for',
+    unit: 's',
+    default: 10,
+    min: 2,
+    max: 120,
+    step: 1,
+    integer: true,
+    group: 'layout',
+    showIf: (v) => v['pack'] === true,
+    help: 'How long Optimise searches. Longer searches try more layouts and can find fewer sheets, most of all with many parts or copies; Stop keeps the best so far.',
+  },
 ];
 
 /**

@@ -8,6 +8,7 @@
 import type { NestResult } from '../lib/layout/nest';
 import type { LayoutSuggestion } from '../lib/layout/pack';
 import type { ParamSpec, ParamValue, ParamValues } from '../lib/params/schema';
+import type { ComponentChildren } from 'preact';
 import { NumberInput } from './controls';
 
 interface Props {
@@ -107,7 +108,7 @@ export function SheetBar({ specs, values, setValue, hint, applyHint, optimiser }
         </div>
       )}
       {hint && <Hint hint={hint} values={values} panels={panels} onUse={() => applyHint(hint)} />}
-      <Optimise {...optimiser} />
+      <Optimise {...optimiser} duration={number('optimise_seconds', 'Search for', 's')} />
     </div>
   );
 }
@@ -115,7 +116,18 @@ export function SheetBar({ specs, values, setValue, hint, applyHint, optimiser }
 const sheetCount = (n: number) => `${n} sheet${n === 1 ? '' : 's'}`;
 
 /** Nesting by outline: start it, watch it, and keep or drop what it finds. */
-function Optimise({ running, result, applied, start, stop, discard }: Optimiser) {
+function Optimise({
+  running,
+  result,
+  applied,
+  start,
+  stop,
+  discard,
+  duration,
+}: Optimiser & {
+  /** The search length field; left out while searching, when changing it would stop the search. */
+  duration: ComponentChildren;
+}) {
   if (running) {
     const best = running.best;
     return (
@@ -137,6 +149,7 @@ function Optimise({ running, result, applied, start, stop, discard }: Optimiser)
           Optimised layout: {sheetCount(result.sheets)}, {Math.round(result.used * 100)}% used, against{' '}
           {sheetCount(result.baseline)} packed by box.
         </p>
+        {duration}
         <button type="button" class="btn" onClick={start}>
           Optimise again
         </button>
@@ -151,8 +164,9 @@ function Optimise({ running, result, applied, start, stop, discard }: Optimiser)
       <p>
         {result
           ? 'Settings have changed since the layout was optimised, so parts are packed by box again.'
-          : 'Parts are packed by their boxes. Optimise nests them by outline and searches for fewer sheets, for about ten seconds.'}
+          : 'Parts are packed by their boxes. Optimise nests them by outline and searches for fewer sheets.'}
       </p>
+      {duration}
       <button type="button" class="btn" onClick={start}>
         {result ? 'Optimise again' : 'Optimise layout'}
       </button>
