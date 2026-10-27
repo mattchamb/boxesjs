@@ -466,7 +466,7 @@ this reason).
 
 ## 9. State of the port
 
-**Every generator on the list is done.** Fifty generators are registered —
+**Every generator on the list is done.** Fifty-six generators are registered —
 ABox, ClosedBox, OpenBox, CardBox, Console2, UniversalBox, RegularBox,
 BayonetBox, NotesHolder, TypeTray, TrayLayout, TrayInsert, DividerTray,
 CompartmentBox, DrillBox, DrillStand, DisplayShelf, StorageRack, StorageShelf,
@@ -476,9 +476,9 @@ WallChiselHolder, WallSlottedHolder, WallWrenchHolder, WallPinRow,
 WallTypeTray, WallStackableBin, WallCaliper, WallHook, WallRollHolder,
 WallDrillBox), the first batch from the survey below (TwoPiece, BasedBox,
 AngledBox, Crate, SpicesRack, SlantedTray), and every `polygonWalls` user
-(Coffin, RoundedTrapezoidBox, RoundedRegularBox, Console, Tetris, HeartBox) —
-plus the RectangularWall part. All of them match boxes.py
-coordinate-for-coordinate across 241 golden cases,
+(Coffin, RoundedTrapezoidBox, RoundedRegularBox, Console, Tetris, HeartBox),
+and the flex boxes (FlexBox 1–5, RoundedBox) — plus the RectangularWall part.
+All of them match boxes.py coordinate-for-coordinate across 261 golden cases,
 regenerated against boxes.py master at `84e392b` (2026-10-22).
 
 When the boxes.py checkout moves, run `./scripts/upstream-drift.py`, then
@@ -505,7 +505,7 @@ batch since ported). The most useful, by boxes.py's own groups:
 | Box | `halfbox`, `rackbox`, `rack19halfwidth`, `eurorackskiff`, `regularstarbox`, `electronicsbox`, `displaycase`, `brick_sorter` |
 | Shelf | `winerack`, `bintray`, `microrack`, `discrack`, `stackablebin` |
 | Tray | `smallpartstray`, `penholderbox`, `gridfinitybase` |
-| FlexBox | `shutterbox`, `breadbox`, `flexbook`, `folder` — `X` directly, no `surroundingWall` |
+| FlexBox | `shutterbox`, `breadbox`, `flexbook`, `folder`, `doubleflexdoorbox`, `lamp` (`silverwarebox` also needs `Boxes.handle`) |
 | WallMounted | `wallrack`, `rollholder`, `keyholder`, `skadis`, `skadisstand` |
 | Misc | `airpurifier`, `jointpanel`, `bookholder`, `magazinefile`, `laptopstand`, `phoneholder`, `agricolainsert`, and some 25 small parts and test pieces |
 
@@ -514,14 +514,12 @@ batch since ported). The most useful, by boxes.py's own groups:
 
 **The engine pieces still missing, by what each unlocks:**
 
-1. `surroundingWall` (with `latch`): flexbox 1–5, lamp, silverwarebox,
-   doubleflexdoorbox, roundedbox.
-2. The hinge families (`Hinge`, `ChestHinge`, `CabinetHinge`): hingebox,
+1. The hinge families (`Hinge`, `ChestHinge`, `CabinetHinge`): hingebox,
    dicebox, integratedhingebox, piratechest and others, and hinged top-edge
    choices on the boxes already ported.
-3. `SlideOnLid`: royalgame, kamishibai, and slide-on top edges likewise.
-4. `Grooved`: cardholder, slidingdrawer, unevenheightbox.
-5. NEMA, gears, pulleys, servos, `fillHoles`, `hexHolesPlate`, and the two that
+2. `SlideOnLid`: royalgame, kamishibai, and slide-on top edges likewise.
+3. `Grooved`: cardholder, slidingdrawer, unevenheightbox.
+4. NEMA, gears, pulleys, servos, `fillHoles`, `hexHolesPlate`, and the two that
    import shapely/numpy (sphere, stevensonscreenbox).
 
 A generator referencing `edges.BaseEdge` is *not* blocked — that is the
@@ -550,6 +548,8 @@ section is a record of what the engine now has and where the sharp edges were.
 | `flangedWall` | `__init__.py:2620` | `boxes.ts` — WallCaliper, WallHook. boxes.py indexes `flanges[i-1]` at `i = 0`, i.e. Python's `[-1]`; the port spells that out |
 | `roundedPlate`, `_splitWall` | `__init__.py:2299` | `boxes.ts` — WallRollHolder. Without `holesMargin` (see below) |
 | `polygonWalls` | `__init__.py:3059` | `boxes.ts` — Coffin and the other five. boxes.py draws every wall into one part; the port opens a part per wall, named `wall N`, so each can be named and packed on its own. The paths and their order are boxes.py's |
+| `surroundingWall`, `surroundingWallPiece` | `__init__.py:2398` | `boxes.ts` — RoundedBox. Every flex box defines its own `surroundingWall` instead, renamed `flexWall` in the port since it cannot shadow the base method's signature; the same goes for RoundedBox's argument-less `hole` (`holeCB`) and Console2's `latch` (`latchPart`) |
+| `latch`, `grip`, `_latchHole`, `_latchGrip` | `__init__.py:1123` | `boxes.ts` — the flex boxes' door latch. The private helpers are `doorLatchHole`/`doorLatchGrip`, since Console2 has a `latchHole` of its own |
 | `FLEX_PARAMS` | | `params/common.ts` — the living-hinge fields the chest lid already had, for generators that bend walls (RoundedTrapezoidBox, RoundedRegularBox, HeartBox) |
 | DrillStand's part methods | `generators/drillstand.py` | `drillstand.ts`, as a mixin over `Boxes` (DrillStand) or `WallMountedBox` (WallDrillBox), standing in for boxes.py's multiple inheritance |
 | `HandleEdge`, `HandleHoleEdge` (`y`, `Y`) | `edges.py:2611` | `src/lib/edges/handle.ts` — DividerTray's bottom-panel handle; not offered as a top edge |
@@ -784,7 +784,7 @@ state, not local values, and anything drawn afterwards sees the redefinition.
 
 ### Deliberate divergences
 
-Seven, each recorded at the site. Note what they have in common: every one is a
+Eight, each recorded at the site. Note what they have in common: every one is a
 configuration boxes.py itself refuses to render, so none of them can have a
 golden and the invariant tests are the only cover.
 
@@ -815,6 +815,9 @@ golden and the invariant tests are the only cover.
 - **Coffin with `outside` off.** The lid's cross reads the foot width and
   shoulder length, which boxes.py stores only in the `outside` branch, so it
   raises `AttributeError`. The port stores them either way.
+- **FlexBox5 with diameters too different for its length.** The straight runs'
+  tilt is `asin` of a ratio that can pass 1, and boxes.py raises
+  `ValueError`. The port warns on `x` and draws nothing.
 
 Two upstream quirks are reproduced rather than "fixed", because the geometry
 depends on them:
@@ -844,7 +847,7 @@ conditional are truthy. The float is discarded. The port passes a literal `true`
 
 ### Not ported, and nothing above needs it
 
-`surroundingWall`, `roundedPlate`, `CabinetHinge`, `ChestHinge`, `Click`, `SlideOnLid`,
+`CabinetHinge`, `ChestHinge`, `Click`, `SlideOnLid`,
 `Grooved`, gears, pulleys, servos, QR codes, `fillHoles`, DXF and PostScript output.
 
 `roundedPlate`'s `holesMargin`/`holesSettings` are not ported; they fill the

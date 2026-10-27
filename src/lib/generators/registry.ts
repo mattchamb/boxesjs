@@ -21,12 +21,18 @@ import { displayShelf } from './displayshelf';
 import { dividerTray } from './dividertray';
 import { drillBox } from './drillbox';
 import { drillStand, wallDrillBox } from './drillstand';
+import { flexBox } from './flexbox';
+import { flexBox2 } from './flexbox2';
+import { flexBox3 } from './flexbox3';
+import { flexBox4 } from './flexbox4';
+import { flexBox5 } from './flexbox5';
 import { frameLoom } from './frameloom';
 import { heartBox } from './heart';
 import { notesHolder } from './notesholder';
 import { openBox } from './openbox';
 import { paintStorage } from './paintstorage';
 import { rectangularWall } from './rectangularwall';
+import { roundedBox } from './roundedbox';
 import { roundedRegularBox } from './roundedregularbox';
 import { roundedTrapezoidBox } from './roundedtrapezoidbox';
 import { regularBox } from './regularbox';
@@ -106,6 +112,12 @@ const DEFS: GeneratorDef[] = [
   consoleBox,
   heartBox,
   tetris,
+  flexBox,
+  flexBox2,
+  flexBox3,
+  flexBox4,
+  flexBox5,
+  roundedBox,
   rectangularWall,
 ];
 

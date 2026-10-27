@@ -53,8 +53,12 @@ class Console2 extends Boxes {
     return [y, 90, fh, 90 - angle, panel, angle + 90, h, 90];
   }
 
-  /** The sprung bar that holds the back wall shut. */
-  private latch = (move?: string): void => {
+  /**
+   * The sprung bar that holds the back wall shut. boxes.py calls this
+   * `latch`, overriding the base class's flex-door latch with a different
+   * signature, which TypeScript does not allow.
+   */
+  private latchPart = (move?: string): void => {
     const t = this.thickness;
     const tw = 8 * t;
     const th = 3 * t;
@@ -336,8 +340,8 @@ class Console2 extends Boxes {
 
     // hardware for back wall
     if (this.o.removableBackwall) {
-      this.latch('up');
-      this.latch('up');
+      this.latchPart('up');
+      this.latchPart('up');
       this.partsMatrix(4, 2, 'up', this.latchClamp);
     }
   }

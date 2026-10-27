@@ -3437,5 +3437,253 @@
       "thickness": 3,
       "labels": true
     }
+  },
+  {
+    "name": "ref_flexbox_default",
+    "generator": "flexbox",
+    "pythonClass": "FlexBox",
+    "params": {
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_flexbox_dividers_kerf",
+    "generator": "flexbox",
+    "pythonClass": "FlexBox",
+    "params": {
+      "sx": "40*3",
+      "y": 80,
+      "h": 60,
+      "radius": 10,
+      "latchsize": 6,
+      "thickness": 4,
+      "burn": 0.15,
+      "flex_distance": 0.7
+    }
+  },
+  {
+    "name": "ref_flexbox_full_radius_labels",
+    "generator": "flexbox",
+    "pythonClass": "FlexBox",
+    "params": {
+      "sx": "120",
+      "y": 60,
+      "h": 90,
+      "radius": 0,
+      "outside": false,
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_flexbox2_default",
+    "generator": "flexbox2",
+    "pythonClass": "FlexBox2",
+    "params": {
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_flexbox2_kerf",
+    "generator": "flexbox2",
+    "pythonClass": "FlexBox2",
+    "params": {
+      "x": 140,
+      "y": 70,
+      "h": 80,
+      "radius": 25,
+      "latchsize": 6,
+      "thickness": 4,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_flexbox2_labels",
+    "generator": "flexbox2",
+    "pythonClass": "FlexBox2",
+    "params": {
+      "x": 120,
+      "y": 90,
+      "h": 110,
+      "radius": 0,
+      "outside": false,
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_flexbox4_default",
+    "generator": "flexbox4",
+    "pythonClass": "FlexBox4",
+    "params": {
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_flexbox4_kerf",
+    "generator": "flexbox4",
+    "pythonClass": "FlexBox4",
+    "params": {
+      "x": 140,
+      "y": 70,
+      "h": 80,
+      "radius": 25,
+      "latchsize": 6,
+      "thickness": 4,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_flexbox4_labels",
+    "generator": "flexbox4",
+    "pythonClass": "FlexBox4",
+    "params": {
+      "x": 120,
+      "y": 90,
+      "h": 110,
+      "radius": 0,
+      "outside": false,
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_flexbox5_default",
+    "generator": "flexbox5",
+    "pythonClass": "FlexBox5",
+    "params": {
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_flexbox5_tapered_kerf",
+    "generator": "flexbox5",
+    "pythonClass": "FlexBox5",
+    "params": {
+      "x": 160,
+      "h": 70,
+      "top_diameter": 80,
+      "bottom_diameter": 40,
+      "latchsize": 6,
+      "thickness": 4,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_flexbox5_lengthened_labels",
+    "generator": "flexbox5",
+    "pythonClass": "FlexBox5",
+    "params": {
+      "x": 50,
+      "h": 60,
+      "top_diameter": 40,
+      "bottom_diameter": 50,
+      "outside": false,
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_flexbox3_default",
+    "generator": "flexbox3",
+    "pythonClass": "FlexBox3",
+    "params": {
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_flexbox3_tall_lid_kerf",
+    "generator": "flexbox3",
+    "pythonClass": "FlexBox3",
+    "params": {
+      "x": 140,
+      "y": 80,
+      "z": 70,
+      "h": 25,
+      "radius": 12,
+      "c": 1.5,
+      "thickness": 4,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_flexbox3_auto_radius_labels",
+    "generator": "flexbox3",
+    "pythonClass": "FlexBox3",
+    "params": {
+      "x": 120,
+      "y": 90,
+      "z": 60,
+      "h": 8,
+      "radius": 0,
+      "outside": false,
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_roundedbox_default",
+    "generator": "roundedbox",
+    "pythonClass": "RoundedBox",
+    "params": {
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_roundedbox_shelves_lid_kerf",
+    "generator": "roundedbox",
+    "pythonClass": "RoundedBox",
+    "params": {
+      "x": 140,
+      "y": 90,
+      "sh": "40*3",
+      "radius": 20,
+      "wallpieces": 2,
+      "top": "lid",
+      "thickness": 4,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_roundedbox_holes_four",
+    "generator": "roundedbox",
+    "pythonClass": "RoundedBox",
+    "params": {
+      "x": 160,
+      "y": 120,
+      "sh": "60:40",
+      "edge_style": "h",
+      "wallpieces": 4,
+      "top": "closed",
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_roundedbox_F_three",
+    "generator": "roundedbox",
+    "pythonClass": "RoundedBox",
+    "params": {
+      "x": 120,
+      "y": 120,
+      "sh": "80",
+      "edge_style": "F",
+      "wallpieces": 3,
+      "outside": false,
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_roundedbox_round_labels",
+    "generator": "roundedbox",
+    "pythonClass": "RoundedBox",
+    "params": {
+      "x": 150,
+      "y": 60,
+      "sh": "50",
+      "radius": 30,
+      "wallpieces": 1,
+      "thickness": 3,
+      "labels": true
+    }
   }
 ]

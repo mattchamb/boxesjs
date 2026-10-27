@@ -1613,6 +1613,196 @@ export abstract class Boxes {
     this.move(overallwidth, overallheight, move, false, label);
   }
 
+  /**
+   * The geometry of one piece of a `surroundingWall`, ported from boxes.py
+   * `surroundingWallPiece`: whether it starts or ends at a split, and the
+   * length of straight wall the callback with number `cbnr` stands on.
+   */
+  surroundingWallPiece(cbnr: number, x: number, y: number, r: number, pieces = 1): [boolean, number, boolean] {
+    let sides: number[];
+    if (pieces <= 2 && y - 2 * r < 1e-3) {
+      // Leave out the y sides when they have no length.
+      sides = [x / 2 - r, x - 2 * r, x - 2 * r];
+      // boxes.py's own hack to get the right splits.
+      if (pieces > 0) pieces += 1;
+    } else {
+      sides = [x / 2 - r, y - 2 * r, x - 2 * r, y - 2 * r, x - 2 * r];
+    }
+
+    let wallcount = 0;
+    for (let nr = 0; nr < sides.length; nr++) {
+      const l = sides[nr]!;
+      if (this.splitWall(pieces, nr) && nr > 0) {
+        if (wallcount === cbnr) return [false, l / 2, true];
+        wallcount += 1;
+        if (wallcount === cbnr) return [true, l / 2, false];
+        wallcount += 1;
+      } else {
+        if (wallcount === cbnr) return [false, l, false];
+        wallcount += 1;
+      }
+    }
+    return [false, 0.0, false];
+  }
+
+  /**
+   * The wall that runs round a `roundedPlate`, bent round its corners as a
+   * living hinge, ported from boxes.py `surroundingWall`. It starts in the
+   * middle of the first x side; with `pieces` above 1 it is split where
+   * `roundedPlate` splits, each piece ending in `left` and `right`.
+   * Callbacks are numbered along the straight runs, a split run counting as
+   * two. All the pieces are one part, as in boxes.py.
+   */
+  surroundingWall(
+    x: number,
+    y: number,
+    r: number,
+    h: number,
+    opts: {
+      bottom?: EdgeSpec;
+      top?: EdgeSpec;
+      left?: EdgeSpec;
+      right?: EdgeSpec;
+      pieces?: number;
+      extendCorners?: boolean;
+      callback?: Callback;
+      move?: string | null;
+      label?: string;
+    } = {},
+  ): void {
+    const { extendCorners = true, callback, move, label = '' } = opts;
+    let pieces = opts.pieces ?? 1;
+    const t = this.thickness;
+    let c4 = (r + this.burn) * Math.PI * 0.5; // a quarter circle
+    c4 = c4 / (this.getEdge('X').settings as FlexSettings).stretch;
+
+    const top = this.getEdge(opts.top ?? 'e');
+    const bottom = this.getEdge(opts.bottom ?? 'e');
+    const left = this.getEdge(opts.left ?? 'D');
+    const right = this.getEdge(opts.right ?? 'd');
+
+    // boxes.py assumes each edge starts and ends at the same width.
+    const topwidth = extendCorners ? t : top.startWidth();
+    const bottomwidth = extendCorners ? t : bottom.startWidth();
+
+    const overallwidth =
+      2 * x + 2 * y - 8 * r + 4 * c4 + (this.getEdge('d').spacing() + this.getEdge('D').spacing() + this.spacing) * pieces;
+    const overallheight = h + Math.max(t, top.spacing()) + Math.max(t, bottom.spacing());
+
+    if (this.move(overallwidth, overallheight, move, true)) return;
+
+    this.moveTo(left.spacing(), bottom.margin());
+
+    let wallcount = 0;
+    let tops: number[] = []; // what the top runs along, flex and straight in turn
+
+    let sides: number[];
+    if (pieces <= 2 && y - 2 * r < 1e-3) {
+      // Leave out the y sides when they have no length.
+      c4 *= 2;
+      sides = [x / 2 - r, x - 2 * r, x - 2 * r];
+      if (pieces > 0) pieces += 1;
+    } else {
+      sides = [x / 2 - r, y - 2 * r, x - 2 * r, y - 2 * r, x - 2 * r];
+    }
+
+    const flex = this.getEdge('X') as FlexEdge;
+    for (let nr = 0; nr < sides.length; nr++) {
+      const l = sides[nr]!;
+      if (this.splitWall(pieces, nr) && nr > 0) {
+        this.cc(callback ?? null, wallcount, 0, bottomwidth + this.burn);
+        wallcount += 1;
+        bottom.call(l / 2);
+        tops.push(l / 2);
+
+        // Close this piece back along the top.
+        this.savedContext(() => {
+          this.edgeCorner(bottom, right, 90);
+          right.call(h);
+          this.edgeCorner(right, top, 90);
+          [...tops].reverse().forEach((d, n) => {
+            if (n % 2) {
+              // Over a flex section the top stays plain.
+              this.step(topwidth - top.endWidth());
+              this.edge(d);
+              this.step(top.startWidth() - topwidth);
+            } else {
+              top.call(d);
+            }
+          });
+          this.edgeCorner(top, left, 90);
+          left.call(h);
+          this.edgeCorner(left, bottom, 90);
+        });
+
+        if (nr === sides.length - 1) break;
+        // Start the next piece.
+        tops = [];
+        this.moveTo(right.margin() + left.margin() + this.spacing);
+        this.cc(callback ?? null, wallcount, 0, bottomwidth + this.burn);
+        wallcount += 1;
+        bottom.call(l / 2);
+        tops.push(l / 2);
+      } else {
+        this.cc(callback ?? null, wallcount, 0, bottomwidth + this.burn);
+        wallcount += 1;
+        bottom.call(l);
+        tops.push(l);
+      }
+      this.step(bottomwidth - bottom.endWidth());
+      flex.call(c4, { h: h + topwidth + bottomwidth });
+      this.step(bottom.startWidth() - bottomwidth);
+      tops.push(c4);
+    }
+
+    this.move(overallwidth, overallheight, move, false, label);
+  }
+
+  /** A corrugated run, to give a finger something to grip, ported from boxes.py `grip`. */
+  grip(length: number, depth: number): void {
+    const grooves = Math.max(Math.floor(length / (depth * 2.0)) + 1, 1);
+    depth = length / grooves / 4.0;
+    for (let groove = 0; groove < grooves; groove++) {
+      this.corner(90, depth);
+      this.corner(-180, depth);
+      this.corner(90, depth);
+    }
+  }
+
+  // boxes.py's _latchHole and _latchGrip. Console2 has a latchHole of its own.
+  private doorLatchHole(length: number): void {
+    this.edge(1.1 * this.thickness);
+    this.corner(-90);
+    this.edge(length / 2.0 + 0.2 * this.thickness);
+    this.corner(-90);
+    this.edge(1.1 * this.thickness);
+  }
+
+  private doorLatchGrip(length: number, extraLength = 0.0): void {
+    this.corner(90, this.thickness / 4.0);
+    this.grip(length / 2.0 - this.thickness / 2.0 - 0.2 * this.thickness + extraLength, this.thickness / 2.0);
+    this.corner(90, this.thickness / 4.0);
+  }
+
+  /**
+   * The latch that holds a flex box's door shut, ported from boxes.py
+   * `latch`: a tab on the box side (`positive`), or on the door a slot with a
+   * grip beside it. `reverse` when running away from the latch.
+   */
+  latch(length: number, positive = true, reverse = false, extraLength = 0.0): void {
+    const t = this.thickness;
+    if (positive) {
+      const poly = [0, -90, t, 90, length / 2.0, 90, t, -90, length / 2.0];
+      this.polyline(...(reverse ? [...poly].reverse() : poly));
+    } else {
+      if (reverse) this.doorLatchGrip(length, extraLength);
+      else this.corner(90);
+      this.doorLatchHole(length);
+      if (!reverse) this.doorLatchGrip(length, extraLength);
+      else this.corner(90);
+    }
+  }
+
   /** Right triangle, used for brackets and shelf supports. */
   rectangularTriangle(
     x: number,

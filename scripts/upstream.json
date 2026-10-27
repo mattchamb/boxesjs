@@ -316,6 +316,42 @@
         "boxes/generators/heart.py"
       ],
       "sha": "84e392b39191"
+    },
+    "flexbox": {
+      "files": [
+        "boxes/generators/flexbox.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "flexbox2": {
+      "files": [
+        "boxes/generators/flexbox2.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "flexbox3": {
+      "files": [
+        "boxes/generators/flexbox3.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "flexbox4": {
+      "files": [
+        "boxes/generators/flexbox4.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "flexbox5": {
+      "files": [
+        "boxes/generators/flexbox5.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "roundedbox": {
+      "files": [
+        "boxes/generators/roundedbox.py"
+      ],
+      "sha": "84e392b39191"
     }
   }
 }
