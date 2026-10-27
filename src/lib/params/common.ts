@@ -335,6 +335,20 @@ export const COMMON_PARAMS: ParamSpec[] = [
     showIf: (v) => v['pack'] === true,
     help: 'Turns parts a quarter turn where that fits better. Switch off to keep the grain running the way each part was designed.',
   },
+  {
+    key: 'pack_angle_step',
+    kind: 'enum',
+    label: 'Turn by',
+    default: '90',
+    choices: [
+      { value: '90', label: '90°' },
+      { value: '45', label: '45°' },
+      { value: '15', label: '15°' },
+    ],
+    group: 'layout',
+    showIf: (v) => v['pack'] === true && v['pack_rotate'] !== false,
+    help: 'Finest turn Optimise tries on parts that are not near rectangles. Finer steps can fit round parts closer, but search more slowly.',
+  },
 ];
 
 /**

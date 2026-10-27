@@ -652,6 +652,17 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
 .copies-hint p { margin: 0; flex: 1; }
 .copies-hint .btn { flex: none; }
 
+.optimise {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  line-height: 1.4;
+}
+
+.optimise p { margin: 0; flex: 1; color: var(--fg-muted); }
+.optimise .btn { flex: none; }
+.sheet-field select { padding: 3px 6px; }
+
 .statsbar {
   display: flex;
   gap: 18px;

@@ -10,7 +10,8 @@
 import { LAYERS, type Layer } from './geom/colors';
 import { toBoxesConfig } from './params/common';
 import { defaultsFor, getGenerator, paramsFor } from './generators/registry';
-import { bestLayout, packDrawing, type LayoutSuggestion, type PackOptions } from './layout/pack';
+import { bestLayout, packDrawing, realise, type LayoutSuggestion, type PackOptions } from './layout/pack';
+import { layoutKey, nest, type NestOptions, type NestResult } from './layout/nest';
 import { renderBox, type BBox, type Drawing, type DrawingStats, type Sheet } from './render';
 import type { ParamValues } from './params/schema';
 
@@ -37,16 +38,32 @@ export interface PreviewData {
   stats: DrawingStats;
   warnings: { param?: string; message: string }[];
   sheets?: Sheet[];
+  /** The sheets are laid out by an optimised layout, not MaxRects. */
+  optimised?: boolean;
 }
 
 /**
  * Build a drawing from a generator id and a set of form values, packed onto
  * sheets when that is asked for, so the preview and every export agree.
+ *
+ * An optimised layout is used while it still fits: made for this geometry and
+ * these sheet settings. Otherwise MaxRects lays the parts out as usual.
  */
-export function buildDrawing(generator: string, values: ParamValues): Drawing {
+export function buildDrawing(generator: string, values: ParamValues, nested?: NestResult | null): Drawing {
   const full = { ...defaultsFor(generator), ...values };
   const drawing = renderBox(getGenerator(generator).create(full, toBoxesConfig(full)));
-  return full['pack'] === true ? packDrawing(drawing, packOptions(full)) : drawing;
+  if (full['pack'] !== true) return drawing;
+  const o = packOptions(full);
+  if (nested && nested.key === layoutKey(drawing, o)) return { ...realise(drawing, o, nested.arrangement), optimised: true };
+  return packDrawing(drawing, o);
+}
+
+/** Nest the parts by their outlines; null when packing is off. Slow: see `nest`. */
+export function optimiseLayout(generator: string, values: ParamValues, opts: NestOptions): NestResult | null {
+  const full = { ...defaultsFor(generator), ...values };
+  if (full['pack'] !== true) return null;
+  const drawing = renderBox(getGenerator(generator).create(full, toBoxesConfig(full)));
+  return nest(drawing, packOptions(full), opts);
 }
 
 function packOptions(full: ParamValues): PackOptions {
@@ -57,6 +74,7 @@ function packOptions(full: ParamValues): PackOptions {
     margin: num('sheet_margin'),
     gap: num('pack_gap'),
     rotate: full['pack_rotate'] !== false,
+    angleStep: Number(full['pack_angle_step'] ?? 90),
     copies: num('pack_copies'),
   };
 }
@@ -107,6 +125,7 @@ export function toPreview(drawing: Drawing): PreviewData {
     stats: drawing.stats,
     warnings: drawing.warnings,
     ...(drawing.sheets ? { sheets: drawing.sheets } : {}),
+    ...(drawing.optimised ? { optimised: true } : {}),
   };
 }
 

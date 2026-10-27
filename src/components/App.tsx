@@ -17,7 +17,7 @@ import {
   type ParamValues,
 } from '../lib/params/schema';
 import { paramsFor } from '../lib/generators/registry';
-import { RenderClient } from '../lib/render-client';
+import { RenderClient, type Optimising } from '../lib/render-client';
 import { decodeParams, encodeParams, permalinkFor } from '../lib/permalink';
 import {
   findMaterial,
@@ -28,11 +28,12 @@ import {
   setSelectedMaterialId,
   type Material,
 } from '../lib/materials';
+import type { NestResult } from '../lib/layout/nest';
 import { sheetsPerPanel, type LayoutSuggestion } from '../lib/layout/pack';
 import type { PreviewData } from '../lib/preview';
 import { Control } from './controls';
 import { Preview } from './Preview';
-import { SheetBar } from './SheetBar';
+import { SheetBar, type Optimiser } from './SheetBar';
 
 interface Props {
   generator: string;
@@ -62,6 +63,11 @@ export default function App({ generator, name, summary, initial }: Props) {
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
   const [layoutHint, setLayoutHint] = useState<LayoutSuggestion | null>(null);
+  // An optimised layout lasts until it is dropped; it applies only while the
+  // settings it was made for are back, so undoing a change brings it back too.
+  const [nested, setNested] = useState<NestResult | null>(null);
+  const [optimising, setOptimising] = useState<Optimiser['running']>(null);
+  const search = useRef<Optimising | null>(null);
 
   const client = useRef<RenderClient>();
 
@@ -100,8 +106,32 @@ export default function App({ generator, name, summary, initial }: Props) {
   // Every parameter change re-renders. The client coalesces, so this is safe
   // to fire on every keystroke and every pixel of slider drag.
   useEffect(() => {
-    client.current?.requestPreview({ generator, values });
-  }, [generator, values]);
+    client.current?.requestPreview({ generator, values, nest: nested });
+  }, [generator, values, nested]);
+
+  // A search started before a change is searching for the old settings.
+  useEffect(() => () => search.current?.stop(), [generator, values]);
+
+  const startOptimise = () => {
+    if (!client.current || search.current) return;
+    setOptimising({ elapsedMs: 0, best: null });
+    const run = client.current.optimise({ generator, values, budgetMs: 10_000 }, (best, elapsedMs) => {
+      setNested(best);
+      setOptimising({ elapsedMs, best });
+    });
+    search.current = run;
+    // The elapsed time moves on between better layouts too.
+    const began = Date.now();
+    const tick = setInterval(() => setOptimising((r) => r && { ...r, elapsedMs: Date.now() - began }), 200);
+    run.done
+      .then((best) => best && setNested(best))
+      .catch((e) => setError(e instanceof Error ? e.message : String(e)))
+      .finally(() => {
+        clearInterval(tick);
+        search.current = null;
+        setOptimising(null);
+      });
+  };
 
   // The layout search packs the design many times over, so it waits for the
   // parameters to settle; asked on every change, previews would queue behind it.
@@ -151,6 +181,7 @@ export default function App({ generator, name, summary, initial }: Props) {
       const result = await client.current.requestExport({
         generator,
         values,
+        nest: nested,
         format,
         material,
         layers: LAYERS.filter((l) => visibleLayers.has(l)),
@@ -331,6 +362,14 @@ export default function App({ generator, name, summary, initial }: Props) {
                 pack_copies: h.copies,
               }))
             }
+            optimiser={{
+              running: optimising,
+              result: nested,
+              applied: data?.optimised === true,
+              start: startOptimise,
+              stop: () => search.current?.stop(),
+              discard: () => setNested(null),
+            }}
           />
         )}
 

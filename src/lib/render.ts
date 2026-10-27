@@ -55,7 +55,7 @@ export interface DrawingStats {
 export interface Sheet extends BBox {
   /** Indices into `Drawing.parts` of what is cut from this sheet. */
   parts: number[];
-  /** Fraction of the sheet covered by the parts' bounding boxes. */
+  /** Fraction of the sheet that ends up in parts: their outlines' area less their holes'. */
   used: number;
 }
 
@@ -71,6 +71,8 @@ export interface Drawing {
    * side by side, in the same coordinates as the parts.
    */
   sheets?: Sheet[];
+  /** The sheets are laid out by the nester's arrangement rather than MaxRects'. */
+  optimised?: boolean;
 }
 
 export const emptyLayerRecord = <T>(v: () => T): Record<Layer, T> =>

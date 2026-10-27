@@ -14,7 +14,7 @@ function slug(s: string): string {
 }
 
 function runExport(req: ExportRequest): WorkerResponse {
-  const drawing = buildDrawing(req.generator, req.values);
+  const drawing = buildDrawing(req.generator, req.values, req.nest);
   const title = req.title ?? req.generator;
   const common = { layers: req.layers, permalink: req.permalink, title };
 
@@ -50,7 +50,7 @@ export function handleRequest(req: WorkerRequest): WorkerResponse {
         id: req.id,
         kind: 'preview',
         ok: true,
-        data: toPreview(buildDrawing(req.generator, req.values)),
+        data: toPreview(buildDrawing(req.generator, req.values, req.nest)),
       };
     }
     if (req.kind === 'layout') {

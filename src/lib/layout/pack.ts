@@ -17,6 +17,7 @@
  */
 import { Affine } from '../geom/affine';
 import { LAYERS } from '../geom/colors';
+import { drawnBox, materialArea } from './footprint';
 import type { PathCmd } from '../geom/context';
 import {
   emptyLayerRecord,
@@ -36,6 +37,11 @@ export interface PackOptions {
   gap: number;
   /** Allow quarter turns. Off keeps every part in the grain direction it was designed in. */
   rotate: boolean;
+  /**
+   * Finest turn the nester tries, in degrees, where rotating is allowed. Only
+   * Optimise uses it; MaxRects turns by quarter turns at most.
+   */
+  angleStep?: number;
   /** How many of the design to cut, packed together so copies share sheets. */
   copies?: number;
 }
@@ -47,7 +53,7 @@ export const SHEET_GAP = 20;
 const FIT_EPS = 1e-6;
 
 /** Parts that have to move together, and the box round all of them. */
-interface Piece {
+export interface Piece {
   parts: number[];
   bbox: BBox;
 }
@@ -77,7 +83,7 @@ function union(a: BBox, b: BBox): BBox {
  * to (WallStackableBin's slots are drawn this way). It travels with the
  * smallest cut part that contains it.
  */
-function piecesOf(parts: DrawingPart[]): Piece[] {
+export function piecesOf(parts: DrawingPart[]): Piece[] {
   const hasCut = parts.map((p) => p.paths.some((x) => x.layer === 'cut'));
   const owner = parts.map((_, i) => i);
 
@@ -98,11 +104,13 @@ function piecesOf(parts: DrawingPart[]): Piece[] {
   parts.forEach((p, i) => {
     const o = owner[i]!;
     const piece = byOwner.get(o);
+    // Packed by what is drawn, curves and all, not by the part's own box.
+    const box = drawnBox([p]) ?? p.bbox;
     if (piece) {
       piece.parts.push(i);
-      piece.bbox = union(piece.bbox, p.bbox);
+      piece.bbox = union(piece.bbox, box);
     } else {
-      byOwner.set(o, { parts: [i], bbox: { ...p.bbox } });
+      byOwner.set(o, { parts: [i], bbox: { ...box } });
     }
   });
   return [...byOwner.values()];
@@ -115,7 +123,7 @@ interface Rect {
   h: number;
 }
 
-interface Placement {
+interface BinPlacement {
   piece: number;
   x: number;
   y: number;
@@ -125,7 +133,7 @@ interface Placement {
 /** One sheet's free space, as MaxRects keeps it: every maximal empty rectangle. */
 class Bin {
   free: Rect[];
-  placed: Placement[] = [];
+  placed: BinPlacement[] = [];
 
   constructor(w: number, h: number) {
     this.free = [{ x: 0, y: 0, w, h }];
@@ -241,7 +249,7 @@ function attempt(items: Item[], binW: number, binH: number, rotate: boolean): At
 }
 
 /** Orders worth trying; none wins on every drawing. All descending. */
-const ORDERS: ((i: Item) => number)[] = [
+export const ORDERS: ((i: { w: number; h: number }) => number)[] = [
   (i) => i.w * i.h,
   (i) => Math.max(i.w, i.h),
   (i) => i.h,
@@ -274,21 +282,100 @@ function mapBBox(b: BBox, m: Affine): BBox {
   return { x, y, width: Math.max(...xs) - x, height: Math.max(...ys) - y };
 }
 
+/**
+ * The box round a part's drawn points, the way `renderBox` measures it. Turned
+ * by anything but a quarter turn, the old box's corners would overstate it.
+ */
+function drawnBBox(paths: DrawingPart['paths']): BBox | null {
+  let x0 = Infinity;
+  let y0 = Infinity;
+  let x1 = -Infinity;
+  let y1 = -Infinity;
+  for (const p of paths) {
+    // A trailing move-to draws nothing.
+    const n = p.cmds.length && p.cmds[p.cmds.length - 1]!.c === 'M' ? p.cmds.length - 1 : p.cmds.length;
+    for (let i = 0; i < n; i++) {
+      const c = p.cmds[i]!;
+      x0 = Math.min(x0, c.x);
+      y0 = Math.min(y0, c.y);
+      x1 = Math.max(x1, c.x);
+      y1 = Math.max(y1, c.y);
+    }
+  }
+  return Number.isFinite(x0) ? { x: x0, y: y0, width: x1 - x0, height: y1 - y0 } : null;
+}
+
 /** A part moved by `m`: geometry, labels and box together. */
 export function transformPart(part: DrawingPart, m: Affine): DrawingPart {
+  const paths = part.paths.map((p) => {
+    const cmds = p.cmds.map((c) => mapCmd(c, m));
+    return { ...p, cmds, d: toPathData(cmds).d };
+  });
+  const square = (m.b === 0 && m.d === 0) || (m.a === 0 && m.e === 0);
   return {
     name: part.name,
-    bbox: mapBBox(part.bbox, m),
-    paths: part.paths.map((p) => {
-      const cmds = p.cmds.map((c) => mapCmd(c, m));
-      return { ...p, cmds, d: toPathData(cmds).d };
-    }),
+    bbox: (!square && drawnBBox(paths)) || mapBBox(part.bbox, m),
+    paths,
     texts: part.texts.map((t) => ({ ...t, matrix: m.mul(t.matrix) })),
   };
 }
 
 /** A quarter turn, exact rather than through cos(90°). */
 const QUARTER_TURN = new Affine(0, -1, 0, 1, 0, 0);
+
+/** A turn by `angle` degrees; exact for quarter turns, so they move parts without rounding. */
+export function turn(angle: number): Affine {
+  switch (((angle % 360) + 360) % 360) {
+    case 0:
+      return Affine.identity();
+    case 90:
+      return QUARTER_TURN;
+    case 180:
+      return new Affine(-1, 0, 0, 0, -1, 0);
+    case 270:
+      return new Affine(0, 1, 0, -1, 0, 0);
+    default:
+      return Affine.rotation(angle);
+  }
+}
+
+/** Where one piece goes: turned by `angle` degrees about the origin, then moved by (x, y) from its sheet's corner. */
+export interface Placement {
+  piece: number;
+  angle: number;
+  x: number;
+  y: number;
+}
+
+/**
+ * Where every piece goes, before anything is moved: what a packer decides and
+ * `realise` carries out. Plain data, so it can cross a worker boundary.
+ */
+export interface Arrangement {
+  /** Each sheet's placements. Pieces index the design's pieces, copy after copy. */
+  sheets: Placement[][];
+  /** Pieces too large for an empty sheet, each on a sheet of its own. */
+  oversize: number[];
+}
+
+/**
+ * The design's pieces once per copy, and its parts once per copy.
+ *
+ * Copies are made piece by piece, from one grouping of the original: every
+ * copy starts out in the same place, so grouping the copied parts would hand
+ * all of the copies' loose holes to the first copy's part.
+ */
+export function copiesOf(parts: DrawingPart[], copies: number, once: Piece[]): { pieces: Piece[]; source: DrawingPart[] } {
+  const n = parts.length;
+  return {
+    source: Array.from({ length: copies }, () => parts).flat(),
+    pieces: Array.from({ length: copies }, (_, k) =>
+      once.map((p) => ({ parts: p.parts.map((i) => i + k * n), bbox: p.bbox })),
+    ).flat(),
+  };
+}
+
+export const copyCount = (o: PackOptions) => Math.max(1, Math.round(o.copies ?? 1));
 
 /** Where every piece goes, before anything is moved. */
 interface Plan {
@@ -302,15 +389,7 @@ interface Plan {
 }
 
 function plan(drawing: Drawing, o: PackOptions, once = piecesOf(drawing.parts)): Plan {
-  const copies = Math.max(1, Math.round(o.copies ?? 1));
-  const n = drawing.parts.length;
-  // Copies are made piece by piece, from one grouping of the original: every
-  // copy starts out in the same place, so grouping the copied parts would hand
-  // all of the copies' loose holes to the first copy's part.
-  const source = Array.from({ length: copies }, () => drawing.parts).flat();
-  const pieces = Array.from({ length: copies }, (_, k) =>
-    once.map((p) => ({ parts: p.parts.map((i) => i + k * n), bbox: p.bbox })),
-  ).flat();
+  const { pieces, source } = copiesOf(drawing.parts, copyCount(o), once);
 
   // Padding every part and the usable area by one gap lets parts sit flush in
   // the packer while staying a gap apart on the sheet, and lets the last part
@@ -340,10 +419,37 @@ function plan(drawing: Drawing, o: PackOptions, once = piecesOf(drawing.parts)):
   return { once, pieces, source, best: best! };
 }
 
+/** Where MaxRects puts every piece: quick enough to run on every preview. */
+export function planRects(drawing: Drawing, o: PackOptions): Arrangement {
+  const { pieces, best } = plan(drawing, o);
+  return {
+    sheets: best.bins.map((bin) =>
+      bin.placed.map((pl) => {
+        const b = pieces[pl.piece]!.bbox;
+        return pl.rotated
+          ? { piece: pl.piece, angle: 90, x: o.margin + pl.x + b.y + b.height, y: o.margin + pl.y - b.x }
+          : { piece: pl.piece, angle: 0, x: o.margin + pl.x - b.x, y: o.margin + pl.y - b.y };
+      }),
+    ),
+    oversize: [...best.oversize],
+  };
+}
+
 /** Lay the drawing's parts out on as few sheets as possible. */
 export function packDrawing(drawing: Drawing, o: PackOptions): Drawing {
-  const copies = Math.max(1, Math.round(o.copies ?? 1));
-  const { once, pieces, source, best } = plan(drawing, o);
+  return realise(drawing, o, planRects(drawing, o));
+}
+
+/**
+ * Move every part where an arrangement says, and lay the sheets side by side.
+ * The arrangement must have been made for this drawing and these options.
+ */
+export function realise(drawing: Drawing, o: PackOptions, arrangement: Arrangement): Drawing {
+  const copies = copyCount(o);
+  const once = piecesOf(drawing.parts);
+  const { pieces, source } = copiesOf(drawing.parts, copies, once);
+  const area = once.map((p) => materialArea(p.parts.map((i) => drawing.parts[i]!)));
+  const oversize = new Set(arrangement.oversize);
   const warnings = [...drawing.warnings];
   /** Sheets each oversize piece of the design hangs off, numbered from 1. */
   const overhangs = new Map<number, number[]>();
@@ -353,29 +459,25 @@ export function packDrawing(drawing: Drawing, o: PackOptions): Drawing {
   let x0 = 0;
   let height = 0;
 
-  for (const bin of best.bins) {
+  for (const placed of arrangement.sheets) {
     const ids: number[] = [];
     let right = o.sheetWidth;
     let bottom = o.sheetHeight;
-    let area = 0;
+    let covered = 0;
 
-    for (const pl of bin.placed) {
+    for (const pl of placed) {
       const piece = pieces[pl.piece]!;
-      const b = piece.bbox;
-      const tx = x0 + o.margin + pl.x;
-      const ty = o.margin + pl.y;
-      const m = pl.rotated
-        ? Affine.translation(tx + b.y + b.height, ty - b.x).mul(QUARTER_TURN)
-        : Affine.translation(tx - b.x, ty - b.y);
-      for (const i of piece.parts) parts[i] = transformPart(source[i]!, m);
+      const m = Affine.translation(x0 + pl.x, pl.y).mul(turn(pl.angle));
+      for (const i of piece.parts) {
+        const p = transformPart(source[i]!, m);
+        parts[i] = p;
+        right = Math.max(right, p.bbox.x + p.bbox.width - x0);
+        bottom = Math.max(bottom, p.bbox.y + p.bbox.height);
+      }
       ids.push(...piece.parts);
-      area += b.width * b.height;
+      covered += area[pl.piece % once.length]!;
 
-      const [w, h] = pl.rotated ? [b.height, b.width] : [b.width, b.height];
-      right = Math.max(right, o.margin + pl.x + w);
-      bottom = Math.max(bottom, o.margin + pl.y + h);
-
-      if (best.oversize.has(pl.piece)) {
+      if (oversize.has(pl.piece)) {
         const key = pl.piece % once.length;
         overhangs.set(key, [...(overhangs.get(key) ?? []), sheets.length + 1]);
       }
@@ -388,7 +490,7 @@ export function packDrawing(drawing: Drawing, o: PackOptions): Drawing {
       width: o.sheetWidth,
       height: o.sheetHeight,
       parts: ids,
-      used: area / (o.sheetWidth * o.sheetHeight),
+      used: covered / (o.sheetWidth * o.sheetHeight),
     });
     // A part hanging off its sheet must not run into the next one.
     x0 += right + SHEET_GAP;

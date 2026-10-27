@@ -10,16 +10,29 @@ import { handleRequest } from '../workers/handler';
 import type {
   ExportRequest,
   ExportResult,
+  NestMessage,
+  NestRequest,
   WorkerRequest,
   WorkerResponse,
 } from '../workers/protocol';
+import type { NestResult } from './layout/nest';
 import type { LayoutSuggestion } from './layout/pack';
-import type { PreviewData } from './preview';
+import { optimiseLayout, type PreviewData } from './preview';
 import type { ParamValues } from './params/schema';
 
 export interface PreviewJob {
   generator: string;
   values: ParamValues;
+  /** An optimised layout, used if it was made for these values. */
+  nest?: NestResult | null;
+}
+
+/** A layout search under way. */
+export interface Optimising {
+  /** The best layout found, once the search ends or is stopped. */
+  done: Promise<NestResult | null>;
+  /** End the search now, keeping the best layout found so far. */
+  stop(): void;
 }
 
 export type PreviewListener = (
@@ -72,6 +85,7 @@ export class RenderClient {
       kind: 'preview',
       generator: job.generator,
       values: job.values,
+      nest: job.nest,
     };
     this.inflight = req.id;
 
@@ -138,6 +152,70 @@ export class RenderClient {
       if (this.worker) this.worker.postMessage(req);
       else queueMicrotask(() => this.receive(handleRequest(req)));
     });
+  }
+
+  /**
+   * Search for an optimised layout for `budgetMs`, reporting each better one
+   * found. It gets a worker of its own: the search holds its thread for the
+   * whole budget, and stopping it early is terminating that worker.
+   */
+  optimise(
+    job: { generator: string; values: ParamValues; budgetMs: number },
+    onProgress: (best: NestResult, elapsedMs: number) => void,
+  ): Optimising {
+    let best: NestResult | null = null;
+    let finish: (r: NestResult | null) => void = () => {};
+    let fail: (e: Error) => void = () => {};
+    const done = new Promise<NestResult | null>((resolve, reject) => {
+      finish = resolve;
+      fail = reject;
+    });
+
+    let worker: Worker | null = null;
+    try {
+      worker = new Worker(new URL('../workers/nest.worker.ts', import.meta.url), { type: 'module' });
+    } catch {
+      worker = null;
+    }
+
+    if (!worker) {
+      // No workers: a short search on this thread, after the page has had a
+      // chance to show that it is busy.
+      setTimeout(() => {
+        try {
+          finish(optimiseLayout(job.generator, job.values, { budgetMs: Math.min(job.budgetMs, 1500) }));
+        } catch (e) {
+          fail(e instanceof Error ? e : new Error(String(e)));
+        }
+      }, 50);
+      return { done, stop: () => {} };
+    }
+
+    const w = worker;
+    w.onmessage = (e: MessageEvent<NestMessage>) => {
+      const m = e.data;
+      if (m.kind === 'progress') {
+        best = m.best;
+        onProgress(m.best, m.elapsedMs);
+        return;
+      }
+      w.terminate();
+      if (m.ok) finish(m.result);
+      else fail(new Error(m.error));
+    };
+    w.onerror = (e) => {
+      w.terminate();
+      fail(new Error(e.message || 'Layout search failed'));
+    };
+    const req: NestRequest = job;
+    w.postMessage(req);
+    return {
+      done,
+      stop: () => {
+        w.terminate();
+        finish(best);
+      },
+    };
   }
 
   dispose(): void {

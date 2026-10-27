@@ -5,6 +5,7 @@
  * preview right below; in the parameter panel it sat under every joint and lid
  * setting, out of sight of the sheets it lays out.
  */
+import type { NestResult } from '../lib/layout/nest';
 import type { LayoutSuggestion } from '../lib/layout/pack';
 import type { ParamSpec, ParamValue, ParamValues } from '../lib/params/schema';
 import { NumberInput } from './controls';
@@ -15,9 +16,22 @@ interface Props {
   setValue: (key: string, v: ParamValue) => void;
   hint: LayoutSuggestion | null;
   applyHint: (hint: LayoutSuggestion) => void;
+  optimiser: Optimiser;
 }
 
-export function SheetBar({ specs, values, setValue, hint, applyHint }: Props) {
+/** The layout search, as the sheet bar shows and drives it. */
+export interface Optimiser {
+  /** A search under way: how long it has run, and the best layout yet. */
+  running: { elapsedMs: number; best: NestResult | null } | null;
+  result: NestResult | null;
+  /** The preview is laid out by `result`, which still fits the settings. */
+  applied: boolean;
+  start: () => void;
+  stop: () => void;
+  discard: () => void;
+}
+
+export function SheetBar({ specs, values, setValue, hint, applyHint, optimiser }: Props) {
   const number = (key: string, label: string, unit?: string) => {
     const spec = specs.find((s) => s.key === key);
     if (!spec || (spec.kind !== 'length' && spec.kind !== 'number')) return null;
@@ -39,6 +53,7 @@ export function SheetBar({ specs, values, setValue, hint, applyHint }: Props) {
   );
 
   const rotate = specs.find((s) => s.key === 'pack_rotate');
+  const step = specs.find((s) => s.key === 'pack_angle_step');
   const usePanels = specs.find((s) => s.key === 'use_panels');
   const panels = values['use_panels'] === true;
 
@@ -59,6 +74,21 @@ export function SheetBar({ specs, values, setValue, hint, applyHint }: Props) {
             Rotate parts
           </label>
         )}
+        {step?.kind === 'enum' && values['pack_rotate'] !== false && (
+          <label class="sheet-field" title={step.help}>
+            <span class="k">Optimise turns by</span>
+            <select
+              value={String(values['pack_angle_step'] ?? step.default)}
+              onChange={(e) => setValue('pack_angle_step', (e.target as HTMLSelectElement).value)}
+            >
+              {step.choices.map((c) => (
+                <option key={c.value} value={c.value}>
+                  {c.label}
+                </option>
+              ))}
+            </select>
+          </label>
+        )}
         {usePanels && (
           <label class="sheet-check" title={usePanels.help}>
             <input
@@ -77,6 +107,55 @@ export function SheetBar({ specs, values, setValue, hint, applyHint }: Props) {
         </div>
       )}
       {hint && <Hint hint={hint} values={values} panels={panels} onUse={() => applyHint(hint)} />}
+      <Optimise {...optimiser} />
+    </div>
+  );
+}
+
+const sheetCount = (n: number) => `${n} sheet${n === 1 ? '' : 's'}`;
+
+/** Nesting by outline: start it, watch it, and keep or drop what it finds. */
+function Optimise({ running, result, applied, start, stop, discard }: Optimiser) {
+  if (running) {
+    const best = running.best;
+    return (
+      <div class="optimise">
+        <p>
+          Optimising… {best ? `${sheetCount(best.sheets)}, ${Math.round(best.used * 100)}% used` : 'starting'} ·{' '}
+          {(running.elapsedMs / 1000).toFixed(1)} s
+        </p>
+        <button type="button" class="btn" onClick={stop}>
+          Stop
+        </button>
+      </div>
+    );
+  }
+  if (result && applied) {
+    return (
+      <div class="optimise">
+        <p>
+          Optimised layout: {sheetCount(result.sheets)}, {Math.round(result.used * 100)}% used, against{' '}
+          {sheetCount(result.baseline)} packed by box.
+        </p>
+        <button type="button" class="btn" onClick={start}>
+          Optimise again
+        </button>
+        <button type="button" class="btn" onClick={discard}>
+          Pack by box
+        </button>
+      </div>
+    );
+  }
+  return (
+    <div class="optimise">
+      <p>
+        {result
+          ? 'Settings have changed since the layout was optimised, so parts are packed by box again.'
+          : 'Parts are packed by their boxes. Optimise nests them by outline and searches for fewer sheets, for about ten seconds.'}
+      </p>
+      <button type="button" class="btn" onClick={start}>
+        {result ? 'Optimise again' : 'Optimise layout'}
+      </button>
     </div>
   );
 }
