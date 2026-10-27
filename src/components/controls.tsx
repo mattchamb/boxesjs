@@ -227,79 +227,99 @@ function SectionEditor({
   };
 
   const total = sizes.reduce((a, b) => a + b, 0);
+  // The text form is for those who know it; it opens by itself when what is
+  // there cannot be shown as sizes.
+  const [asText, setAsText] = useState(false);
 
   return (
     <div class="sections">
-      {sizes.map((s, i) => (
-        // Position is the identity here: sections have no other key.
-        // eslint-disable-next-line react/no-array-index-key
-        <div class="section-row" key={i}>
-          <span class="idx">{i + 1}</span>
-          <input
-            type="number"
-            min={1}
-            step={1}
-            value={s}
-            autocomplete="off"
-            aria-label={`${itemLabel} ${i + 1} size in mm`}
-            onInput={(e) => {
-              const n = Number((e.target as HTMLInputElement).value);
-              if (Number.isFinite(n) && n > 0) setAt(i, n);
-            }}
-          />
-          <button
-            type="button"
-            class="icon-btn"
-            aria-label={`Remove ${itemLabel} ${i + 1}`}
-            disabled={sizes.length <= 1}
-            onClick={() => push(sizes.filter((_, j) => j !== i))}
-          >
-            ×
-          </button>
-        </div>
-      ))}
-
-      <div class="section-actions">
+      {/* Sizes in a wrapping row, so three compartments cost one line, not five. */}
+      <div class="section-chips">
+        {sizes.map((s, i) => (
+          // Position is the identity here: sections have no other key.
+          // eslint-disable-next-line react/no-array-index-key
+          <span class="section-chip" key={i}>
+            <input
+              type="number"
+              min={1}
+              step={1}
+              value={s}
+              autocomplete="off"
+              aria-label={`${itemLabel} ${i + 1} size in mm`}
+              onInput={(e) => {
+                const n = Number((e.target as HTMLInputElement).value);
+                if (Number.isFinite(n) && n > 0) setAt(i, n);
+              }}
+            />
+            {sizes.length > 1 && (
+              <button
+                type="button"
+                class="chip-remove"
+                title={`Remove ${itemLabel} ${i + 1}`}
+                aria-label={`Remove ${itemLabel} ${i + 1}`}
+                onClick={() => push(sizes.filter((_, j) => j !== i))}
+              >
+                ×
+              </button>
+            )}
+          </span>
+        ))}
         <button
           type="button"
-          class="btn"
+          class="icon-btn chip-add"
+          title={`Add a ${itemLabel}`}
+          aria-label={`Add a ${itemLabel}`}
           onClick={() => push([...sizes, sizes[sizes.length - 1] ?? 50])}
         >
-          + Add {itemLabel}
-        </button>
-        <button
-          type="button"
-          class="btn"
-          title="Give every compartment the same size, keeping the total"
-          disabled={sizes.length < 2}
-          onClick={() => push(sizes.map(() => Math.round((total / sizes.length) * 100) / 100))}
-        >
-          Equalise
+          +
         </button>
       </div>
 
-      <input
-        type="text"
-        value={raw}
-        aria-label="Section sizes as text"
-        autocomplete="off"
-        spellcheck={false}
-        onInput={(e) => {
-          const v = (e.target as HTMLInputElement).value;
-          setRaw(v);
-          try {
-            parseSections(v);
-            onChange(v);
-          } catch {
-            /* keep typing; the row above shows the problem */
-          }
-        }}
-      />
+      {(asText || parseError) && (
+        <input
+          type="text"
+          value={raw}
+          aria-label="Section sizes as text"
+          autocomplete="off"
+          spellcheck={false}
+          onInput={(e) => {
+            const v = (e.target as HTMLInputElement).value;
+            setRaw(v);
+            try {
+              parseSections(v);
+              onChange(v);
+            } catch {
+              /* keep typing; the warning below shows the problem */
+            }
+          }}
+        />
+      )}
       {parseError ? (
         <p class="field-warning">{parseError}</p>
       ) : (
-        <p class="field-help">
-          {sizes.length} × {itemLabel}, {Math.round(total * 10) / 10} mm total
+        <p class="section-summary">
+          <span>
+            {sizes.length} × {itemLabel}, {Math.round(total * 10) / 10} mm total
+          </span>
+          {sizes.length > 1 && (
+            <button
+              type="button"
+              class="link-btn"
+              title={`Give every ${itemLabel} the same size, keeping the total`}
+              onClick={() => push(sizes.map(() => Math.round((total / sizes.length) * 100) / 100))}
+            >
+              Equalise
+            </button>
+          )}
+          <button
+            type="button"
+            class="link-btn"
+            title='Edit as boxes.py section text: "50*3" is three of 50 mm, "120/3" is 120 mm split in three'
+            aria-expanded={asText}
+            onClick={() => setAsText((t) => !t)}
+          >
+            {asText ? 'Hide text' : 'Edit as text'}
+          </button>
         </p>
       )}
     </div>

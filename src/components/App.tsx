@@ -80,6 +80,80 @@ export default function App({ generator, name, summary, description, initial }: 
 
   const client = useRef<RenderClient>();
 
+  // Undo history. The URL is replaced rather than pushed on every change, so
+  // the browser's back button cannot step through edits; this does. A drag
+  // or a run of keystrokes is one step: a state is recorded once it has
+  // stood for a moment.
+  const edits = useRef({
+    past: [] as ParamValues[],
+    future: [] as ParamValues[],
+    /** The last recorded state; `values` differs from it while an edit settles. */
+    committed: null as ParamValues | null,
+    /** Take the next state as the starting point rather than an edit. */
+    rebase: false,
+  });
+  const [, setHistoryTick] = useState(0);
+  const valuesRef = useRef(values);
+  valuesRef.current = values;
+
+  useEffect(() => {
+    const h = edits.current;
+    if (h.committed === null || h.rebase || h.committed === values) {
+      if (h.committed !== null) h.rebase = false;
+      h.committed = values;
+      return;
+    }
+    const timer = setTimeout(() => {
+      h.past.push(h.committed!);
+      h.future = [];
+      h.committed = values;
+      setHistoryTick((t) => t + 1);
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [values]);
+
+  const travel = (to: ParamValues) => {
+    edits.current.committed = to;
+    setValues(to);
+    setHistoryTick((t) => t + 1);
+  };
+  const undo = () => {
+    const h = edits.current;
+    const now = valuesRef.current;
+    // An edit still settling is undone back to where it started.
+    if (now !== h.committed) {
+      h.future = [now];
+      travel(h.committed!);
+    } else if (h.past.length > 0) {
+      h.future.unshift(now);
+      travel(h.past.pop()!);
+    }
+  };
+  const redo = () => {
+    const h = edits.current;
+    if (valuesRef.current !== h.committed || h.future.length === 0) return;
+    h.past.push(valuesRef.current);
+    travel(h.future.shift()!);
+  };
+  const canUndo = edits.current.past.length > 0 || (edits.current.committed !== null && values !== edits.current.committed);
+  const canRedo = edits.current.future.length > 0 && values === edits.current.committed;
+
+  const undoRef = useRef({ undo, redo });
+  undoRef.current = { undo, redo };
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      if (!(e.metaKey || e.ctrlKey) || e.key.toLowerCase() !== 'z' && e.key.toLowerCase() !== 'y') return;
+      // Text fields keep their own undo for what is being typed.
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === 'TEXTAREA' || (t.tagName === 'INPUT' && /^(text|search)$/.test((t as HTMLInputElement).type)))) return;
+      e.preventDefault();
+      if (e.key.toLowerCase() === 'y' || e.shiftKey) undoRef.current.redo();
+      else undoRef.current.undo();
+    };
+    window.addEventListener('keydown', onKey);
+    return () => window.removeEventListener('keydown', onKey);
+  }, []);
+
   useEffect(() => {
     const c = new RenderClient();
     c.onPreview((res) => {
@@ -109,7 +183,11 @@ export default function App({ generator, name, summary, description, initial }: 
     // the preset is the single source of truth for stock, and a thickness typed
     // by hand is one edit away from being typed again.
     const m = all.find((x) => x.id === id);
-    if (m) setValues((prev) => ({ ...prev, thickness: m.thickness, burn: m.kerf }));
+    if (m) {
+      setValues((prev) => ({ ...prev, thickness: m.thickness, burn: m.kerf }));
+      // Arriving is not an edit: undo should not take the preset back off.
+      edits.current.rebase = true;
+    }
   }, []);
 
   // Every parameter change re-renders. The client coalesces, so this is safe
@@ -256,6 +334,11 @@ export default function App({ generator, name, summary, description, initial }: 
   const generalWarnings = data?.warnings.filter((w) => !w.param || !shown.has(w.param)) ?? [];
   const warned = (items: ParamSpec[]) => items.some((s) => warningFor(s.key));
 
+  const layerChips = LAYERS.filter((l) => data?.layers[l] || l === 'annotate');
+  // Downloads carry only the layers shown, so a layer hidden to tidy the view
+  // is missing from the file too; say so where the file is made.
+  const leftOut = layerChips.filter((l) => !visibleLayers.has(l)).map((l) => LAYER_INFO[l].name);
+
   const control = (spec: ParamSpec) => (
     <Control
       key={spec.key}
@@ -399,7 +482,7 @@ export default function App({ generator, name, summary, description, initial }: 
       <div class="stage">
         <div class="toolbar">
           <div class="layer-toggles">
-            {LAYERS.filter((l) => data?.layers[l] || l === 'annotate').map((l) => {
+            {layerChips.map((l) => {
               const info = LAYER_INFO[l];
               const on = visibleLayers.has(l);
               return (
@@ -428,6 +511,14 @@ export default function App({ generator, name, summary, description, initial }: 
 
           <div class="spacer" />
 
+          <span class="undo-redo">
+            <button type="button" class="icon-btn" title="Undo (⌘Z / Ctrl+Z)" aria-label="Undo" disabled={!canUndo} onClick={undo}>
+              ↶
+            </button>
+            <button type="button" class="icon-btn" title="Redo (⇧⌘Z / Ctrl+Y)" aria-label="Redo" disabled={!canRedo} onClick={redo}>
+              ↷
+            </button>
+          </span>
           <button
             type="button"
             class="btn"
@@ -443,6 +534,11 @@ export default function App({ generator, name, summary, description, initial }: 
           <button type="button" class="btn" onClick={copyLink}>
             {copied ? 'Copied' : 'Copy link'}
           </button>
+          {leftOut.length > 0 && (
+            <span class="export-note" title="Downloads contain only the layers shown. Turn a layer back on to include it.">
+              Leaves out {leftOut.join(', ')}
+            </span>
+          )}
           <button type="button" class="btn" disabled={busy} onClick={() => download('svg')}>
             SVG
           </button>

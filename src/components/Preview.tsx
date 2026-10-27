@@ -55,8 +55,14 @@ export function Preview({ data, error, visibleLayers, showGrid }: Props) {
     return () => ro.disconnect();
   }, []);
 
+  // Whether the view is where you put it rather than where fitting put it. A
+  // fitted view follows the canvas as it resizes — the sheet bar grows a line
+  // when it has a suggestion — while one you have panned or zoomed stays put.
+  const viewMoved = useRef(false);
+
   const fit = useRef<() => void>(() => {});
   fit.current = () => {
+    viewMoved.current = false;
     if (!data || data.bbox.width <= 0 || data.bbox.height <= 0) return;
     const pad = 24;
     const scale = Math.min(
@@ -77,11 +83,23 @@ export function Preview({ data, error, visibleLayers, showGrid }: Props) {
   const lastFit = useRef<string>('');
   useEffect(() => {
     if (!data || !fitKey) return;
-    if (lastFit.current === fitKey && view.scale !== 1) return;
+    if (lastFit.current === fitKey && viewMoved.current) return;
     lastFit.current = fitKey;
     fit.current();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fitKey, size.w, size.h]);
+
+  /** Zoom by `factor`, holding the canvas point (px, py) still. */
+  const zoomAt = (factor: number, px: number, py: number) => {
+    viewMoved.current = true;
+    setView((v) => {
+      const next = Math.max(MIN_SCALE, Math.min(MAX_SCALE, v.scale * factor));
+      const k = next / v.scale;
+      return { scale: next, x: px - (px - v.x) * k, y: py - (py - v.y) * k };
+    });
+  };
+  const zoomAtRef = useRef(zoomAt);
+  zoomAtRef.current = zoomAt;
 
   // Wheel zoom toward the cursor.
   useEffect(() => {
@@ -91,16 +109,8 @@ export function Preview({ data, error, visibleLayers, showGrid }: Props) {
     const onWheel = (e: WheelEvent) => {
       e.preventDefault();
       const rect = el.getBoundingClientRect();
-      const px = e.clientX - rect.left;
-      const py = e.clientY - rect.top;
-
-      setView((v) => {
-        const factor = Math.exp(-e.deltaY * 0.0015);
-        const next = Math.max(MIN_SCALE, Math.min(MAX_SCALE, v.scale * factor));
-        const k = next / v.scale;
-        // Hold the point under the cursor still.
-        return { scale: next, x: px - (px - v.x) * k, y: py - (py - v.y) * k };
-      });
+      // Hold the point under the cursor still.
+      zoomAtRef.current(Math.exp(-e.deltaY * 0.0015), e.clientX - rect.left, e.clientY - rect.top);
     };
 
     el.addEventListener('wheel', onWheel, { passive: false });
@@ -112,7 +122,10 @@ export function Preview({ data, error, visibleLayers, showGrid }: Props) {
       const t = e.target as HTMLElement | null;
       if (t && /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName)) return;
       if (e.key === 'f' || e.key === 'F') fit.current();
-      if (e.key === '1') setView((v) => ({ ...v, scale: 1 }));
+      if (e.key === '1') {
+        viewMoved.current = true;
+        setView((v) => ({ ...v, scale: 1 }));
+      }
       if (e.key === 'Escape') setIsolated(null);
     };
     window.addEventListener('keydown', onKey);
@@ -133,7 +146,10 @@ export function Preview({ data, error, visibleLayers, showGrid }: Props) {
     const onMove = (ev: PointerEvent) => {
       const dx = ev.clientX - startX;
       const dy = ev.clientY - startY;
-      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) moved = true;
+      if (Math.abs(dx) > 3 || Math.abs(dy) > 3) {
+        moved = true;
+        viewMoved.current = true;
+      }
       setView({ scale: start.scale, x: start.x + dx, y: start.y + dy });
     };
 
@@ -155,6 +171,18 @@ export function Preview({ data, error, visibleLayers, showGrid }: Props) {
   };
 
   const transform = `translate(${view.x} ${view.y}) scale(${view.scale})`;
+
+  // Labels are engraved, so they are drawn; but at a fitted zoom they are
+  // specks of red over the cut lines. They stay faint until they are big
+  // enough to read, except on the part under the pointer.
+  const labelPx = data?.texts.length ? Math.min(...data.texts.map((t) => t.size)) * view.scale : 0;
+  const legible = labelPx >= 9;
+  const onHovered = (t: { matrix: number[] }) => {
+    const b = hover?.part.bbox;
+    if (!b) return false;
+    const [x, y] = [t.matrix[4]!, t.matrix[5]!];
+    return x >= b.x && x <= b.x + b.width && y >= b.y && y <= b.y + b.height;
+  };
 
   return (
     <div
@@ -204,6 +232,7 @@ export function Preview({ data, error, visibleLayers, showGrid }: Props) {
                       text-anchor={t.anchor}
                       dominant-baseline="hanging"
                       fill={LAYER_INFO[t.layer].css}
+                      class={legible || onHovered(t) ? undefined : 'faint'}
                       stroke="none"
                       style={{ userSelect: 'none' }}
                     >
@@ -251,6 +280,23 @@ export function Preview({ data, error, visibleLayers, showGrid }: Props) {
           )}
         </g>
       </svg>
+
+      {/* Not part of the canvas: a press here must not pan or pick a part. */}
+      <div
+        class="zoom-controls"
+        onPointerDown={(e) => e.stopPropagation()}
+        onDblClick={(e) => e.stopPropagation()}
+      >
+        <button type="button" class="icon-btn" title="Zoom out" aria-label="Zoom out" onClick={() => zoomAt(1 / 1.4, size.w / 2, size.h / 2)}>
+          −
+        </button>
+        <button type="button" class="icon-btn" title="Zoom in" aria-label="Zoom in" onClick={() => zoomAt(1.4, size.w / 2, size.h / 2)}>
+          +
+        </button>
+        <button type="button" class="icon-btn" title="Fit to view (F)" onClick={() => fit.current()}>
+          Fit
+        </button>
+      </div>
 
       {hover && (
         <div class="hover-tip" style={{ left: `${hover.cx}px`, top: `${hover.cy}px` }}>
