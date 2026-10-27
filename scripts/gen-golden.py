@@ -92,6 +92,8 @@ def main() -> int:
                 key = "DoveTail_" + key[3:]
             elif key.startswith("flex_"):
                 key = "Flex_" + key[5:]
+            elif key.startswith("mount_"):
+                key = "Mounting_" + key[6:]
             elif key.startswith("he_"):
                 key = "HandleEdge_" + key[3:]
             argv += [f"--{key}", str(value)]

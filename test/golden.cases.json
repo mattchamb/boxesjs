@@ -4023,5 +4023,243 @@
       "thickness": 3,
       "labels": true
     }
+  },
+  {
+    "name": "ref_halfbox_default",
+    "generator": "halfbox",
+    "pythonClass": "HalfBox",
+    "params": {}
+  },
+  {
+    "name": "ref_halfbox_sturdy",
+    "generator": "halfbox",
+    "pythonClass": "HalfBox",
+    "params": {
+      "Sturdy": true,
+      "Clamping": true,
+      "Mounting": true,
+      "x": 120,
+      "h": 90,
+      "sy": "40:60:40",
+      "ClampingSize": 20,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_halfbox_clamp",
+    "generator": "halfbox",
+    "pythonClass": "HalfBox",
+    "params": {
+      "Clamping": true,
+      "Mounting": true,
+      "mount_style": "mounting tab",
+      "mount_num": 3,
+      "mount_d_head": 8,
+      "x": 80,
+      "h": 140,
+      "sy": "60"
+    }
+  },
+  {
+    "name": "ref_halfbox_labels",
+    "generator": "halfbox",
+    "pythonClass": "HalfBox",
+    "params": {
+      "Sturdy": true,
+      "x": 100,
+      "h": 120,
+      "sy": "50",
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_smallpartstray_default",
+    "generator": "smallpartstray",
+    "pythonClass": "SmallPartsTray",
+    "params": {}
+  },
+  {
+    "name": "ref_smallpartstray_onesided",
+    "generator": "smallpartstray",
+    "pythonClass": "SmallPartsTray",
+    "params": {
+      "two_sided": false,
+      "sx": "40:60",
+      "y": 80,
+      "h": 40,
+      "angle": 30,
+      "rampheight": 0.7,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_smallpartstray_nofront",
+    "generator": "smallpartstray",
+    "pythonClass": "SmallPartsTray",
+    "params": {
+      "front_panel": false,
+      "outside": false,
+      "sx": "30*4",
+      "y": 60,
+      "h": 25,
+      "angle": 60,
+      "lid_style": "flat"
+    }
+  },
+  {
+    "name": "ref_smallpartstray_onesided_nofront",
+    "generator": "smallpartstray",
+    "pythonClass": "SmallPartsTray",
+    "params": {
+      "two_sided": false,
+      "front_panel": false,
+      "rampheight": 1
+    }
+  },
+  {
+    "name": "ref_smallpartstray_labels",
+    "generator": "smallpartstray",
+    "pythonClass": "SmallPartsTray",
+    "params": {
+      "sx": "50*2",
+      "y": 90,
+      "h": 35,
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_penholderbox_default",
+    "generator": "penholderbox",
+    "pythonClass": "PenHolderBox",
+    "params": {}
+  },
+  {
+    "name": "ref_penholderbox_custom",
+    "generator": "penholderbox",
+    "pythonClass": "PenHolderBox",
+    "params": {
+      "x": 120,
+      "y": 80,
+      "h": 140,
+      "outside": false,
+      "bottom_edge": "F",
+      "plate_gap": 60,
+      "plate1_offset": 10,
+      "nx": 5,
+      "ny": 3,
+      "pen_diam": 10,
+      "cap_diam": 20,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_penholderbox_labels",
+    "generator": "penholderbox",
+    "pythonClass": "PenHolderBox",
+    "params": {
+      "bottom_edge": "e",
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_gridfinitybase_default",
+    "generator": "gridfinitybase",
+    "pythonClass": "GridfinityBase",
+    "params": {}
+  },
+  {
+    "name": "ref_gridfinitybase_plate_pads",
+    "generator": "gridfinitybase",
+    "pythonClass": "GridfinityBase",
+    "params": {
+      "x": 2,
+      "y": 2,
+      "h": 0,
+      "cut_pads": true
+    }
+  },
+  {
+    "name": "ref_gridfinitybase_refined_tabs",
+    "generator": "gridfinitybase",
+    "pythonClass": "GridfinityBase",
+    "params": {
+      "x": 2,
+      "y": 1,
+      "h": 0,
+      "base_type": "refined"
+    }
+  },
+  {
+    "name": "ref_gridfinitybase_refined_walls",
+    "generator": "gridfinitybase",
+    "pythonClass": "GridfinityBase",
+    "params": {
+      "x": 2,
+      "y": 2,
+      "size_x": 100,
+      "size_y": 95,
+      "base_type": "refined",
+      "bottom_edge": "h",
+      "lid_style": "flat"
+    }
+  },
+  {
+    "name": "ref_gridfinitybase_auto",
+    "generator": "gridfinitybase",
+    "pythonClass": "GridfinityBase",
+    "params": {
+      "x": 0,
+      "y": 0,
+      "size_x": 150,
+      "size_y": 110,
+      "h": 15,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_gridfinitybase_split",
+    "generator": "gridfinitybase",
+    "pythonClass": "GridfinityBase",
+    "params": {
+      "x": 5,
+      "y": 4,
+      "size_x": 220,
+      "size_y": 175,
+      "panel_x": 100,
+      "panel_y": 100,
+      "h": 20
+    }
+  },
+  {
+    "name": "ref_gridfinitybase_split_plain",
+    "generator": "gridfinitybase",
+    "pythonClass": "GridfinityBase",
+    "params": {
+      "x": 4,
+      "y": 3,
+      "panel_x": 90,
+      "panel_y": 200,
+      "panel_edge": "e",
+      "h": 0,
+      "cut_pads": true,
+      "cut_pads_mag_diameter": 0
+    }
+  },
+  {
+    "name": "ref_gridfinitybase_labels",
+    "generator": "gridfinitybase",
+    "pythonClass": "GridfinityBase",
+    "params": {
+      "x": 3,
+      "y": 3,
+      "panel_x": 100,
+      "panel_y": 100,
+      "h": 10,
+      "thickness": 3,
+      "labels": true
+    }
   }
 ]

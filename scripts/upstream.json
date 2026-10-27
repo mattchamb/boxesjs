@@ -412,6 +412,30 @@
         "boxes/generators/stackablebin.py"
       ],
       "sha": "84e392b39191"
+    },
+    "halfbox": {
+      "files": [
+        "boxes/generators/halfbox.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "smallpartstray": {
+      "files": [
+        "boxes/generators/smallpartstray.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "penholderbox": {
+      "files": [
+        "boxes/generators/penholderbox.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "gridfinitybase": {
+      "files": [
+        "boxes/generators/gridfinitybase.py"
+      ],
+      "sha": "84e392b39191"
     }
   }
 }

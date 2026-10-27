@@ -466,7 +466,7 @@ this reason).
 
 ## 9. State of the port
 
-**Every generator on the list is done.** Sixty-six generators are registered —
+**Every generator on the list is done.** Seventy generators are registered —
 ABox, ClosedBox, OpenBox, CardBox, Console2, UniversalBox, RegularBox,
 BayonetBox, NotesHolder, TypeTray, TrayLayout, TrayInsert, DividerTray,
 CompartmentBox, DrillBox, DrillStand, DisplayShelf, StorageRack, StorageShelf,
@@ -479,8 +479,9 @@ AngledBox, Crate, SpicesRack, SlantedTray), and every `polygonWalls` user
 (Coffin, RoundedTrapezoidBox, RoundedRegularBox, Console, Tetris, HeartBox),
 and the flex boxes (FlexBox 1–5, RoundedBox, DoubleFlexDoorBox, BreadBox,
 ShutterBox, FlexBook, Folder), and the Shelf group (WineRack, BinTray,
-SBCMicroRack, DiscRack, StackableBin) — plus the RectangularWall part.
-All of them match boxes.py coordinate-for-coordinate across 292 golden cases,
+SBCMicroRack, DiscRack, StackableBin), HalfBox, and the Tray group
+(SmallPartsTray, PenHolderBox, GridfinityBase) — plus the RectangularWall part.
+All of them match boxes.py coordinate-for-coordinate across 312 golden cases,
 regenerated against boxes.py master at `84e392b` (2026-10-22).
 
 When the boxes.py checkout moves, run `./scripts/upstream-drift.py`, then
@@ -499,13 +500,12 @@ unported generator files for `self.X(` calls, `edges.X` classes,
 classes), so §4 steps 1–2 still come first. Note that `paintbox.py` is
 PaintStorage, already ported.
 
-**About 55 need no new engine machinery** (70 at the survey, less those
+**About 50 need no new engine machinery** (70 at the survey, less those
 since ported). The most useful, by boxes.py's own groups:
 
 | Group | Generators |
 | --- | --- |
-| Box | `halfbox`, `rackbox`, `rack19halfwidth`, `eurorackskiff`, `regularstarbox`, `electronicsbox`, `displaycase`, `brick_sorter` |
-| Tray | `smallpartstray`, `penholderbox`, `gridfinitybase` |
+| Box | `rackbox`, `rack19halfwidth`, `eurorackskiff`, `regularstarbox`, `electronicsbox`, `displaycase`, `brick_sorter` |
 | WallMounted | `wallrack`, `rollholder`, `keyholder`, `skadis`, `skadisstand` |
 | Misc | `airpurifier`, `jointpanel`, `bookholder`, `magazinefile`, `laptopstand`, `phoneholder`, `agricolainsert`, and some 25 small parts and test pieces |
 
@@ -552,6 +552,7 @@ section is a record of what the engine now has and where the sharp edges were.
 | `surroundingWall`, `surroundingWallPiece` | `__init__.py:2398` | `boxes.ts` — RoundedBox. Every flex box defines its own `surroundingWall` instead, renamed `flexWall` in the port since it cannot shadow the base method's signature; the same goes for RoundedBox's argument-less `hole` (`holeCB`) and Console2's `latch` (`latchPart`) |
 | `latch`, `grip`, `_latchHole`, `_latchGrip` | `__init__.py:1123` | `boxes.ts` — the flex boxes' door latch. The private helpers are `doorLatchHole`/`doorLatchGrip`, since Console2 has a `latchHole` of its own |
 | `FLEX_PARAMS` | | `params/common.ts` — the living-hinge fields the chest lid already had, for generators that bend walls (RoundedTrapezoidBox, RoundedRegularBox, HeartBox) |
+| `MOUNTING_PARAMS` (`mount_*`) | `MountingSettings` | `params/common.ts` — the `G` edge's keyhole options, first offered by HalfBox. boxes.py's `side` is left out: nothing reads it |
 | DrillStand's part methods | `generators/drillstand.py` | `drillstand.ts`, as a mixin over `Boxes` (DrillStand) or `WallMountedBox` (WallDrillBox), standing in for boxes.py's multiple inheritance |
 | `HandleEdge`, `HandleHoleEdge` (`y`, `Y`) | `edges.py:2611` | `src/lib/edges/handle.ts` — DividerTray's bottom-panel handle; not offered as a top edge |
 | `Bolts`, `bedBoltHole`, `bedBolts` on `f`/`F`/`h`/`e` | `edges.py:122`, `__init__.py:994` | `BoltsPolicy` in `fingerjoint.ts`, `bedBoltHole` in `boxes.ts` — ClosedBox and UniversalBox with `assembly: 'bolts'`, as wired upstream (five bolted goldens); RectangularWall's `bolts`; the shelves, below. Choosing the bolt, and where it goes on a shelf, is `src/lib/edges/bolts.ts`. `polygonWall` takes `bedBolts` per leg, which boxes.py's does not |

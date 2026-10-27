@@ -7,6 +7,10 @@ import { defaultValues, type ParamSpec, type ParamValues } from '../params/schem
 import type { GeneratorDef } from './types';
 
 import { aBox } from './abox';
+import { gridfinityBase } from './gridfinitybase';
+import { penHolderBox } from './penholderbox';
+import { smallPartsTray } from './smallpartstray';
+import { halfBox } from './halfbox';
 import { stackableBin } from './stackablebin';
 import { discRack } from './discrack';
 import { microRack } from './microrack';
@@ -138,6 +142,10 @@ const DEFS: GeneratorDef[] = [
   microRack,
   discRack,
   stackableBin,
+  halfBox,
+  smallPartsTray,
+  penHolderBox,
+  gridfinityBase,
   rectangularWall,
 ];
 

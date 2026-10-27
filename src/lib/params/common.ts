@@ -782,6 +782,40 @@ export const DOVETAIL_PARAMS: ParamSpec[] = inSection('Dovetails', (v) => anyEdg
 ]);
 
 /**
+ * Keyhole mounting-slot options, for generators that offer the `G` edge.
+ * boxes.py's `side` setting is left out: nothing reads it.
+ */
+export const MOUNTING_PARAMS: ParamSpec[] = inSection('Mounting holes', (v) => anyEdgeIn(v, 'G'), [
+  {
+    key: 'mount_style',
+    kind: 'enum',
+    label: 'Mounting style',
+    default: 'straight edge, within',
+    choices: [
+      { value: 'straight edge, within', label: 'Within the edge' },
+      { value: 'straight edge, extended', label: 'Edge extended to fit them' },
+      { value: 'mounting tab', label: 'On tabs' },
+    ],
+    group: 'advanced',
+  },
+  { key: 'mount_num', kind: 'number', label: 'Mounting holes', default: 2, min: 1, max: 20, step: 1, integer: true, group: 'advanced' },
+  {
+    key: 'mount_margin',
+    kind: 'number',
+    label: 'Mounting hole margin',
+    unit: '× edge',
+    default: 0.125,
+    min: 0,
+    max: 0.45,
+    step: 0.005,
+    group: 'advanced',
+    help: 'Fraction of the edge left clear of holes at each end.',
+  },
+  { key: 'mount_d_shaft', kind: 'length', label: 'Screw shaft diameter', unit: 'mm', default: 3, min: 1, max: 20, step: 0.1, group: 'advanced' },
+  { key: 'mount_d_head', kind: 'length', label: 'Screw head diameter', unit: 'mm', default: 6.5, min: 2, max: 30, step: 0.1, group: 'advanced' },
+]);
+
+/**
  * Wedged through-tenon options (`w`/`W`). Not from boxes.py — see
  * edges/wedgedtenon.ts for the geometry these describe.
  */
@@ -1275,6 +1309,11 @@ export function toBoxesConfig(values: ParamValues): BoxesConfig {
     if (v !== undefined && typeof v !== 'boolean') dovetail[settingKey] = v;
   }
 
+  const mounting: Record<string, number | string> = {};
+  for (const [k, v] of Object.entries(values)) {
+    if (k.startsWith('mount_') && v !== undefined && typeof v !== 'boolean') mounting[k.slice(6)] = v;
+  }
+
   const wedgedTenon: Record<string, number | string> = {};
   for (const [k, v] of Object.entries(values)) {
     if (k.startsWith('wt_') && v !== undefined && typeof v !== 'boolean') wedgedTenon[k.slice(3)] = v;
@@ -1300,6 +1339,7 @@ export function toBoxesConfig(values: ParamValues): BoxesConfig {
       HandleEdge: handleEdge,
       Flex: flex,
       DoveTail: dovetail,
+      Mounting: mounting,
       WedgedTenon: wedgedTenon,
       ...wallFamilies,
     },
