@@ -2,6 +2,7 @@
 import type { Layer } from '../lib/geom/colors';
 import type { Material } from '../lib/materials';
 import type { ParamValues } from '../lib/params/schema';
+import type { CopiesSuggestion } from '../lib/layout/pack';
 import type { PreviewData } from '../lib/preview';
 
 export type ExportFormat = 'svg' | 'lbrn2';
@@ -25,7 +26,15 @@ export interface ExportRequest {
   title?: string;
 }
 
-export type WorkerRequest = PreviewRequest | ExportRequest;
+/** Search for the copy count that wastes least; slower than a preview. */
+export interface CopiesRequest {
+  id: number;
+  kind: 'copies';
+  generator: string;
+  values: ParamValues;
+}
+
+export type WorkerRequest = PreviewRequest | ExportRequest | CopiesRequest;
 
 export interface ExportResult {
   filename: string;
@@ -36,4 +45,5 @@ export interface ExportResult {
 export type WorkerResponse =
   | { id: number; kind: 'preview'; ok: true; data: PreviewData }
   | { id: number; kind: 'export'; ok: true; data: ExportResult }
-  | { id: number; kind: 'preview' | 'export'; ok: false; error: string };
+  | { id: number; kind: 'copies'; ok: true; data: CopiesSuggestion | null }
+  | { id: number; kind: 'preview' | 'export' | 'copies'; ok: false; error: string };

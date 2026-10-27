@@ -13,6 +13,7 @@ import type {
   WorkerRequest,
   WorkerResponse,
 } from '../workers/protocol';
+import type { CopiesSuggestion } from './layout/pack';
 import type { PreviewData } from './preview';
 import type { ParamValues } from './params/schema';
 
@@ -32,7 +33,8 @@ export class RenderClient {
   /** Newest job seen while a render was running. */
   private queued: PreviewJob | null = null;
   private listener: PreviewListener | null = null;
-  private exports = new Map<number, (r: WorkerResponse) => void>();
+  /** Exports and copy searches waiting on the worker, by request id. */
+  private pending = new Map<number, (r: WorkerResponse) => void>();
 
   constructor() {
     if (typeof Worker !== 'undefined') {
@@ -82,9 +84,9 @@ export class RenderClient {
   }
 
   private receive(res: WorkerResponse): void {
-    if (res.kind === 'export') {
-      this.exports.get(res.id)?.(res);
-      this.exports.delete(res.id);
+    if (res.kind !== 'preview') {
+      this.pending.get(res.id)?.(res);
+      this.pending.delete(res.id);
       return;
     }
 
@@ -108,7 +110,7 @@ export class RenderClient {
     const full: ExportRequest = { ...req, id, kind: 'export' };
 
     return new Promise<ExportResult>((resolve, reject) => {
-      this.exports.set(id, (res) => {
+      this.pending.set(id, (res) => {
         if (res.ok && res.kind === 'export') resolve(res.data);
         else reject(new Error(res.ok ? 'Unexpected response' : res.error));
       });
@@ -118,10 +120,30 @@ export class RenderClient {
     });
   }
 
+  /**
+   * Search for the copy count that wastes least. It packs the design up to
+   * twenty times, so callers should ask once the parameters have settled
+   * rather than on every change, or previews would queue behind it.
+   */
+  requestCopies(job: PreviewJob): Promise<CopiesSuggestion | null> {
+    const id = this.nextId++;
+    const req: WorkerRequest = { id, kind: 'copies', generator: job.generator, values: job.values };
+
+    return new Promise((resolve, reject) => {
+      this.pending.set(id, (res) => {
+        if (res.ok && res.kind === 'copies') resolve(res.data);
+        else reject(new Error(res.ok ? 'Unexpected response' : res.error));
+      });
+
+      if (this.worker) this.worker.postMessage(req);
+      else queueMicrotask(() => this.receive(handleRequest(req)));
+    });
+  }
+
   dispose(): void {
     this.worker?.terminate();
     this.worker = null;
     this.listener = null;
-    this.exports.clear();
+    this.pending.clear();
   }
 }

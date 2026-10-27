@@ -9,8 +9,8 @@
  */
 import { LAYERS, type Layer } from './geom/colors';
 import { toBoxesConfig } from './params/common';
-import { defaultsFor, getGenerator } from './generators/registry';
-import { packDrawing } from './layout/pack';
+import { defaultsFor, getGenerator, paramsFor } from './generators/registry';
+import { bestCopies, packDrawing, type CopiesSuggestion, type PackOptions } from './layout/pack';
 import { renderBox, type BBox, type Drawing, type DrawingStats, type Sheet } from './render';
 import type { ParamValues } from './params/schema';
 
@@ -46,16 +46,33 @@ export interface PreviewData {
 export function buildDrawing(generator: string, values: ParamValues): Drawing {
   const full = { ...defaultsFor(generator), ...values };
   const drawing = renderBox(getGenerator(generator).create(full, toBoxesConfig(full)));
-  if (full['pack'] !== true) return drawing;
+  return full['pack'] === true ? packDrawing(drawing, packOptions(full)) : drawing;
+}
 
+function packOptions(full: ParamValues): PackOptions {
   const num = (k: string) => Number(full[k]);
-  return packDrawing(drawing, {
+  return {
     sheetWidth: num('sheet_width'),
     sheetHeight: num('sheet_height'),
     margin: num('sheet_margin'),
     gap: num('pack_gap'),
     rotate: full['pack_rotate'] !== false,
-  });
+    copies: num('pack_copies'),
+  };
+}
+
+/**
+ * The copy count that wastes the least stock, when it beats the one asked
+ * for; null otherwise, and whenever packing is off. Searches as far as the
+ * Copies control goes.
+ */
+export function suggestCopies(generator: string, values: ParamValues): CopiesSuggestion | null {
+  const full = { ...defaultsFor(generator), ...values };
+  if (full['pack'] !== true) return null;
+  const spec = paramsFor(generator).find((s) => s.key === 'pack_copies');
+  const max = spec && 'max' in spec ? spec.max : 1;
+  const drawing = renderBox(getGenerator(generator).create(full, toBoxesConfig(full)));
+  return bestCopies(drawing, packOptions(full), max);
 }
 
 export function toPreview(drawing: Drawing): PreviewData {

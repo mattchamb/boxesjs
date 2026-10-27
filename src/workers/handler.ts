@@ -6,7 +6,7 @@
  */
 import { toLBRN2 } from '../lib/export/lbrn2';
 import { toSVG } from '../lib/export/svg';
-import { buildDrawing, toPreview } from '../lib/preview';
+import { buildDrawing, suggestCopies, toPreview } from '../lib/preview';
 import type { ExportRequest, WorkerRequest, WorkerResponse } from './protocol';
 
 function slug(s: string): string {
@@ -52,6 +52,9 @@ export function handleRequest(req: WorkerRequest): WorkerResponse {
         ok: true,
         data: toPreview(buildDrawing(req.generator, req.values)),
       };
+    }
+    if (req.kind === 'copies') {
+      return { id: req.id, kind: 'copies', ok: true, data: suggestCopies(req.generator, req.values) };
     }
     return runExport(req);
   } catch (err) {

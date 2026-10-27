@@ -36,6 +36,8 @@ export interface PackOptions {
   gap: number;
   /** Allow quarter turns. Off keeps every part in the grain direction it was designed in. */
   rotate: boolean;
+  /** How many of the design to cut, packed together so copies share sheets. */
+  copies?: number;
 }
 
 /** Space between sheets where they sit side by side in one drawing. */
@@ -288,10 +290,27 @@ export function transformPart(part: DrawingPart, m: Affine): DrawingPart {
 /** A quarter turn, exact rather than through cos(90°). */
 const QUARTER_TURN = new Affine(0, -1, 0, 1, 0, 0);
 
-/** Lay the drawing's parts out on as few sheets as possible. */
-export function packDrawing(drawing: Drawing, o: PackOptions): Drawing {
-  const pieces = piecesOf(drawing.parts);
-  const warnings = [...drawing.warnings];
+/** Where every piece goes, before anything is moved. */
+interface Plan {
+  /** The design's pieces, once. */
+  once: Piece[];
+  /** Every copy's pieces, indexing into `source`. */
+  pieces: Piece[];
+  /** The design's parts, once per copy. */
+  source: DrawingPart[];
+  best: Attempt;
+}
+
+function plan(drawing: Drawing, o: PackOptions, once = piecesOf(drawing.parts)): Plan {
+  const copies = Math.max(1, Math.round(o.copies ?? 1));
+  const n = drawing.parts.length;
+  // Copies are made piece by piece, from one grouping of the original: every
+  // copy starts out in the same place, so grouping the copied parts would hand
+  // all of the copies' loose holes to the first copy's part.
+  const source = Array.from({ length: copies }, () => drawing.parts).flat();
+  const pieces = Array.from({ length: copies }, (_, k) =>
+    once.map((p) => ({ parts: p.parts.map((i) => i + k * n), bbox: p.bbox })),
+  ).flat();
 
   // Padding every part and the usable area by one gap lets parts sit flush in
   // the packer while staying a gap apart on the sheet, and lets the last part
@@ -318,12 +337,23 @@ export function packDrawing(drawing: Drawing, o: PackOptions): Drawing {
     }
   }
 
-  const parts = drawing.parts.slice();
+  return { once, pieces, source, best: best! };
+}
+
+/** Lay the drawing's parts out on as few sheets as possible. */
+export function packDrawing(drawing: Drawing, o: PackOptions): Drawing {
+  const copies = Math.max(1, Math.round(o.copies ?? 1));
+  const { once, pieces, source, best } = plan(drawing, o);
+  const warnings = [...drawing.warnings];
+  /** Sheets each oversize piece of the design hangs off, numbered from 1. */
+  const overhangs = new Map<number, number[]>();
+
+  const parts = source.slice();
   const sheets: Sheet[] = [];
   let x0 = 0;
   let height = 0;
 
-  for (const bin of best?.bins ?? []) {
+  for (const bin of best.bins) {
     const ids: number[] = [];
     let right = o.sheetWidth;
     let bottom = o.sheetHeight;
@@ -337,7 +367,7 @@ export function packDrawing(drawing: Drawing, o: PackOptions): Drawing {
       const m = pl.rotated
         ? Affine.translation(tx + b.y + b.height, ty - b.x).mul(QUARTER_TURN)
         : Affine.translation(tx - b.x, ty - b.y);
-      for (const i of piece.parts) parts[i] = transformPart(drawing.parts[i]!, m);
+      for (const i of piece.parts) parts[i] = transformPart(source[i]!, m);
       ids.push(...piece.parts);
       area += b.width * b.height;
 
@@ -345,14 +375,9 @@ export function packDrawing(drawing: Drawing, o: PackOptions): Drawing {
       right = Math.max(right, o.margin + pl.x + w);
       bottom = Math.max(bottom, o.margin + pl.y + h);
 
-      if (best!.oversize.has(pl.piece)) {
-        const name = piece.parts.map((i) => drawing.parts[i]!.name).find(Boolean) || 'A part';
-        warnings.push({
-          param: 'sheet_width',
-          message:
-            `${name} (${b.width.toFixed(0)} × ${b.height.toFixed(0)} mm) does not fit on a ` +
-            `${o.sheetWidth} × ${o.sheetHeight} mm sheet inside the edge offset, so it hangs off sheet ${sheets.length + 1}.`,
-        });
+      if (best.oversize.has(pl.piece)) {
+        const key = pl.piece % once.length;
+        overhangs.set(key, [...(overhangs.get(key) ?? []), sheets.length + 1]);
       }
     }
 
@@ -370,6 +395,21 @@ export function packDrawing(drawing: Drawing, o: PackOptions): Drawing {
     height = Math.max(height, bottom);
   }
 
+  // One warning per part of the design, however many copies hang off.
+  for (const [key, on] of [...overhangs.entries()].sort((a, b) => a[0] - b[0])) {
+    const piece = once[key]!;
+    const b = piece.bbox;
+    const name = piece.parts.map((i) => drawing.parts[i]!.name).find(Boolean) || 'A part';
+    on.sort((x, y) => x - y);
+    const where = on.length === 1 ? `sheet ${on[0]}` : `sheets ${on.slice(0, -1).join(', ')} and ${on[on.length - 1]}`;
+    warnings.push({
+      param: 'sheet_width',
+      message:
+        `${name} (${b.width.toFixed(0)} × ${b.height.toFixed(0)} mm) does not fit on a ` +
+        `${o.sheetWidth} × ${o.sheetHeight} mm sheet inside the edge offset, so it hangs off ${where}.`,
+    });
+  }
+
   const chunks = emptyLayerRecord<string[]>(() => []);
   for (const p of parts) for (const path of p.paths) chunks[path.layer].push(path.d);
   const layers = emptyLayerRecord<string>(() => '');
@@ -380,8 +420,68 @@ export function packDrawing(drawing: Drawing, o: PackOptions): Drawing {
     parts,
     layers,
     bbox: { x: 0, y: 0, width, height },
-    stats: { ...drawing.stats, widthMm: width, heightMm: height },
+    stats: {
+      partCount: drawing.stats.partCount * copies,
+      widthMm: width,
+      heightMm: height,
+      cutLengthMm: drawing.stats.cutLengthMm * copies,
+      lengthByLayer: Object.fromEntries(
+        LAYERS.map((l) => [l, drawing.stats.lengthByLayer[l] * copies]),
+      ) as Drawing['stats']['lengthByLayer'],
+    },
     warnings,
     sheets,
+  };
+}
+
+export interface CopiesSuggestion {
+  copies: number;
+  sheets: number;
+  /** Fraction of those sheets covered by the parts' bounding boxes. */
+  used: number;
+  /** What the copies asked for in the options come to, for comparison. */
+  current: { copies: number; sheets: number };
+}
+
+/**
+ * The number of copies that wastes the least stock, counting a partly used
+ * last sheet as waste: the fewest sheets per copy, up to `max` copies.
+ *
+ * The best rate usually comes round again at multiples (3, 6, 9 …), so of the
+ * counts that reach it, this picks the smallest no fewer than were asked for —
+ * asking for four is taken as needing four. Returns null when the copies
+ * asked for are already as good as any.
+ */
+export function bestCopies(drawing: Drawing, o: PackOptions, max: number): CopiesSuggestion | null {
+  const once = piecesOf(drawing.parts);
+  if (once.length === 0) return null;
+  const asked = Math.max(1, Math.round(o.copies ?? 1));
+  const sheetsFor = (copies: number) => plan(drawing, { ...o, copies }, once).best.bins.length;
+
+  // No packing beats the stock's area, so a count whose lower bound is already
+  // worse than the best rate found cannot be the answer and is never packed.
+  const area = once.reduce((s, p) => s + p.bbox.width * p.bbox.height, 0) / (o.sheetWidth * o.sheetHeight);
+
+  // Rates compared as fractions, sheets × copies, so equal rates are equal.
+  const results: { copies: number; sheets: number }[] = [];
+  let best: { copies: number; sheets: number } | null = null;
+  for (let copies = 1; copies <= Math.max(max, asked); copies++) {
+    const bound = Math.ceil(copies * area - 1e-9);
+    if (best && bound * best.copies > best.sheets * copies) continue;
+    const sheets = sheetsFor(copies);
+    results.push({ copies, sheets });
+    if (!best || sheets * best.copies < best.sheets * copies) best = { copies, sheets };
+  }
+
+  const current = results.find((r) => r.copies === asked) ?? { copies: asked, sheets: sheetsFor(asked) };
+  if (current.sheets * best!.copies <= best!.sheets * current.copies) return null;
+
+  const tied = results.filter((r) => r.sheets * best!.copies === best!.sheets * r.copies);
+  const pick = tied.find((r) => r.copies >= asked) ?? tied[0]!;
+  return {
+    copies: pick.copies,
+    sheets: pick.sheets,
+    used: (area * pick.copies) / pick.sheets,
+    current,
   };
 }

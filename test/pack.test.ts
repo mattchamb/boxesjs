@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { packDrawing, SHEET_GAP, type PackOptions } from '~/lib/layout/pack';
-import { buildDrawing } from '~/lib/preview';
+import { buildDrawing, suggestCopies } from '~/lib/preview';
+import { decodeParams } from '~/lib/permalink';
 import { defaultsFor, listGenerators } from '~/lib/generators/registry';
 import { emptyLayerRecord, toPathData, type BBox, type Drawing, type DrawingPart } from '~/lib/render';
 import type { Layer } from '~/lib/geom/colors';
@@ -79,6 +80,102 @@ const apart = (a: BBox, b: BBox, gap: number) =>
   a.y + a.height + gap <= b.y + 1e-6 ||
   b.y + b.height + gap <= a.y + 1e-6;
 
+describe('copies', () => {
+  it('share sheets rather than each taking their own', () => {
+    // One default wall uses under a tenth of a 300 × 400 sheet.
+    const base = { ...defaultsFor('rectangularwall'), pack: true };
+    expect(buildDrawing('rectangularwall', base).sheets).toHaveLength(1);
+    const five = buildDrawing('rectangularwall', { ...base, pack_copies: 5 });
+    expect(five.parts).toHaveLength(5);
+    expect(five.sheets).toHaveLength(1);
+  });
+
+  it('never need more sheets than packing each copy alone', () => {
+    for (const id of ['storagerack', 'typetray', 'closedbox']) {
+      const base = { ...defaultsFor(id), pack: true };
+      const one = buildDrawing(id, base).sheets!.length;
+      expect(buildDrawing(id, { ...base, pack_copies: 3 }).sheets!.length, id).toBeLessThanOrEqual(3 * one);
+    }
+  });
+
+  it('keep loose holes with their own copy of the part', () => {
+    // WallStackableBin draws a side's slots in a move of their own, on top of it.
+    const v = { ...defaultsFor('wallstackablebin'), pack: true, pack_copies: 3 };
+    const plain = buildDrawing('wallstackablebin', { ...v, pack: false });
+    const packed = buildDrawing('wallstackablebin', v);
+    const n = plain.parts.length;
+    const loose = plain.parts.flatMap((p, i) => (p.paths.some((x) => x.layer === 'cut') ? [] : [i]));
+    expect(loose.length).toBeGreaterThan(0);
+    for (const i of loose) {
+      const host = plain.parts.findIndex(
+        (q, j) => j !== i && q.paths.some((x) => x.layer === 'cut') && within(p(plain, i), p(plain, j)),
+      );
+      for (let k = 0; k < 3; k++) {
+        expect(within(p(packed, i + k * n), p(packed, host + k * n)), `copy ${k + 1}`).toBe(true);
+      }
+    }
+  });
+
+  it('warn once about a part too large for the sheet, naming every sheet it hangs off', () => {
+    const v = { ...defaultsFor('displayshelf'), pack: true };
+    const one = buildDrawing('displayshelf', v).warnings.filter((w) => w.param === 'sheet_width');
+    const two = buildDrawing('displayshelf', { ...v, pack_copies: 2 }).warnings.filter((w) => w.param === 'sheet_width');
+    expect(one.length).toBeGreaterThan(0);
+    expect(two).toHaveLength(one.length);
+    expect(two[0]!.message).toMatch(/hangs off sheets \d+ and \d+\./);
+  });
+});
+
+describe('suggested copies', () => {
+  // Settings from trays and racks cut on 300 × 400 stock.
+  const tray = decodeParams('typetray', 'sx=78*3&sy=280&h=102&outside=0&bottom_edge=F&fingerholes=front&thickness=3.3&burn=0.08&pack=1');
+  const rack = decodeParams('storagerack', 'x=249&depth=289&sh=107*2&rail=45&outside=0&bottom_edge=s&top_edge=S&thickness=3.3&burn=0.08&pack=1');
+
+  it('finds the count that wastes least', () => {
+    const hint = suggestCopies('typetray', tray)!;
+    expect(hint).toMatchObject({ copies: 3, sheets: 8, current: { copies: 1, sheets: 3 } });
+    expect(hint.used).toBeGreaterThan(0.7);
+    // And that is what packing that many actually gives.
+    expect(buildDrawing('typetray', { ...tray, pack_copies: 3 }).sheets).toHaveLength(8);
+  });
+
+  it('takes the count asked for as a minimum', () => {
+    expect(suggestCopies('typetray', { ...tray, pack_copies: 4 })).toMatchObject({ copies: 6, sheets: 16 });
+  });
+
+  it('says nothing when the count asked for is already as good as any', () => {
+    expect(suggestCopies('typetray', { ...tray, pack_copies: 3 })).toBeNull();
+    expect(suggestCopies('storagerack', rack)).toBeNull();
+    expect(suggestCopies('typetray', { ...tray, pack: false })).toBeNull();
+  });
+
+  it('agrees with packing every count, despite skipping the hopeless ones', () => {
+    for (const id of ['typetray', 'rectangularwall', 'cardbox', 'trayinsert']) {
+      const base: ParamValues = { ...defaultsFor(id), pack: true };
+      const all = Array.from({ length: 20 }, (_, i) => ({
+        copies: i + 1,
+        sheets: buildDrawing(id, { ...base, pack_copies: i + 1 }).sheets!.length,
+      }));
+      const rate = Math.min(...all.map((r) => r.sheets / r.copies));
+      const hint = suggestCopies(id, base);
+      if (all[0]!.sheets <= rate + 1e-9) {
+        expect(hint, id).toBeNull();
+      } else {
+        expect(hint, id).not.toBeNull();
+        expect(hint!.sheets / hint!.copies, id).toBeCloseTo(rate, 9);
+        expect(hint!.copies, id).toBe(all.find((r) => Math.abs(r.sheets / r.copies - rate) < 1e-9)!.copies);
+      }
+    }
+  });
+});
+
+const p = (d: Drawing, i: number) => d.parts[i]!.bbox;
+const within = (inner: BBox, outer: BBox) =>
+  inner.x >= outer.x - 0.01 &&
+  inner.y >= outer.y - 0.01 &&
+  inner.x + inner.width <= outer.x + outer.width + 0.01 &&
+  inner.y + inner.height <= outer.y + outer.height + 0.01;
+
 describe('packDrawing', () => {
   it('fits parts that fill a sheet exactly', () => {
     // Four quarters of the usable area, a gap apart.
@@ -141,35 +238,40 @@ describe('packDrawing', () => {
   });
 });
 
-/** The default offsets, and a pair far enough from them to show they are used. */
+/** The defaults, and settings far enough from them to show they are used. */
 const OFFSETS = [
-  { edge: 5, gap: 2 },
-  { edge: 12, gap: 7.5 },
+  { edge: 5, gap: 2, copies: 1 },
+  { edge: 12, gap: 7.5, copies: 3 },
 ];
 
 describe.each(
   listGenerators().flatMap((g) => OFFSETS.map((o) => ({ id: g.meta.id, ...o }))),
-)('$id packed onto 300 × 400, $edge mm from the edge, $gap mm apart', ({ id, edge, gap }) => {
+)('$id × $copies packed onto 300 × 400, $edge mm from the edge, $gap mm apart', ({ id, edge, gap, copies }) => {
   const values: ParamValues = { ...defaultsFor(id), labels: true, reference: 0 };
   const plain = buildDrawing(id, values);
-  const packed = buildDrawing(id, { ...values, pack: true, sheet_margin: edge, pack_gap: gap });
+  const settings = { ...values, pack: true, sheet_margin: edge, pack_gap: gap, pack_copies: copies };
+  const packed = buildDrawing(id, settings);
   const sheets = packed.sheets!;
+  const n = plain.parts.length;
 
   it('places every part on exactly one sheet', () => {
-    expect(packed.parts).toHaveLength(plain.parts.length);
+    expect(packed.parts).toHaveLength(n * copies);
     const all = sheets.flatMap((s) => s.parts).sort((a, b) => a - b);
-    expect(all).toEqual(plain.parts.map((_, i) => i));
+    expect(all).toEqual(packed.parts.map((_, i) => i));
   });
 
   it('moves parts without changing them', () => {
     packed.parts.forEach((p, i) => {
-      const q = plain.parts[i]!;
+      const q = plain.parts[i % n]!;
       expect(p.name).toBe(q.name);
       expect(p.paths.map((x) => x.layer)).toEqual(q.paths.map((x) => x.layer));
       expect(length(p)).toBeCloseTo(length(q), 6);
       expect(p.texts.map((t) => t.text)).toEqual(q.texts.map((t) => t.text));
     });
-    expect(packed.stats.lengthByLayer).toEqual(plain.stats.lengthByLayer);
+    for (const [layer, mm] of Object.entries(plain.stats.lengthByLayer)) {
+      expect(packed.stats.lengthByLayer[layer as Layer]).toBeCloseTo(mm * copies, 6);
+    }
+    expect(packed.stats.partCount).toBe(plain.stats.partCount * copies);
   });
 
   it('keeps parts apart and inside their sheet', () => {
@@ -195,6 +297,6 @@ describe.each(
   });
 
   it('is deterministic', () => {
-    expect(buildDrawing(id, { ...values, pack: true, sheet_margin: edge, pack_gap: gap })).toEqual(packed);
+    expect(buildDrawing(id, settings)).toEqual(packed);
   });
 });

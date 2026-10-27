@@ -28,6 +28,7 @@ import {
   setSelectedMaterialId,
   type Material,
 } from '../lib/materials';
+import type { CopiesSuggestion } from '../lib/layout/pack';
 import type { PreviewData } from '../lib/preview';
 import { Control } from './controls';
 import { Preview } from './Preview';
@@ -59,6 +60,7 @@ export default function App({ generator, name, summary, initial }: Props) {
   const [materialId, setMaterialId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
+  const [copiesHint, setCopiesHint] = useState<CopiesSuggestion | null>(null);
 
   const client = useRef<RenderClient>();
 
@@ -98,6 +100,26 @@ export default function App({ generator, name, summary, initial }: Props) {
   // to fire on every keystroke and every pixel of slider drag.
   useEffect(() => {
     client.current?.requestPreview({ generator, values });
+  }, [generator, values]);
+
+  // The copy search packs the design up to twenty times, so it waits for the
+  // parameters to settle; asked on every change, previews would queue behind it.
+  useEffect(() => {
+    setCopiesHint(null);
+    if (values['pack'] !== true) return;
+    let live = true;
+    const timer = setTimeout(() => {
+      client.current
+        ?.requestCopies({ generator, values })
+        .then((hint) => live && setCopiesHint(hint))
+        .catch(() => {
+          /* a failed search just means no hint; the preview reports the error */
+        });
+    }, 400);
+    return () => {
+      live = false;
+      clearTimeout(timer);
+    };
   }, [generator, values]);
 
   // Keep the URL in step without flooding history.
@@ -174,7 +196,11 @@ export default function App({ generator, name, summary, initial }: Props) {
       value={values[spec.key] ?? spec.default}
       onChange={(v) => setValue(spec.key, v)}
       warning={warningFor(spec.key)}
-    />
+    >
+      {spec.key === 'pack_copies' && copiesHint && (
+        <CopiesHint hint={copiesHint} onUse={() => setValue('pack_copies', copiesHint.copies)} />
+      )}
+    </Control>
   );
 
   return (
@@ -306,6 +332,22 @@ export default function App({ generator, name, summary, initial }: Props) {
           </span>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** A copy count that wastes less stock than the one chosen, and a way to take it. */
+function CopiesHint({ hint, onUse }: { hint: CopiesSuggestion; onUse: () => void }) {
+  const rate = (sheets: number, copies: number) => (sheets / copies).toFixed(2);
+  return (
+    <div class="copies-hint">
+      <p>
+        {hint.copies} copies fit on {hint.sheets} sheets: {rate(hint.sheets, hint.copies)} sheets per copy
+        ({Math.round(hint.used * 100)}% used), against {rate(hint.current.sheets, hint.current.copies)} now.
+      </p>
+      <button type="button" class="btn" onClick={onUse}>
+        Use {hint.copies}
+      </button>
     </div>
   );
 }

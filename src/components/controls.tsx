@@ -6,6 +6,7 @@
  * have to know. Each control here is picked from the parameter's declared kind,
  * which is what makes the panel readable.
  */
+import type { ComponentChildren } from 'preact';
 import { useEffect, useState } from 'preact/hooks';
 import { EDGE_INFO, type ParamSpec, type ParamValue } from '../lib/params/schema';
 import { formatSections, parseSections } from '../lib/params/sections';
@@ -15,9 +16,11 @@ interface ControlProps {
   value: ParamValue;
   onChange: (v: ParamValue) => void;
   warning?: string;
+  /** Extra content under the help text, for the few fields that need more than a value. */
+  children?: ComponentChildren;
 }
 
-export function Control({ spec, value, onChange, warning }: ControlProps) {
+export function Control({ spec, value, onChange, warning, children }: ControlProps) {
   return (
     <div class="field">
       {spec.kind !== 'bool' && (
@@ -44,6 +47,7 @@ export function Control({ spec, value, onChange, warning }: ControlProps) {
       {spec.help && <p class="field-help">{spec.help}</p>}
       {spec.kind === 'enum' && <ChoiceHelp spec={spec} value={String(value)} />}
       {warning && <p class="field-warning">{warning}</p>}
+      {children}
     </div>
   );
 }
