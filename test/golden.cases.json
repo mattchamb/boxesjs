@@ -3721,5 +3721,130 @@
       "thickness": 3,
       "labels": true
     }
+  },
+  {
+    "name": "ref_folder_default",
+    "generator": "folder",
+    "pythonClass": "Folder",
+    "params": {}
+  },
+  {
+    "name": "ref_folder_labels",
+    "generator": "folder",
+    "pythonClass": "Folder",
+    "params": {
+      "x": 120,
+      "y": 80,
+      "h": 15,
+      "r": 5,
+      "flex_distance": 0.8,
+      "thickness": 4,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_breadbox_default",
+    "generator": "breadbox",
+    "pythonClass": "BreadBox",
+    "params": {}
+  },
+  {
+    "name": "ref_breadbox_small",
+    "generator": "breadbox",
+    "pythonClass": "BreadBox",
+    "params": {
+      "x": 200,
+      "y": 120,
+      "h": 80,
+      "radius": 0,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_breadbox_labels",
+    "generator": "breadbox",
+    "pythonClass": "BreadBox",
+    "params": {
+      "x": 160,
+      "y": 90,
+      "h": 110,
+      "radius": 30,
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_shutterbox_default",
+    "generator": "shutterbox",
+    "pythonClass": "ShutterBox",
+    "params": {}
+  },
+  {
+    "name": "ref_shutterbox_double",
+    "generator": "shutterbox",
+    "pythonClass": "ShutterBox",
+    "params": {
+      "style": "double",
+      "x": 120,
+      "y": 180,
+      "h": 120,
+      "radius": 40,
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_shutterbox_double_low",
+    "generator": "shutterbox",
+    "pythonClass": "ShutterBox",
+    "params": {
+      "style": "double",
+      "h": 80,
+      "radius": 0,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_shutterbox_labels",
+    "generator": "shutterbox",
+    "pythonClass": "ShutterBox",
+    "params": {
+      "x": 90,
+      "y": 160,
+      "h": 110,
+      "radius": 30,
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_flexbook_default",
+    "generator": "flexbook",
+    "pythonClass": "FlexBook",
+    "params": {}
+  },
+  {
+    "name": "ref_flexbook_recess",
+    "generator": "flexbook",
+    "pythonClass": "FlexBook",
+    "params": {
+      "recess_wall": true,
+      "x": 90,
+      "y": 40,
+      "h": 150,
+      "latchsize": 10,
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_flexbook_labels",
+    "generator": "flexbook",
+    "pythonClass": "FlexBook",
+    "params": {
+      "x": 80,
+      "y": 30,
+      "h": 120,
+      "thickness": 4,
+      "labels": true
+    }
   }
 ]

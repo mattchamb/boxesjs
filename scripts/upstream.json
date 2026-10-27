@@ -358,6 +358,30 @@
         "boxes/generators/doubleflexdoorbox.py"
       ],
       "sha": "84e392b39191"
+    },
+    "folder": {
+      "files": [
+        "boxes/generators/folder.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "breadbox": {
+      "files": [
+        "boxes/generators/breadbox.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "shutterbox": {
+      "files": [
+        "boxes/generators/shutterbox.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "flexbook": {
+      "files": [
+        "boxes/generators/flexbook.py"
+      ],
+      "sha": "84e392b39191"
     }
   }
 }
