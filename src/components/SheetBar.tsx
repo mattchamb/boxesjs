@@ -188,7 +188,8 @@ function Hint({
   onUse: () => void;
 }) {
   const mm = (n: number) => String(Math.round(n * 10) / 10);
-  const rate = (panels: number, copies: number) => (panels / copies).toFixed(2);
+  // Two places at most, and no trailing zeros: "3", not "3.00".
+  const rate = (panels: number, copies: number) => String(Math.round((panels / copies) * 100) / 100);
   const resize =
     Math.abs(hint.sheetWidth - Number(values['sheet_width'])) > 1e-6 ||
     Math.abs(hint.sheetHeight - Number(values['sheet_height'])) > 1e-6;
@@ -199,8 +200,9 @@ function Hint({
     return (
       <div class="copies-hint">
         <p>
-          {hint.copies} copies fit on {hint.sheets} sheets: {rate(hint.sheets, hint.copies)} sheets per copy (
-          {Math.round(hint.used * 100)}% used), against {rate(hint.current.sheets, hint.current.copies)} now.
+          {hint.copies} copies fit on {hint.sheets} sheets, {Math.round(hint.used * 100)}% used. That is{' '}
+          {rate(hint.sheets, hint.copies)} sheets per copy, down from {rate(hint.current.sheets, hint.current.copies)}{' '}
+          per copy now.
         </p>
         <button type="button" class="btn" onClick={onUse}>
           Use {hint.copies}
@@ -218,8 +220,9 @@ function Hint({
             {hint.perPanel} sheets of {size}:{' '}
           </>
         )}
-        {hint.copies} {hint.copies === 1 ? 'copy uses' : 'copies use'} {panels}, {rate(hint.panels, hint.copies)} per
-        copy ({Math.round(hint.used * 100)}% used), against {rate(hint.current.panels, hint.current.copies)} now.
+        {hint.copies} {hint.copies === 1 ? 'copy uses' : 'copies use'} {panels}, {Math.round(hint.used * 100)}% used.
+        That is {rate(hint.panels, hint.copies)} panels per copy, down from{' '}
+        {rate(hint.current.panels, hint.current.copies)} per copy now.
       </p>
       <button type="button" class="btn" onClick={onUse}>
         {resize ? `Use ${size}, ${hint.copies} ${hint.copies === 1 ? 'copy' : 'copies'}` : `Use ${hint.copies}`}
