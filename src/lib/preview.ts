@@ -10,7 +10,8 @@
 import { LAYERS, type Layer } from './geom/colors';
 import { toBoxesConfig } from './params/common';
 import { defaultsFor, getGenerator } from './generators/registry';
-import { renderBox, type BBox, type Drawing, type DrawingStats } from './render';
+import { packDrawing } from './layout/pack';
+import { renderBox, type BBox, type Drawing, type DrawingStats, type Sheet } from './render';
 import type { ParamValues } from './params/schema';
 
 export interface PreviewPart {
@@ -35,12 +36,26 @@ export interface PreviewData {
   bbox: BBox;
   stats: DrawingStats;
   warnings: { param?: string; message: string }[];
+  sheets?: Sheet[];
 }
 
-/** Build a drawing from a generator id and a set of form values. */
+/**
+ * Build a drawing from a generator id and a set of form values, packed onto
+ * sheets when that is asked for, so the preview and every export agree.
+ */
 export function buildDrawing(generator: string, values: ParamValues): Drawing {
   const full = { ...defaultsFor(generator), ...values };
-  return renderBox(getGenerator(generator).create(full, toBoxesConfig(full)));
+  const drawing = renderBox(getGenerator(generator).create(full, toBoxesConfig(full)));
+  if (full['pack'] !== true) return drawing;
+
+  const num = (k: string) => Number(full[k]);
+  return packDrawing(drawing, {
+    sheetWidth: num('sheet_width'),
+    sheetHeight: num('sheet_height'),
+    margin: num('sheet_margin'),
+    gap: num('pack_gap'),
+    rotate: full['pack_rotate'] !== false,
+  });
 }
 
 export function toPreview(drawing: Drawing): PreviewData {
@@ -68,6 +83,7 @@ export function toPreview(drawing: Drawing): PreviewData {
     bbox: drawing.bbox,
     stats: drawing.stats,
     warnings: drawing.warnings,
+    ...(drawing.sheets ? { sheets: drawing.sheets } : {}),
   };
 }
 

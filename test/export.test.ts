@@ -5,6 +5,7 @@ import { defaultsFor, getGenerator } from '~/lib/generators/registry';
 import { toSVG } from '~/lib/export/svg';
 import { toLBRN2 } from '~/lib/export/lbrn2';
 import { BUILTIN_MATERIALS, estimateSeconds, formatDuration } from '~/lib/materials';
+import { buildDrawing } from '~/lib/preview';
 
 function render(id: string, overrides: Record<string, number | string | boolean> = {}) {
   const v = { ...defaultsFor(id), reference: 0, ...overrides };
@@ -147,6 +148,65 @@ describe('LightBurn export', () => {
     const out = toLBRN2(drawing, { material: off, layers: ['cut'] });
     expect(out).not.toContain('<name Value="Inner Cut"/>');
     expect(out).toContain('<name Value="Outer Cut"/>');
+  });
+});
+
+describe('packed onto sheets', () => {
+  const packed = buildDrawing('storagerack', { ...defaultsFor('storagerack'), labels: true, pack: true });
+  const sheets = packed.sheets!;
+  const lbrn = toLBRN2(packed, { material, title: 'Rack' });
+
+  /** Each page's shapes: page 1 is the top level, the rest are page groups. */
+  const pages = lbrn.split(/<Shape Type="Group" SubType="Page" Name="Page \d+">/);
+
+  it('needs more than one sheet, or this tests nothing', () => {
+    expect(sheets.length).toBeGreaterThan(1);
+  });
+
+  it('writes one LightBurn page per sheet', () => {
+    expect(lbrn).toContain('Page0Name="Page 1"');
+    expect(lbrn).toContain('CurrentPage="0"');
+    expect(pages).toHaveLength(sheets.length);
+    for (let i = 2; i <= sheets.length; i++) expect(lbrn).toContain(`Name="Page ${i}"`);
+  });
+
+  it('outlines every sheet on tool layer T2', () => {
+    expect(lbrn).toMatch(/<CutSetting Type="Tool">\s*<index Value="31"\/>/);
+    for (const page of pages) {
+      expect(page.match(/<Shape Type="Rect" CutIndex="31" W="300" H="400" Cr="0">/g)).toHaveLength(1);
+      expect(page).toContain('<XForm>1 0 0 1 150 200</XForm>');
+    }
+  });
+
+  it('puts each part on its sheet\'s page, inside the sheet', () => {
+    pages.forEach((page, i) => {
+      expect(page.match(/<Shape Type="Group">/g)).toHaveLength(sheets[i]!.parts.length);
+      const xs: number[] = [];
+      const ys: number[] = [];
+      for (const m of page.matchAll(/V(-?[\d.]+) (-?[\d.]+)c/g)) {
+        xs.push(Number(m[1]));
+        ys.push(Number(m[2]));
+      }
+      expect(Math.min(...xs)).toBeGreaterThanOrEqual(0);
+      expect(Math.max(...xs)).toBeLessThanOrEqual(300);
+      expect(Math.min(...ys)).toBeGreaterThanOrEqual(0);
+      expect(Math.max(...ys)).toBeLessThanOrEqual(400);
+    });
+  });
+
+  it('leaves an unpacked drawing on a single page', () => {
+    const plain = toLBRN2(render('storagerack'), { material });
+    expect(plain).not.toContain('SubType="Page"');
+    expect(plain).not.toContain('CutIndex="31"');
+  });
+
+  it('lays the sheets side by side in SVG, outlined', () => {
+    const svg = toSVG(packed);
+    const group = /<g id="sheet"[^>]*>([\s\S]*?)<\/g>/.exec(svg);
+    expect(group).not.toBeNull();
+    expect(group![1]!.match(/<rect /g)).toHaveLength(sheets.length);
+    expect(svg).toContain(`width="${Math.round(packed.bbox.width * 1000) / 1000}mm"`);
+    expect(toSVG(render('storagerack'))).not.toContain('id="sheet"');
   });
 });
 

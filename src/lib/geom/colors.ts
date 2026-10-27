@@ -100,6 +100,21 @@ export const LAYER_INFO: Record<Layer, LayerInfo> = {
   },
 };
 
+/**
+ * The stock outline drawn round each sheet of a packed layout. It is not one of
+ * `LAYERS`: the engine never draws it, so no colour should map to it, and no
+ * material preset needs settings for it. LightBurn gets it on tool layer T2,
+ * the way sheets get laid out there by hand; in SVG it shares the label
+ * colour, so an import treats it the same way it treats the labels.
+ */
+export const SHEET_OUTLINE = {
+  name: 'Sheet (T2)',
+  lightburnIndex: 31,
+  priority: 5,
+  css: 'rgb(150,150,165)',
+  rgb: ANNOTATIONS,
+} as const;
+
 const EPS = 1e-6;
 
 /** Map a drawing colour onto the layer it belongs to. */

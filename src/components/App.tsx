@@ -241,7 +241,7 @@ export default function App({ generator, name, summary, initial }: Props) {
                   type="button"
                   class="layer-chip"
                   aria-pressed={on}
-                  title={`${info.description} — LightBurn ${info.isTool ? 'T1' : `C${String(info.lightburnIndex).padStart(2, '0')}`}`}
+                  title={`${info.description} — LightBurn ${lightburnName(info.lightburnIndex, info.isTool)}`}
                   onClick={() =>
                     setVisibleLayers((prev) => {
                       const next = new Set(prev);
@@ -253,9 +253,7 @@ export default function App({ generator, name, summary, initial }: Props) {
                 >
                   <span class="dot" style={{ background: info.css }} />
                   {info.name}
-                  <span class="idx">
-                    {info.isTool ? 'T1' : `C${String(info.lightburnIndex).padStart(2, '0')}`}
-                  </span>
+                  <span class="idx">{lightburnName(info.lightburnIndex, info.isTool)}</span>
                 </button>
               );
             })}
@@ -295,7 +293,7 @@ export default function App({ generator, name, summary, initial }: Props) {
         )}
 
         <div class="statsbar">
-          <Stat k="Sheet" v={data ? `${data.bbox.width.toFixed(0)} × ${data.bbox.height.toFixed(0)} mm` : '—'} />
+          <Stat k="Sheet" v={data ? sheetSummary(data) : '—'} />
           <Stat k="Parts" v={data ? String(data.stats.partCount) : '—'} />
           <Stat k="Cut length" v={data ? `${(data.stats.cutLengthMm / 1000).toFixed(2)} m` : '—'} />
           <Stat
@@ -330,7 +328,19 @@ function Stat({ k, v }: { k: string; v: string }) {
   );
 }
 
-const GROUP_ORDER: ParamGroup[] = ['dimensions', 'material', 'joints', 'top', 'advanced'];
+function sheetSummary(data: PreviewData): string {
+  const s = data.sheets?.[0];
+  if (!data.sheets || !s) return `${data.bbox.width.toFixed(0)} × ${data.bbox.height.toFixed(0)} mm`;
+  const used = data.sheets.reduce((t, x) => t + x.used, 0) / data.sheets.length;
+  return `${data.sheets.length} × ${s.width.toFixed(0)} × ${s.height.toFixed(0)} mm · ${Math.round(used * 100)}% used`;
+}
+
+/** LightBurn's name for a layer: C00–C29 cut layers, T1 and T2 tool layers from index 30. */
+function lightburnName(index: number, isTool: boolean): string {
+  return isTool ? `T${index - 29}` : `C${String(index).padStart(2, '0')}`;
+}
+
+const GROUP_ORDER: ParamGroup[] = ['dimensions', 'material', 'joints', 'top', 'layout', 'advanced'];
 
 interface Grouped {
   group: ParamGroup;

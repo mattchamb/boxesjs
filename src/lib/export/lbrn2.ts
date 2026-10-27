@@ -8,10 +8,18 @@
  *
  * Parts become groups, so moving a wall in LightBurn moves it whole. Labels go
  * to tool layer T1, which LightBurn never outputs.
+ *
+ * A drawing packed onto sheets becomes one LightBurn page per sheet, each with
+ * the sheet outline on tool layer T2 — the layout that otherwise gets made by
+ * hand. Pages need LightBurn 2: page 1 is the project's top-level shapes, and
+ * every later page is a top-level group of `SubType="Page"` with its own
+ * canvas in the same coordinates.
  */
-import { LAYERS, LAYER_INFO, type Layer } from '../geom/colors';
+import { Affine } from '../geom/affine';
+import { LAYERS, LAYER_INFO, SHEET_OUTLINE, type Layer } from '../geom/colors';
+import { transformPart } from '../layout/pack';
 import type { Material } from '../materials';
-import type { Drawing, DrawingPath, DrawingText } from '../render';
+import type { Drawing, DrawingPart, DrawingPath, DrawingText } from '../render';
 import type { PathCmd } from '../geom/context';
 
 export interface LBRN2Options {
@@ -163,8 +171,26 @@ function textXML(t: DrawingText, cutIndex: number, flipY: number): string[] {
   ];
 }
 
+/** One group per part, so a whole wall moves together in LightBurn. */
+function partXML(part: DrawingPart, active: Layer[], flipY: number): string[] {
+  const children: string[] = [];
+
+  for (const path of part.paths) {
+    if (!active.includes(path.layer)) continue;
+    children.push(...shapeXML(path, LAYER_INFO[path.layer].lightburnIndex, flipY));
+  }
+  for (const t of part.texts) {
+    if (!active.includes(t.layer)) continue;
+    children.push(...textXML(t, LAYER_INFO[t.layer].lightburnIndex, flipY));
+  }
+  if (children.length === 0) return [];
+
+  return ['<Shape Type="Group">', `<XForm>1 0 0 1 0 0</XForm>`, '<Children>', ...children, '</Children>', '</Shape>'];
+}
+
 export function toLBRN2(drawing: Drawing, options: LBRN2Options): string {
   const { material, permalink, title = 'boxesjs' } = options;
+  const sheets = drawing.sheets;
 
   const used = new Set<Layer>();
   for (const l of LAYERS) {
@@ -182,8 +208,11 @@ export function toLBRN2(drawing: Drawing, options: LBRN2Options): string {
 
   out.push('<?xml version="1.0" encoding="UTF-8"?>');
   out.push(
-    '<LightBurnProject AppVersion="1.7.00" FormatVersion="1" MaterialHeight="0" ' +
-      'MirrorX="False" MirrorY="False">',
+    sheets
+      ? '<LightBurnProject AppVersion="2.2.00" FormatVersion="1" MaterialHeight="0" ' +
+          'MirrorX="False" MirrorY="False" CurrentPage="0" Page0Name="Page 1">'
+      : '<LightBurnProject AppVersion="1.7.00" FormatVersion="1" MaterialHeight="0" ' +
+          'MirrorX="False" MirrorY="False">',
   );
 
   // Cut settings, in the order they should run: marking first, perimeter last.
@@ -213,26 +242,37 @@ export function toLBRN2(drawing: Drawing, options: LBRN2Options): string {
     out.push('</CutSetting>');
   }
 
-  // One group per part, so a whole wall moves together in LightBurn.
-  for (const part of drawing.parts) {
-    const children: string[] = [];
+  if (sheets) {
+    out.push('<CutSetting Type="Tool">');
+    out.push(`<index Value="${SHEET_OUTLINE.lightburnIndex}"/>`);
+    out.push(`<name Value="${esc(SHEET_OUTLINE.name)}"/>`);
+    out.push(`<priority Value="${SHEET_OUTLINE.priority}"/>`);
+    out.push('</CutSetting>');
 
-    for (const path of part.paths) {
-      if (!active.includes(path.layer)) continue;
-      children.push(...shapeXML(path, LAYER_INFO[path.layer].lightburnIndex, flipY));
-    }
-    for (const t of part.texts) {
-      if (!active.includes(t.layer)) continue;
-      children.push(...textXML(t, LAYER_INFO[t.layer].lightburnIndex, flipY));
-    }
-    if (children.length === 0) continue;
-
-    out.push('<Shape Type="Group">');
-    out.push(`<XForm>1 0 0 1 0 0</XForm>`);
-    out.push('<Children>');
-    out.push(...children);
-    out.push('</Children>');
-    out.push('</Shape>');
+    sheets.forEach((sheet, i) => {
+      // Every page is its own canvas, so each sheet moves back to the origin.
+      const home = Affine.translation(-sheet.x, -sheet.y);
+      const shapes = [
+        `<Shape Type="Rect" CutIndex="${SHEET_OUTLINE.lightburnIndex}" ` +
+          `W="${fmt(sheet.width)}" H="${fmt(sheet.height)}" Cr="0">`,
+        // A rectangle is placed by its centre.
+        `<XForm>1 0 0 1 ${fmt(sheet.width / 2)} ${fmt(sheet.height / 2)}</XForm>`,
+        '</Shape>',
+        ...sheet.parts.flatMap((idx) => partXML(transformPart(drawing.parts[idx]!, home), active, sheet.height)),
+      ];
+      if (i === 0) {
+        out.push(...shapes);
+        return;
+      }
+      out.push(`<Shape Type="Group" SubType="Page" Name="Page ${i + 1}">`);
+      out.push('<XForm>1 0 0 1 0 0</XForm>');
+      out.push('<Children>');
+      out.push(...shapes);
+      out.push('</Children>');
+      out.push('</Shape>');
+    });
+  } else {
+    for (const part of drawing.parts) out.push(...partXML(part, active, flipY));
   }
 
   const notes = [

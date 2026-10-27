@@ -168,10 +168,18 @@ export function Preview({ data, error, visibleLayers, showGrid }: Props) {
         <g transform={transform}>
           {data && (
             <>
-              <rect class="sheet" x={0} y={0} width={data.bbox.width} height={data.bbox.height} />
-              {showGrid && (
-                <rect x={0} y={0} width={data.bbox.width} height={data.bbox.height} fill="url(#grid)" />
-              )}
+              {(data.sheets ?? [data.bbox]).map((s, i) => (
+                // eslint-disable-next-line react/no-array-index-key
+                <g key={i}>
+                  <rect class="sheet" x={s.x} y={s.y} width={s.width} height={s.height} />
+                  {showGrid && <rect x={s.x} y={s.y} width={s.width} height={s.height} fill="url(#grid)" />}
+                  {data.sheets && (
+                    <text class="sheet-caption" x={s.x} y={s.y + s.height + 2} font-size={5} dominant-baseline="hanging">
+                      Sheet {i + 1}
+                    </text>
+                  )}
+                </g>
+              ))}
 
               {LAYERS.filter((l) => visibleLayers.has(l) && data.layers[l]).map((l) => (
                 <path

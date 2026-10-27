@@ -51,6 +51,14 @@ export interface DrawingStats {
   lengthByLayer: Record<Layer, number>;
 }
 
+/** One stock sheet of a packed layout, placed in the drawing's coordinates. */
+export interface Sheet extends BBox {
+  /** Indices into `Drawing.parts` of what is cut from this sheet. */
+  parts: number[];
+  /** Fraction of the sheet covered by the parts' bounding boxes. */
+  used: number;
+}
+
 export interface Drawing {
   parts: DrawingPart[];
   /** Merged path data per layer — the preview binds these straight to <path d>. */
@@ -58,9 +66,14 @@ export interface Drawing {
   bbox: BBox;
   stats: DrawingStats;
   warnings: { param?: string; message: string }[];
+  /**
+   * Present only when the parts have been packed onto stock sheets: the sheets,
+   * side by side, in the same coordinates as the parts.
+   */
+  sheets?: Sheet[];
 }
 
-const emptyLayerRecord = <T>(v: () => T): Record<Layer, T> =>
+export const emptyLayerRecord = <T>(v: () => T): Record<Layer, T> =>
   Object.fromEntries(LAYERS.map((l) => [l, v()])) as Record<Layer, T>;
 
 function fmt(n: number): string {
@@ -70,7 +83,7 @@ function fmt(n: number): string {
 }
 
 /** Serialise commands to SVG path data, matching boxes.py's output shape. */
-function toPathData(cmds: PathCmd[]): { d: string; closed: boolean } {
+export function toPathData(cmds: PathCmd[]): { d: string; closed: boolean } {
   const out: string[] = [];
   let x = 0;
   let y = 0;

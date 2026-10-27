@@ -10,13 +10,14 @@
  * settings until they are wanted.
  */
 
-export type ParamGroup = 'dimensions' | 'material' | 'joints' | 'top' | 'advanced';
+export type ParamGroup = 'dimensions' | 'material' | 'joints' | 'top' | 'layout' | 'advanced';
 
 export const GROUP_LABELS: Record<ParamGroup, string> = {
   dimensions: 'Dimensions',
   material: 'Material',
   joints: 'Joints',
   top: 'Top & Lid',
+  layout: 'Sheet layout',
   advanced: 'Advanced',
 };
 

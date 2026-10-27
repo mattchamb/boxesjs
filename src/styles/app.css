@@ -542,6 +542,11 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   vector-effect: non-scaling-stroke;
 }
 
+.sheet-caption {
+  fill: var(--fg-muted);
+  user-select: none;
+}
+
 .layer-path {
   fill: none;
   stroke-width: 1.1;

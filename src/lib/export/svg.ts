@@ -8,7 +8,7 @@
  * this purpose — but the `inkscape:label` layer names are kept, so the
  * namespace they need is declared on the root element.
  */
-import { LAYERS, LAYER_INFO, rgbToCSS, type Layer } from '../geom/colors';
+import { LAYERS, LAYER_INFO, SHEET_OUTLINE, rgbToCSS, type Layer } from '../geom/colors';
 import type { Drawing } from '../render';
 
 export interface SVGOptions {
@@ -64,6 +64,18 @@ export function toSVG(drawing: Drawing, options: SVGOptions = {}): string {
       `width="${w}mm" height="${h}mm" viewBox="0 0 ${w} ${h}">`,
   );
   out.push(`<title>${esc(title)}</title>`);
+
+  // Packed sheets sit side by side; their outlines are where the stock ends.
+  if (drawing.sheets) {
+    out.push(
+      `<g id="sheet" inkscape:label="${esc(SHEET_OUTLINE.name)}" fill="none" ` +
+        `stroke="${rgbToCSS(SHEET_OUTLINE.rgb)}" stroke-width="${strokeWidth}">`,
+    );
+    for (const s of drawing.sheets) {
+      out.push(`<rect x="${fmt(s.x)}" y="${fmt(s.y)}" width="${fmt(s.width)}" height="${fmt(s.height)}"/>`);
+    }
+    out.push('</g>');
+  }
 
   for (const layer of active) {
     const info = LAYER_INFO[layer];
