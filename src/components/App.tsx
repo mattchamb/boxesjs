@@ -10,6 +10,7 @@ import { LAYERS, LAYER_INFO, type Layer } from '../lib/geom/colors';
 import {
   GROUPS_OPEN_BY_DEFAULT,
   GROUP_LABELS,
+  defaultValues,
   visibleParams,
   type ParamGroup,
   type ParamSpec,
@@ -17,6 +18,7 @@ import {
   type ParamValues,
 } from '../lib/params/schema';
 import { paramsFor } from '../lib/generators/registry';
+import { matchesQuery } from '../lib/params/search';
 import { RenderClient, type Optimising } from '../lib/render-client';
 import { decodeParams, encodeParams, permalinkFor } from '../lib/permalink';
 import {
@@ -68,6 +70,11 @@ export default function App({ generator, name, summary, initial }: Props) {
   const [nested, setNested] = useState<NestResult | null>(null);
   const [optimising, setOptimising] = useState<Optimiser['running']>(null);
   const search = useRef<Optimising | null>(null);
+  const [query, setQuery] = useState('');
+  const [onlyChanged, setOnlyChanged] = useState(false);
+  // Which groups you have opened or closed, so that a search, which opens
+  // everything it finds, can hand the panel back as you left it.
+  const [openState, setOpenState] = useState<Record<string, boolean>>({});
 
   const client = useRef<RenderClient>();
 
@@ -167,6 +174,18 @@ export default function App({ generator, name, summary, initial }: Props) {
 
   const material = findMaterial(materialId) ?? materials[0];
 
+  // What arriving fresh with this preset would give. The preset sets thickness
+  // and kerf, so choosing one is not a change from it; typing over it is.
+  const baseline = useMemo(() => {
+    const d = defaultValues(specs);
+    if (material && 'thickness' in d) d['thickness'] = material.thickness;
+    if (material && 'burn' in d) d['burn'] = material.kerf;
+    return d;
+  }, [specs, material?.thickness, material?.kerf]);
+  const isChanged = (s: ParamSpec) => (values[s.key] ?? s.default) !== baseline[s.key];
+  const resetKeys = (keys: string[]) =>
+    setValues((prev) => ({ ...prev, ...Object.fromEntries(keys.map((k) => [k, baseline[k]!])) }));
+
   /** Selecting a material is the single setup step: it drives the geometry. */
   const applyMaterial = (id: string) => {
     const m = findMaterial(id);
@@ -220,7 +239,15 @@ export default function App({ generator, name, summary, initial }: Props) {
     [specs, values],
   );
   const packed = values['pack'] === true;
-  const grouped = useMemo(() => groupSpecs(visible), [visible]);
+  const filtering = query.trim() !== '' || onlyChanged;
+  const listed = visible.filter(
+    (s) => matchesQuery(s, query, GROUP_LABELS[s.group]) && (!onlyChanged || isChanged(s)),
+  );
+  // The preset is not a parameter, so it is matched on what it is called.
+  const presetListed =
+    !onlyChanged && matchesQuery({ ...PRESET_SPEC, help: PRESET_HELP }, query, GROUP_LABELS.material);
+  const grouped = groupSpecs(listed, presetListed ? ['material'] : []);
+  const anyChanged = visible.some(isChanged);
   const shown = useMemo(() => new Set(visible.map((s) => s.key)), [visible]);
   const warningFor = (key: string) => data?.warnings.find((w) => w.param === key)?.message;
   // A warning on a hidden field would otherwise go unseen.
@@ -234,8 +261,33 @@ export default function App({ generator, name, summary, initial }: Props) {
       value={values[spec.key] ?? spec.default}
       onChange={(v) => setValue(spec.key, v)}
       warning={warningFor(spec.key)}
+      reset={isChanged(spec) ? { to: baseline[spec.key]!, apply: () => resetKeys([spec.key]) } : undefined}
     />
   );
+
+  // While searching, every group with a match is open; what you open or close
+  // is only remembered while you are not.
+  const isOpen = (id: string, byDefault: boolean) => filtering || (openState[id] ?? byDefault);
+  const remember = (id: string) => (e: Event) => {
+    if (filtering) return;
+    const open = (e.currentTarget as HTMLDetailsElement).open;
+    setOpenState((prev) => (prev[id] === open ? prev : { ...prev, [id]: open }));
+  };
+  // Closing a group mid-search would hide a match the search just showed.
+  const holdOpen = (e: Event) => filtering && e.preventDefault();
+
+  const changedCount = (items: ParamSpec[]) => {
+    const n = items.filter(isChanged).length;
+    return n > 0 && !onlyChanged ? <span class="count-badge">{n} changed</span> : null;
+  };
+  const resetThese = (items: ParamSpec[]) => {
+    const keys = items.filter(isChanged).map((s) => s.key);
+    return keys.length > 1 ? (
+      <button type="button" class="link-btn group-reset" onClick={() => resetKeys(keys)}>
+        Reset these {keys.length}
+      </button>
+    ) : null;
+  };
 
   return (
     <div class="app">
@@ -245,14 +297,62 @@ export default function App({ generator, name, summary, initial }: Props) {
           <p>{summary}</p>
         </div>
 
+        <div class="panel-search">
+          <input
+            type="search"
+            value={query}
+            placeholder="Find a setting"
+            aria-label="Find a setting"
+            autocomplete="off"
+            spellcheck={false}
+            onInput={(e) => setQuery((e.target as HTMLInputElement).value)}
+            onKeyDown={(e) => e.key === 'Escape' && setQuery('')}
+          />
+          <button
+            type="button"
+            class="btn"
+            aria-pressed={onlyChanged}
+            disabled={!anyChanged && !onlyChanged}
+            title="Show only the settings you have changed"
+            onClick={() => setOnlyChanged((c) => !c)}
+          >
+            Changed
+          </button>
+          {anyChanged && (
+            <button
+              type="button"
+              class="link-btn"
+              title="Put every setting shown back to its default"
+              onClick={() => resetKeys(visible.filter(isChanged).map((s) => s.key))}
+            >
+              Reset all
+            </button>
+          )}
+        </div>
+
+        {grouped.length === 0 && (
+          <p class="panel-empty">
+            {onlyChanged && !query.trim()
+              ? 'Nothing is changed from the defaults.'
+              : `No settings match “${query.trim()}”${onlyChanged ? ' among those changed' : ''}.`}
+          </p>
+        )}
+
         {grouped.map(({ group, items, sections }) => (
-          <details class="group" key={group} open={GROUPS_OPEN_BY_DEFAULT.includes(group)}>
-            <summary>
+          <details
+            class="group"
+            key={group}
+            open={isOpen(group, GROUPS_OPEN_BY_DEFAULT.includes(group))}
+            onToggle={remember(group)}
+          >
+            <summary onClick={holdOpen}>
               {GROUP_LABELS[group]}
+              {changedCount([...items, ...sections.flatMap((x) => x.items)])}
               {warned([...items, ...sections.flatMap((x) => x.items)]) && <WarnMark />}
             </summary>
             <div class="group-body">
-              {group === 'material' && material && (
+              {resetThese([...items, ...sections.flatMap((x) => x.items)])}
+              {group === 'material' && material && presetListed && (
                 <div class="field">
                   <div class="field-label">
                     <label for="material">Preset</label>
@@ -260,6 +360,7 @@ export default function App({ generator, name, summary, initial }: Props) {
                   <select
                     id="material"
                     value={material.id}
+                    autocomplete="off"
                     onChange={(e) => applyMaterial((e.target as HTMLSelectElement).value)}
                   >
                     {materials.map((m) => (
@@ -268,17 +369,20 @@ export default function App({ generator, name, summary, initial }: Props) {
                       </option>
                     ))}
                   </select>
-                  <p class="field-help">
-                    Sets thickness and kerf below, and fills in the speed and power of every
-                    layer in the exported LightBurn file.
-                  </p>
+                  <p class="field-help">{PRESET_HELP}</p>
                 </div>
               )}
               {items.map(control)}
               {sections.map(({ section, items: sectionItems }) => (
-                <details class="subgroup" key={section}>
-                  <summary>
+                <details
+                  class="subgroup"
+                  key={section}
+                  open={isOpen(`${group}:${section}`, false)}
+                  onToggle={remember(`${group}:${section}`)}
+                >
+                  <summary onClick={holdOpen}>
                     {section}
+                    {changedCount(sectionItems)}
                     {warned(sectionItems) && <WarnMark />}
                   </summary>
                   <div class="subgroup-body">{sectionItems.map(control)}</div>
@@ -446,6 +550,11 @@ function lightburnName(index: number, isTool: boolean): string {
   return isTool ? `T${index - 29}` : `C${String(index).padStart(2, '0')}`;
 }
 
+const PRESET_HELP =
+  'Sets thickness and kerf below, and fills in the speed and power of every layer in the exported LightBurn file.';
+/** The preset dressed as a parameter, so search finds it like any other. */
+const PRESET_SPEC: ParamSpec = { key: 'preset', kind: 'text', label: 'Preset', default: '', group: 'material' };
+
 const GROUP_ORDER: ParamGroup[] = ['dimensions', 'material', 'joints', 'top', 'advanced'];
 
 interface Grouped {
@@ -456,8 +565,10 @@ interface Grouped {
   sections: { section: string; items: ParamSpec[] }[];
 }
 
-function groupSpecs(specs: ParamSpec[]): Grouped[] {
+/** `always` are groups shown even with no parameters, for fields that are not one. */
+function groupSpecs(specs: ParamSpec[], always: ParamGroup[] = []): Grouped[] {
   const map = new Map<ParamGroup, Grouped>();
+  for (const g of always) map.set(g, { group: g, items: [], sections: [] });
   for (const s of specs) {
     let g = map.get(s.group);
     if (!g) map.set(s.group, (g = { group: s.group, items: [], sections: [] }));

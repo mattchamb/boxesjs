@@ -11,6 +11,7 @@ import { toBoxesConfig } from '~/lib/params/common';
 import { decodeParams, encodeParams } from '~/lib/permalink';
 import { buildDrawing, renderPreview } from '~/lib/preview';
 import { visibleParams, type ParamValues } from '~/lib/params/schema';
+import { matchesQuery } from '~/lib/params/search';
 
 const shown = (id: string, values: ParamValues = {}) =>
   new Set(visibleParams(paramsFor(id), { ...defaultsFor(id), ...values }).map((s) => s.key));
@@ -248,5 +249,33 @@ describe('links', () => {
   it('round-trip the new choices', () => {
     const v = { ...defaultsFor('closedbox'), assembly: 'bolts', bolt_size: 'M4', bolt_length: 25 };
     expect(decodeParams('closedbox', encodeParams('closedbox', v))).toEqual(v);
+  });
+});
+
+describe('finding a setting', () => {
+  const spec = (key: string) => paramsFor('dividertray').find((s) => s.key === key)!;
+
+  it('by label, help or section, ignoring case', () => {
+    expect(matchesQuery(spec('burn'), 'KERF')).toBe(true);
+    expect(matchesQuery(spec('burn'), 'press fit')).toBe(true);
+    expect(matchesQuery(spec('fj_play'), 'finger')).toBe(true);
+  });
+
+  it('by the group it is filed under', () => {
+    expect(matchesQuery(spec('burn'), 'material', 'Material')).toBe(true);
+  });
+
+  it('only when every word matches', () => {
+    expect(matchesQuery(spec('fj_play'), 'finger play')).toBe(true);
+    expect(matchesQuery(spec('fj_play'), 'finger kerf')).toBe(false);
+  });
+
+  it('by the name of a choice it offers', () => {
+    const edge = paramsFor('rectangularwall').find((s) => s.kind === 'edge')!;
+    expect(matchesQuery(edge, 'dovetail')).toBe(true);
+  });
+
+  it('everything for an empty query', () => {
+    expect(matchesQuery(spec('burn'), '  ')).toBe(true);
   });
 });

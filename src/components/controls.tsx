@@ -7,7 +7,7 @@
  * which is what makes the panel readable.
  */
 import { useEffect, useState } from 'preact/hooks';
-import { EDGE_INFO, type ParamSpec, type ParamValue } from '../lib/params/schema';
+import { EDGE_INFO, edgeName, type ParamSpec, type ParamValue } from '../lib/params/schema';
 import { formatSections, parseSections } from '../lib/params/sections';
 
 interface ControlProps {
@@ -15,22 +15,52 @@ interface ControlProps {
   value: ParamValue;
   onChange: (v: ParamValue) => void;
   warning?: string;
+  /** Present when the value differs from where it started: what it started as. */
+  reset?: { to: ParamValue; apply: () => void };
 }
 
-export function Control({ spec, value, onChange, warning }: ControlProps) {
+export function Control({ spec, value, onChange, warning, reset }: ControlProps) {
+  const numeric = spec.kind === 'length' || spec.kind === 'number';
   return (
     <div class="field">
       {spec.kind !== 'bool' && (
         <div class="field-label">
-          <label for={`p-${spec.key}`}>{spec.label}</label>
-          {'unit' in spec && spec.unit && <span class="unit">{spec.unit}</span>}
+          {reset && <ChangedDot />}
+          <label for={`p-${spec.key}`} title={spec.help}>
+            {spec.label}
+          </label>
+          {!numeric && 'unit' in spec && spec.unit && <span class="unit">{spec.unit}</span>}
+          <span class="spacer" />
+          {reset && <ResetButton spec={spec} reset={reset} />}
+          {/* The value sits on the label's row so values line up down the
+              panel and each number costs one row, not two. */}
+          {numeric && (
+            <span class="number-box">
+              <NumberInput spec={spec} value={Number(value)} onChange={onChange} />
+              {spec.unit && <span class="unit">{spec.unit}</span>}
+            </span>
+          )}
         </div>
       )}
 
-      {spec.kind === 'length' || spec.kind === 'number' ? (
-        <NumberSlider spec={spec} value={Number(value)} onChange={onChange} />
+      {numeric ? (
+        <input
+          type="range"
+          min={spec.min}
+          max={spec.max}
+          step={spec.step ?? 1}
+          value={Number(value)}
+          aria-label={spec.label}
+          autocomplete="off"
+          onInput={(e) => onChange(Number((e.target as HTMLInputElement).value))}
+        />
       ) : spec.kind === 'bool' ? (
-        <Switch spec={spec} value={Boolean(value)} onChange={onChange} />
+        <div class="switch-row">
+          {reset && <ChangedDot />}
+          <Switch spec={spec} value={Boolean(value)} onChange={onChange} />
+          <span class="spacer" />
+          {reset && <ResetButton spec={spec} reset={reset} />}
+        </div>
       ) : spec.kind === 'sections' ? (
         <SectionEditor value={String(value)} onChange={onChange} itemLabel={spec.itemLabel} />
       ) : spec.kind === 'edge' ? (
@@ -48,41 +78,46 @@ export function Control({ spec, value, onChange, warning }: ControlProps) {
   );
 }
 
+function ChangedDot() {
+  return <span class="changed-dot" title="Changed from the default" aria-label="changed" />;
+}
+
+function ResetButton({ spec, reset }: { spec: ParamSpec; reset: NonNullable<ControlProps['reset']> }) {
+  const title = `Reset to ${describeValue(spec, reset.to)}`;
+  return (
+    <button type="button" class="reset-btn" title={title} aria-label={`${title}: ${spec.label}`} onClick={reset.apply}>
+      ↺
+    </button>
+  );
+}
+
+/** A value as the control would show it, for saying what a reset goes back to. */
+export function describeValue(spec: ParamSpec, v: ParamValue): string {
+  switch (spec.kind) {
+    case 'bool':
+      return v ? 'on' : 'off';
+    case 'edge':
+      return edgeName(String(v));
+    case 'enum':
+      return spec.choices.find((c) => c.value === v)?.label ?? String(v);
+    case 'length':
+    case 'number':
+      return spec.unit ? `${v} ${spec.unit}` : String(v);
+    default:
+      return String(v) || '(empty)';
+  }
+}
+
 /**
  * What the selected choice means. Explaining every choice at once buries the
  * one that matters; the others explain themselves when picked.
  */
 function ChoiceHelp({ spec, value }: { spec: Extract<ParamSpec, { kind: 'enum' }>; value: string }) {
   const help = spec.choices.find((c) => c.value === value)?.help;
-  return help ? <p class="field-help">{help}</p> : null;
+  return help ? <p class="field-help choice-help">{help}</p> : null;
 }
 
 /* ------------------------------------------------------------------ number */
-
-function NumberSlider({
-  spec,
-  value,
-  onChange,
-}: {
-  spec: Extract<ParamSpec, { kind: 'length' | 'number' }>;
-  value: number;
-  onChange: (v: ParamValue) => void;
-}) {
-  return (
-    <div class="slider-row">
-      <input
-        type="range"
-        min={spec.min}
-        max={spec.max}
-        step={spec.step ?? 1}
-        value={value}
-        aria-label={spec.label}
-        onInput={(e) => onChange(Number((e.target as HTMLInputElement).value))}
-      />
-      <NumberInput spec={spec} value={value} onChange={onChange} />
-    </div>
-  );
-}
 
 /** A number box that clamps to the parameter's range as you type. */
 export function NumberInput({
@@ -113,6 +148,7 @@ export function NumberInput({
       max={spec.max}
       step={spec.step ?? 1}
       value={text}
+      autocomplete="off"
       onInput={(e) => commit((e.target as HTMLInputElement).value)}
       onBlur={() => setText(String(value))}
     />
@@ -140,10 +176,11 @@ function Switch({
         id={`p-${spec.key}`}
         type="checkbox"
         checked={value}
+        autocomplete="off"
         onChange={(e) => onChange((e.target as HTMLInputElement).checked)}
       />
       <span class="track" />
-      <span>{spec.label}</span>
+      <span title={spec.help}>{spec.label}</span>
     </label>
   );
 }
@@ -203,6 +240,7 @@ function SectionEditor({
             min={1}
             step={1}
             value={s}
+            autocomplete="off"
             aria-label={`${itemLabel} ${i + 1} size in mm`}
             onInput={(e) => {
               const n = Number((e.target as HTMLInputElement).value);
@@ -244,6 +282,7 @@ function SectionEditor({
         type="text"
         value={raw}
         aria-label="Section sizes as text"
+        autocomplete="off"
         spellcheck={false}
         onInput={(e) => {
           const v = (e.target as HTMLInputElement).value;
@@ -359,6 +398,7 @@ function EnumControl({
     <select
       id={`p-${spec.key}`}
       value={value}
+      autocomplete="off"
       onChange={(e) => onChange((e.target as HTMLSelectElement).value)}
     >
       {spec.choices.map((c) => (
@@ -387,6 +427,7 @@ function TextControl({
         id={`p-${spec.key}`}
         value={value}
         placeholder={spec.placeholder}
+        autocomplete="off"
         spellcheck={false}
         onInput={(e) => onChange((e.target as HTMLTextAreaElement).value)}
       />
@@ -398,6 +439,7 @@ function TextControl({
       type="text"
       value={value}
       placeholder={spec.placeholder}
+      autocomplete="off"
       onInput={(e) => onChange((e.target as HTMLInputElement).value)}
     />
   );

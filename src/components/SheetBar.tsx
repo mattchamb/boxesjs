@@ -68,6 +68,7 @@ export function SheetBar({ specs, values, setValue, hint, applyHint, optimiser }
         {rotate && (
           <label class="sheet-check" title={rotate.help}>
             <input
+              autocomplete="off"
               type="checkbox"
               checked={values['pack_rotate'] !== false}
               onChange={(e) => setValue('pack_rotate', (e.target as HTMLInputElement).checked)}
@@ -79,6 +80,7 @@ export function SheetBar({ specs, values, setValue, hint, applyHint, optimiser }
           <label class="sheet-field" title={step.help}>
             <span class="k">Optimise turns by</span>
             <select
+              autocomplete="off"
               value={String(values['pack_angle_step'] ?? step.default)}
               onChange={(e) => setValue('pack_angle_step', (e.target as HTMLSelectElement).value)}
             >
@@ -93,6 +95,7 @@ export function SheetBar({ specs, values, setValue, hint, applyHint, optimiser }
         {usePanels && (
           <label class="sheet-check" title={usePanels.help}>
             <input
+              autocomplete="off"
               type="checkbox"
               checked={panels}
               onChange={(e) => setValue('use_panels', (e.target as HTMLInputElement).checked)}
