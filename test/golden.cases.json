@@ -5092,5 +5092,134 @@
       "wall": 8,
       "labels": true
     }
+  },
+  {
+    "name": "ref_spool_default",
+    "generator": "spool",
+    "pythonClass": "Spool",
+    "params": {}
+  },
+  {
+    "name": "ref_spool_ribs",
+    "generator": "spool",
+    "pythonClass": "Spool",
+    "params": {
+      "h": 60,
+      "outer_diameter": 150,
+      "inner_diameter": 70,
+      "axle_diameter": 20,
+      "sides": 6,
+      "reinforcements": 5,
+      "reinforcement_height": 20,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_spool_labels",
+    "generator": "spool",
+    "pythonClass": "Spool",
+    "params": {
+      "h": 50,
+      "outer_diameter": 120,
+      "inner_diameter": 60,
+      "axle_diameter": 15,
+      "sides": 5,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_pizzashovel_default",
+    "generator": "pizzashovel",
+    "pythonClass": "PizzaShovel",
+    "params": {}
+  },
+  {
+    "name": "ref_pizzashovel_nogrip",
+    "generator": "pizzashovel",
+    "pythonClass": "PizzaShovel",
+    "params": {
+      "x": 300,
+      "y": 320,
+      "grip_length": 0,
+      "grip_height": 25,
+      "top_holes": 3.5,
+      "bottom_holes": 2.5,
+      "grip_holes": 4,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_pizzashovel_labels",
+    "generator": "pizzashovel",
+    "pythonClass": "PizzaShovel",
+    "params": {
+      "x": 250,
+      "y": 300,
+      "grip_length": 150,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_drillgauge_default",
+    "generator": "drillgauge",
+    "pythonClass": "DrillGauge",
+    "params": {}
+  },
+  {
+    "name": "ref_drillgauge_right",
+    "generator": "drillgauge",
+    "pythonClass": "DrillGauge",
+    "params": {
+      "sizes": "2:3:4:5:6:8:10",
+      "fontsize": 6,
+      "text_placement": "right",
+      "mounting_holes": "top",
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_drillgauge_labels",
+    "generator": "drillgauge",
+    "pythonClass": "DrillGauge",
+    "params": {
+      "sizes": "1:2:3:4:5",
+      "mounting_holes": "left",
+      "mount_num": 1,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_coindisplay_default",
+    "generator": "coindisplay",
+    "pythonClass": "CoinDisplay",
+    "params": {}
+  },
+  {
+    "name": "ref_coindisplay_inside",
+    "generator": "coindisplay",
+    "pythonClass": "CoinDisplay",
+    "params": {
+      "x": 120,
+      "y": 90,
+      "h": 80,
+      "outside": false,
+      "coin_d": 30,
+      "coin_plate": 60,
+      "coin_showcase_h": 40,
+      "angle": 20,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_coindisplay_labels",
+    "generator": "coindisplay",
+    "pythonClass": "CoinDisplay",
+    "params": {
+      "x": 90,
+      "y": 90,
+      "h": 90,
+      "thickness": 3,
+      "labels": true
+    }
   }
 ]

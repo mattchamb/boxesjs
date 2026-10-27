@@ -7,6 +7,10 @@ import { defaultValues, type ParamSpec, type ParamValues } from '../params/schem
 import type { GeneratorDef } from './types';
 
 import { aBox } from './abox';
+import { coinDisplay } from './coindisplay';
+import { drillGauge } from './drillgauge';
+import { pizzaShovel } from './pizzashovel';
+import { spool } from './spool';
 import { stachel } from './stachel';
 import { deskSign } from './desksign';
 import { burnTest } from './burntest';
@@ -202,6 +206,10 @@ const DEFS: GeneratorDef[] = [
   burnTest,
   deskSign,
   stachel,
+  spool,
+  pizzaShovel,
+  drillGauge,
+  coinDisplay,
   rectangularWall,
 ];
 

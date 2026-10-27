@@ -604,6 +604,30 @@
         "boxes/generators/stachel.py"
       ],
       "sha": "84e392b39191"
+    },
+    "spool": {
+      "files": [
+        "boxes/generators/spool.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "pizzashovel": {
+      "files": [
+        "boxes/generators/pizzashovel.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "drillgauge": {
+      "files": [
+        "boxes/generators/drillgauge.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "coindisplay": {
+      "files": [
+        "boxes/generators/coindisplay.py"
+      ],
+      "sha": "84e392b39191"
     }
   }
 }

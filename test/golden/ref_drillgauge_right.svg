@@ -1,0 +1,41 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg height="96.77mm" viewBox="0.0 0.0 72.20 96.77" width="72.20mm" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<!--
+DrillGauge - A drill gauge with a narrowing slot
+
+
+Make sure to use a burn setting that is tight but does not require force!
+
+
+Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
+Command line (remove spaces between dashes): boxes DrillGauge - -sizes - -fontsize - -text_placement - -mounting_holes - -thickness - -reference - -labels
+-->
+<title>DrillGauge</title>
+<metadata>
+<rdf:RDF><cc:Work>
+<dc:title>Misc - DrillGauge</dc:title>
+<dc:source>boxes DrillGauge --sizes 2:3:4:5:6:8:10 --fontsize 6 --text_placement right --mounting_holes top --thickness 4 --reference 0 --labels 0</dc:source>
+<dc:description>A drill gauge with a narrowing slot
+
+Make sure to use a burn setting that is tight but does not require force!
+
+Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
+Command line: boxes DrillGauge --sizes 2:3:4:5:6:8:10 --fontsize 6 --text_placement right --mounting_holes top --thickness 4 --reference 0 --labels 0
+Command line short: boxes DrillGauge --sizes --fontsize --text_placement --mounting_holes --thickness --reference --labels
+</dc:description>
+</cc:Work></rdf:RDF></metadata>
+<g id="p-0" style="fill:none;stroke-linecap:round;stroke-linejoin:round;">
+  <path d="M 27.100 74.671 C 27.100 74.645 27.089 74.619 27.071 74.600 L 26.100 73.630 C 26.071 73.600 26.100 73.671 26.100 73.630 V 70.671 C 26.100 70.645 26.089 70.619 26.071 70.600 L 25.600 70.130 C 25.571 70.100 25.600 70.171 25.600 70.130 V 67.171 C 25.600 67.145 25.589 67.119 25.571 67.100 L 25.100 66.630 C 25.071 66.600 25.100 66.671 25.100 66.630 V 63.671 C 25.100 63.645 25.089 63.619 25.071 63.600 L 24.600 63.130 C 24.571 63.100 24.600 63.171 24.600 63.130 V 60.171 C 24.600 60.145 24.589 60.119 24.571 60.100 L 24.100 59.630 C 24.071 59.600 24.100 59.671 24.100 59.630 V 56.671 C 24.100 56.645 24.089 56.619 24.071 56.600 L 23.100 55.630 C 23.071 55.600 23.100 55.671 23.100 55.630 V 51.671 C 23.100 51.645 23.089 51.619 23.071 51.600 L 22.100 50.630 C 22.071 50.600 22.100 50.671 22.100 50.630 V 45.671 C 22.100 44.811 22.326 43.966 22.756 43.221 C 23.187 42.476 23.805 41.858 24.550 41.428 C 25.295 40.997 26.140 40.771 27.000 40.771 C 27.860 40.771 28.705 40.997 29.450 41.428 C 30.195 41.858 30.813 42.476 31.244 43.221 C 31.674 43.966 31.900 44.811 31.900 45.671 V 50.630 C 31.900 50.671 31.929 50.600 31.900 50.630 L 30.929 51.600 C 30.911 51.619 30.900 51.645 30.900 51.671 V 55.630 C 30.900 55.671 30.929 55.600 30.900 55.630 L 29.929 56.600 C 29.911 56.619 29.900 56.645 29.900 56.671 V 59.630 C 29.900 59.671 29.929 59.600 29.900 59.630 L 29.429 60.100 C 29.411 60.119 29.400 60.145 29.400 60.171 V 63.130 C 29.400 63.171 29.429 63.100 29.400 63.130 L 28.929 63.600 C 28.911 63.619 28.900 63.645 28.900 63.671 V 66.630 C 28.900 66.671 28.929 66.600 28.900 66.630 L 28.429 67.100 C 28.411 67.119 28.400 67.145 28.400 67.171 V 70.130 C 28.400 70.171 28.429 70.100 28.400 70.130 L 27.929 70.600 C 27.911 70.619 27.900 70.645 27.900 70.671 V 73.630 C 27.900 73.671 27.929 73.600 27.900 73.630 L 26.929 74.600 C 26.911 74.619 26.900 74.645 26.900 74.671 M 10.100 86.771 H 62.100 C 62.155 86.771 62.200 86.726 62.200 86.671 V 26.600 V 10.100 C 62.200 10.045 62.155 10.000 62.100 10.000 H 10.100 C 10.045 10.000 10.000 10.045 10.000 10.100 V 26.600 V 86.671 C 10.000 86.726 10.045 86.771 10.100 86.771 Z" stroke="rgb(0,0,0)" stroke-width="0.20" />
+  <text dominant-baseline="hanging" font-size="6.0px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="left" transform="matrix( 1.000 0.000 -0.000 1.000 34.900 45.771 )">10.0</text>
+  <text dominant-baseline="hanging" font-size="6.0px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="left" transform="matrix( 1.000 0.000 -0.000 1.000 46.900 51.271 )">8.0</text>
+  <path d="M 32.400 53.671 H 45.400" stroke="rgb(0,255,0)" stroke-width="0.20" />
+  <text dominant-baseline="hanging" font-size="6.0px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="left" transform="matrix( 1.000 0.000 -0.000 1.000 34.900 55.771 )">6.0</text>
+  <text dominant-baseline="hanging" font-size="6.0px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="left" transform="matrix( 1.000 0.000 -0.000 1.000 46.900 59.271 )">5.0</text>
+  <path d="M 30.900 61.671 H 45.400" stroke="rgb(0,255,0)" stroke-width="0.20" />
+  <text dominant-baseline="hanging" font-size="6.0px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="left" transform="matrix( 1.000 0.000 -0.000 1.000 34.900 62.771 )">4.0</text>
+  <text dominant-baseline="hanging" font-size="6.0px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="left" transform="matrix( 1.000 0.000 -0.000 1.000 46.900 66.271 )">3.0</text>
+  <path d="M 29.900 68.671 H 45.400" stroke="rgb(0,255,0)" stroke-width="0.20" />
+  <text dominant-baseline="hanging" font-size="6.0px" style="font-family: sans-serif ; font-weight: normal; font-style: normal; fill: rgb(0,255,0)" text-anchor="left" transform="matrix( 1.000 0.000 -0.000 1.000 34.900 69.771 )">2.0</text>
+  <path d="M 34.700 17.500 C 34.700 17.254 34.765 17.013 34.888 16.800 C 35.010 16.587 35.187 16.410 35.400 16.288 C 35.613 16.165 35.854 16.100 36.100 16.100 C 36.346 16.100 36.587 16.165 36.800 16.288 C 37.013 16.410 37.190 16.587 37.312 16.800 C 37.435 17.013 37.500 17.254 37.500 17.500 V 20.500 C 37.500 20.537 37.521 20.571 37.554 20.589 C 38.109 20.877 38.565 21.325 38.865 21.874 C 39.165 22.423 39.294 23.049 39.237 23.672 C 39.179 24.296 38.938 24.887 38.542 25.372 C 38.147 25.858 37.617 26.214 37.018 26.396 C 36.420 26.579 35.780 26.579 35.182 26.396 C 34.583 26.214 34.053 25.858 33.658 25.372 C 33.262 24.887 33.021 24.296 32.963 23.672 C 32.906 23.049 33.035 22.423 33.335 21.874 C 33.635 21.325 34.091 20.877 34.646 20.589 C 34.679 20.571 34.700 20.537 34.700 20.500 V 17.500 Z" stroke="rgb(0,0,255)" stroke-width="0.20" />
+</g>
+</svg>
