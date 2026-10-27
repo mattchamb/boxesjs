@@ -652,6 +652,30 @@
         "boxes/generators/hooks.py"
       ],
       "sha": "84e392b39191"
+    },
+    "airpurifier": {
+      "files": [
+        "boxes/generators/airpurifier.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "makitapowersupply": {
+      "files": [
+        "boxes/generators/makitapowersupply.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "trianglelamp": {
+      "files": [
+        "boxes/generators/trianglelamp.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "matrix": {
+      "files": [
+        "boxes/generators/matrix.py"
+      ],
+      "sha": "84e392b39191"
     }
   }
 }

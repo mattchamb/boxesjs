@@ -5347,5 +5347,141 @@
       "labels": true
     },
     "pythonModule": "hooks"
+  },
+  {
+    "name": "ref_airpurifier_default",
+    "generator": "airpurifier",
+    "pythonClass": "AirPurifier",
+    "params": {}
+  },
+  {
+    "name": "ref_airpurifier_onefilter",
+    "generator": "airpurifier",
+    "pythonClass": "AirPurifier",
+    "params": {
+      "x": 300,
+      "y": 280,
+      "filter_height": 30,
+      "rim": 20,
+      "fan_diameter": 120,
+      "filters": 1,
+      "split_frames": false,
+      "fans_left": 2,
+      "fans_right": 0,
+      "fans_top": -1,
+      "fans_bottom": 1,
+      "screw_holes": 4.5,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_airpurifier_labels",
+    "generator": "airpurifier",
+    "pythonClass": "AirPurifier",
+    "params": {
+      "x": 300,
+      "y": 300,
+      "fan_diameter": 92,
+      "fans_top": 1,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_makitapowersupply_default",
+    "generator": "makitapowersupply",
+    "pythonClass": "MakitaPowerSupply",
+    "params": {}
+  },
+  {
+    "name": "ref_makitapowersupply_usbc",
+    "generator": "makitapowersupply",
+    "pythonClass": "MakitaPowerSupply",
+    "params": {
+      "secondary_power": "usb-c",
+      "banana_socket_diameter": 7,
+      "flipswitch_diameter": 6,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_makitapowersupply_labels",
+    "generator": "makitapowersupply",
+    "pythonClass": "MakitaPowerSupply",
+    "params": {
+      "secondary_power": "none",
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_trianglelamp_default",
+    "generator": "trianglelamp",
+    "pythonClass": "TriangleLamp",
+    "params": {}
+  },
+  {
+    "name": "ref_trianglelamp_sharp",
+    "generator": "trianglelamp",
+    "pythonClass": "TriangleLamp",
+    "params": {
+      "x": 180,
+      "h": 30,
+      "cornersize": 25,
+      "screenholesize": 3,
+      "screwholesize": 1.5,
+      "sharpcorners": true,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_trianglelamp_labels",
+    "generator": "trianglelamp",
+    "pythonClass": "TriangleLamp",
+    "params": {
+      "x": 150,
+      "h": 35,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_matrix_default",
+    "generator": "matrix",
+    "pythonClass": "Matrix",
+    "params": {
+      "led_width": 8,
+      "led_height": 8,
+      "physical_led_x": 80,
+      "physical_led_y": 80
+    }
+  },
+  {
+    "name": "ref_matrix_mount",
+    "generator": "matrix",
+    "pythonClass": "Matrix",
+    "params": {
+      "led_width": 6,
+      "led_height": 4,
+      "physical_led_x": 90,
+      "physical_led_y": 60,
+      "matrix_front_frame_border_offset": 8,
+      "distance_between_leds": 1.5,
+      "h": 40,
+      "height_pcb": 1,
+      "plexiglass_thicknes": 2,
+      "mounting_holes": true,
+      "mounting_hole_diameter": 6,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_matrix_labels",
+    "generator": "matrix",
+    "pythonClass": "Matrix",
+    "params": {
+      "led_width": 4,
+      "led_height": 4,
+      "physical_led_x": 200,
+      "physical_led_y": 200,
+      "labels": true
+    }
   }
 ]

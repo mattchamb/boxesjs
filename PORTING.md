@@ -471,7 +471,7 @@ this reason).
 
 ## 9. State of the port
 
-**Every generator on the list is done.** A hundred and six generators are registered —
+**Every generator on the list is done.** A hundred and ten generators are registered —
 ABox, ClosedBox, OpenBox, CardBox, Console2, UniversalBox, RegularBox,
 BayonetBox, NotesHolder, TypeTray, TrayLayout, TrayInsert, DividerTray,
 CompartmentBox, DrillBox, DrillStand, DisplayShelf, StorageRack, StorageShelf,
@@ -492,9 +492,9 @@ EuroRackSkiff, RegularStarBox, ElectronicsBox, DisplayCase, BrickSorter),
 and the first Misc parts (LBeam, ZBeam, FlexTest, Display, AngledCutJig,
 JointPanel, MagazineFile, BookHolder, LaserClamp, LaserHoldfast, Linkage,
 FanHole, BottleTag, BurnTest, Desksign, Stachel, Spool, PizzaShovel,
-DrillGauge, CoinDisplay, CoffeeCapsuleHolder, BottleStack, Dispenser, Hook)
-— plus the RectangularWall part.
-All of them match boxes.py coordinate-for-coordinate across 417 golden cases,
+DrillGauge, CoinDisplay, CoffeeCapsuleHolder, BottleStack, Dispenser, Hook,
+AirPurifier, MakitaPowerSupply, TriangleLamp, Matrix) — plus the RectangularWall part.
+All of them match boxes.py coordinate-for-coordinate across 429 golden cases,
 regenerated against boxes.py master at `84e392b` (2026-10-22).
 
 When the boxes.py checkout moves, run `./scripts/upstream-drift.py`, then
@@ -513,16 +513,17 @@ unported generator files for `self.X(` calls, `edges.X` classes,
 classes), so §4 steps 1–2 still come first. Note that `paintbox.py` is
 PaintStorage, already ported.
 
-**About 16 need no new engine machinery** (70 at the survey, less those
+**Seven need no new engine machinery** (70 at the survey, less those
 since ported). The most useful, by boxes.py's own groups:
 
 | Group | Generators |
 | --- | --- |
-| Misc | `airpurifier`, `laptopstand`, `phoneholder`, `agricolainsert`, and some 4 small parts and test pieces |
+| Misc | `laptopstand`, `phoneholder`, `agricolainsert`, `paperbox`, `carbonfilter`, `trafficlight`, `clock` |
 
 `silverwarebox` also needs `Boxes.handle`; `lamp` needs `holesMargin` and is
-hidden from boxes.py's own web interface. `castle` is skipped too: a fixed-size
-table decoration in boxes.py's "Unstable" group, with no parameters of its own. `smallpartstray2` and `ubox` also need `_TopEdge.addTopEdgeSettings`, which
+hidden from boxes.py's own web interface. `castle` and `organpipe` are skipped too:
+both are in boxes.py's "Unstable" group, and Castle is a fixed-size table
+decoration with no parameters of its own. `smallpartstray2` and `ubox` also need `_TopEdge.addTopEdgeSettings`, which
 `topedge.ts` does not have.
 
 **The engine pieces still missing, by what each unlocks:**
