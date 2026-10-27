@@ -375,10 +375,13 @@ export const storageShelf: GeneratorDef = {
       key: 'top_edge',
       kind: 'edge',
       label: 'Top edge',
-      choices: TOP_EDGE_CHOICES,
+      // Stackable with finger holes closes the top with a panel and still takes
+      // another shelf's feet. It is golden-tested for this generator only, so it
+      // is added here rather than to the shared list.
+      choices: TOP_EDGE_CHOICES.replace('S', 'SŠ'),
       default: 'e',
       group: 'top',
-      help: 'Straight leaves the shelf open at the top. Finger joints close it with a panel.',
+      help: 'Straight leaves the shelf open at the top. Finger joints close it with a panel; stackable with holes closes it and still takes the feet of a shelf stacked on it.',
     },
     ...HANDLE_PARAMS,
     // Shelf heights are scaled to fit the outside height, so the depth of the

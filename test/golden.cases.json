@@ -1595,6 +1595,39 @@
     }
   },
   {
+    "name": "ref_storageshelf_stack_holes",
+    "generator": "storageshelf",
+    "pythonClass": "StorageShelf",
+    "params": {
+      "x": 100,
+      "sy": "60*2",
+      "sh": "55*2",
+      "outside": true,
+      "bottom_edge": "s",
+      "top_edge": "Š",
+      "retainer": 0,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_storageshelf_stack_holes_labelled",
+    "generator": "storageshelf",
+    "pythonClass": "StorageShelf",
+    "params": {
+      "x": 120,
+      "sy": "80*3",
+      "sh": "60*2",
+      "outside": false,
+      "bottom_edge": "h",
+      "top_edge": "Š",
+      "retainer": 12,
+      "labels": true,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
     "name": "ref_dividertray",
     "generator": "dividertray",
     "pythonClass": "DividerTray",
