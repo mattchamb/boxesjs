@@ -466,7 +466,7 @@ this reason).
 
 ## 9. State of the port
 
-**Every generator on the list is done.** Forty-three generators are registered —
+**Every generator on the list is done.** Fifty generators are registered —
 ABox, ClosedBox, OpenBox, CardBox, Console2, UniversalBox, RegularBox,
 BayonetBox, NotesHolder, TypeTray, TrayLayout, TrayInsert, DividerTray,
 CompartmentBox, DrillBox, DrillStand, DisplayShelf, StorageRack, StorageShelf,
@@ -474,9 +474,11 @@ PaintStorage, FrameLoom, and the whole wall-mounted family (WallHopper,
 WallEdges, WallConsole, WallPlaneHolder, WallPliersHolder, WallStairs,
 WallChiselHolder, WallSlottedHolder, WallWrenchHolder, WallPinRow,
 WallTypeTray, WallStackableBin, WallCaliper, WallHook, WallRollHolder,
-WallDrillBox), and the first batch from the survey below (TwoPiece, BasedBox,
-AngledBox, Crate, SpicesRack, SlantedTray) — plus the RectangularWall part.
-All of them match boxes.py coordinate-for-coordinate across 218 golden cases,
+WallDrillBox), the first batch from the survey below (TwoPiece, BasedBox,
+AngledBox, Crate, SpicesRack, SlantedTray), and every `polygonWalls` user
+(Coffin, RoundedTrapezoidBox, RoundedRegularBox, Console, Tetris, HeartBox) —
+plus the RectangularWall part. All of them match boxes.py
+coordinate-for-coordinate across 241 golden cases,
 regenerated against boxes.py master at `84e392b` (2026-10-22).
 
 When the boxes.py checkout moves, run `./scripts/upstream-drift.py`, then
@@ -514,14 +516,12 @@ batch since ported). The most useful, by boxes.py's own groups:
 
 1. `surroundingWall` (with `latch`): flexbox 1–5, lamp, silverwarebox,
    doubleflexdoorbox, roundedbox.
-2. `polygonWalls` (plural; `@restore`): coffin and roundedtrapezoidbox, both
-   new upstream, plus roundedregularbox, console, tetris, heart.
-3. The hinge families (`Hinge`, `ChestHinge`, `CabinetHinge`): hingebox,
+2. The hinge families (`Hinge`, `ChestHinge`, `CabinetHinge`): hingebox,
    dicebox, integratedhingebox, piratechest and others, and hinged top-edge
    choices on the boxes already ported.
-4. `SlideOnLid`: royalgame, kamishibai, and slide-on top edges likewise.
-5. `Grooved`: cardholder, slidingdrawer, unevenheightbox.
-6. NEMA, gears, pulleys, servos, `fillHoles`, `hexHolesPlate`, and the two that
+3. `SlideOnLid`: royalgame, kamishibai, and slide-on top edges likewise.
+4. `Grooved`: cardholder, slidingdrawer, unevenheightbox.
+5. NEMA, gears, pulleys, servos, `fillHoles`, `hexHolesPlate`, and the two that
    import shapely/numpy (sphere, stevensonscreenbox).
 
 A generator referencing `edges.BaseEdge` is *not* blocked — that is the
@@ -549,6 +549,8 @@ section is a record of what the engine now has and where the sharp edges were.
 | `DoveTailSettings` (`d`, `D`) | `edges.py` | `src/lib/edges/dovetail.ts` — offered on RectangularWall, the only ported generator boxes.py offers it on. The wall generators rebind `d`/`D` to wall edges, as boxes.py does |
 | `flangedWall` | `__init__.py:2620` | `boxes.ts` — WallCaliper, WallHook. boxes.py indexes `flanges[i-1]` at `i = 0`, i.e. Python's `[-1]`; the port spells that out |
 | `roundedPlate`, `_splitWall` | `__init__.py:2299` | `boxes.ts` — WallRollHolder. Without `holesMargin` (see below) |
+| `polygonWalls` | `__init__.py:3059` | `boxes.ts` — Coffin and the other five. boxes.py draws every wall into one part; the port opens a part per wall, named `wall N`, so each can be named and packed on its own. The paths and their order are boxes.py's |
+| `FLEX_PARAMS` | | `params/common.ts` — the living-hinge fields the chest lid already had, for generators that bend walls (RoundedTrapezoidBox, RoundedRegularBox, HeartBox) |
 | DrillStand's part methods | `generators/drillstand.py` | `drillstand.ts`, as a mixin over `Boxes` (DrillStand) or `WallMountedBox` (WallDrillBox), standing in for boxes.py's multiple inheritance |
 | `HandleEdge`, `HandleHoleEdge` (`y`, `Y`) | `edges.py:2611` | `src/lib/edges/handle.ts` — DividerTray's bottom-panel handle; not offered as a top edge |
 | `Bolts`, `bedBoltHole`, `bedBolts` on `f`/`F`/`h`/`e` | `edges.py:122`, `__init__.py:994` | `BoltsPolicy` in `fingerjoint.ts`, `bedBoltHole` in `boxes.ts` — ClosedBox and UniversalBox with `assembly: 'bolts'`, as wired upstream (five bolted goldens); RectangularWall's `bolts`; the shelves, below. Choosing the bolt, and where it goes on a shelf, is `src/lib/edges/bolts.ts`. `polygonWall` takes `bedBolts` per leg, which boxes.py's does not |
@@ -782,7 +784,7 @@ state, not local values, and anything drawn afterwards sees the redefinition.
 
 ### Deliberate divergences
 
-Six, each recorded at the site. Note what they have in common: every one is a
+Seven, each recorded at the site. Note what they have in common: every one is a
 configuration boxes.py itself refuses to render, so none of them can have a
 golden and the invariant tests are the only cover.
 
@@ -810,6 +812,9 @@ golden and the invariant tests are the only cover.
   there is nothing to slope, so the port warns on the `angle` field and draws the
   plain rectangular sides. There is no golden for this — boxes.py cannot render
   it — so the invariant tests are the only cover.
+- **Coffin with `outside` off.** The lid's cross reads the foot width and
+  shoulder length, which boxes.py stores only in the `outside` branch, so it
+  raises `AttributeError`. The port stores them either way.
 
 Two upstream quirks are reproduced rather than "fixed", because the geometry
 depends on them:
@@ -842,8 +847,8 @@ conditional are truthy. The float is discarded. The port passes a literal `true`
 `surroundingWall`, `roundedPlate`, `CabinetHinge`, `ChestHinge`, `Click`, `SlideOnLid`,
 `Grooved`, gears, pulleys, servos, QR codes, `fillHoles`, DXF and PostScript output.
 
-`polygonWalls` (plural) is not ported. Neither is `roundedPlate`'s
-`holesMargin`/`holesSettings`, which fill the plate through `hexHolesPlate`.
+`roundedPlate`'s `holesMargin`/`holesSettings` are not ported; they fill the
+plate through `hexHolesPlate`.
 `hexHolesRectangle` is ported; `hexHolesPlate`,
 `hexHolesCircle` and `hexHolesHex` are not, and neither is `rectangularWall`'s
 `holesMargin` argument, which is the only caller of `hexHolesRectangle` inside

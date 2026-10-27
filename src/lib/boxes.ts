@@ -1357,6 +1357,118 @@ export abstract class Boxes {
   }
 
   /**
+   * The side walls standing on a polygon floor, ported from boxes.py
+   * `polygonWalls` (`@restore`). One wall per run of straight legs: an arc
+   * between legs is bent into the same wall as a flex section, so a rounded
+   * corner does not start a new part. Neighbouring walls meet with finger
+   * joints cut for the corner's angle, or with dovetails where the outline
+   * runs straight on.
+   *
+   * With `symmetrical`, the walls alternate fingers and counterparts so that
+   * opposite walls are the same part; the last wall of an odd count takes
+   * one of each. Otherwise every wall has fingers on its left and
+   * counterparts on its right.
+   */
+  polygonWalls(
+    borders: Array<PolygonBorder | null>,
+    h: number,
+    bottom: EdgeSpec = 'F',
+    top: EdgeSpec = 'F',
+    symmetrical = true,
+  ): void {
+    this.withRestore(() => {
+      if (!borders.length) return;
+
+      const closed = this.closePolygon(borders);
+      const bottomEdge = this.getEdge(bottom);
+      const topEdge = this.getEdge(top);
+      const t = this.thickness;
+
+      // Each side of a wall gets its own copy of the finger-joint settings,
+      // retuned to that corner's angle before the wall is drawn.
+      const fj = this.getEdge('f').settings as FingerJointSettings;
+      const leftsettings = fj.clone();
+      const [lf, lF] = leftsettings.edgeObjects(this, 'fFh', false) as [BaseEdge, BaseEdge, BaseEdge];
+      const rightsettings = fj.clone();
+      const [rf, rF] = rightsettings.edgeObjects(this, 'fFh', false) as [BaseEdge, BaseEdge, BaseEdge];
+
+      let lengthCorrection = 0;
+      let angle = closed[closed.length - 1]!;
+      let i = 0;
+      let partCnt = 0;
+
+      this.moveTo(0, bottomEdge.margin());
+      while (i < closed.length) {
+        // boxes.py draws every wall into one part. Each is a separate piece
+        // of material, so here each gets a part of its own, to be named in
+        // the preview and packed onto a sheet on its own. The paths, and
+        // their order, are boxes.py's.
+        this.ctx.newPart(`wall ${partCnt + 1}`);
+        let left: BaseEdge;
+        let right: BaseEdge;
+        if (symmetrical) {
+          if (partCnt % 2) [left, right] = [lf, rf];
+          // The last part of an odd count.
+          else if (partCnt === Math.floor(closed.length / 2) - 1) [left, right] = [lF, rf];
+          else [left, right] = [lF, rF];
+        } else {
+          [left, right] = [lf, rF];
+        }
+
+        const topLengths: number[] = [];
+        const topEdges: EdgeSpec[] = [];
+
+        if (angle === 0) left = this.getEdge('d');
+
+        leftsettings.setValues(t, true, { angle: angle as number });
+        this.moveTo(left.spacing() + this.spacing, 0);
+        let l = (closed[i] as number) - lengthCorrection;
+        angle = closed[i + 1]!;
+
+        while (Array.isArray(angle)) {
+          bottomEdge.call(l);
+          const [a, radius] = angle;
+          const lr = Math.abs(a * DEG * radius);
+          (this.getEdge('X') as FlexEdge).call(lr, { h: h + 2 * t });
+          topLengths.push(l, lr);
+          topEdges.push(topEdge, 'E');
+
+          i += 2;
+          l = closed[i] as number;
+          angle = closed[i + 1]!;
+        }
+
+        rightsettings.setValues(t, true, { angle });
+        lengthCorrection = angle < 0 ? t * Math.tan((-angle / 2) * DEG) : 0.0;
+        if (angle === 0) right = this.getEdge('D');
+        l -= lengthCorrection;
+
+        bottomEdge.call(l);
+
+        topLengths.push(l);
+        topEdges.push(topEdge);
+        this.savedContext(() => {
+          this.edgeCorner(bottomEdge, right, 90);
+          right.call(h);
+          this.edgeCorner(right, topEdge, 90);
+
+          topEdges.reverse();
+          topLengths.reverse();
+          this.makeCompoundEdge(topEdges, topLengths).call(topLengths.reduce((s, x) => s + x, 0));
+          this.edgeCorner(topEdge, left, 90);
+          left.call(h);
+          this.edgeCorner(left, bottomEdge, 90);
+          this.ctx.stroke();
+        });
+
+        this.moveTo(right.spacing() + this.spacing);
+        partCnt += 1;
+        i += 2;
+      }
+    });
+  }
+
+  /**
    * Rectangular wall that may extend past its nominal size on any side, as a
    * flange (e.g. a plate screwed to the wall either side of a bracket). A side
    * with a flange is drawn straight; an `F` or `h` edge there becomes finger

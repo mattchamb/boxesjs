@@ -1135,6 +1135,20 @@ export const LID_PARAMS: ParamSpec[] = [
   },
 ];
 
+/**
+ * Living-hinge options, for generators that bend walls round a corner. The
+ * same settings the chest lid uses, worded for a bent wall and filed with the
+ * joints; spread into a generator's own params.
+ */
+export const FLEX_PARAMS: ParamSpec[] = inSection(
+  'Living hinge',
+  null,
+  LID_PARAMS.filter((spec) => spec.key.startsWith('flex_')).map((spec) => {
+    const help = spec.help?.replace(/^Chest lid only: /, '') ?? '';
+    return { ...spec, group: 'joints', help: help.charAt(0).toUpperCase() + help.slice(1) } as ParamSpec;
+  }),
+);
+
 /** Split the flat form values into the engine configuration. */
 export function toBoxesConfig(values: ParamValues): BoxesConfig {
   const num = (k: string, d: number) => (typeof values[k] === 'number' ? (values[k] as number) : d);

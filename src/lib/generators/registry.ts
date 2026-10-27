@@ -13,22 +13,28 @@ import { bayonetBox } from './bayonetbox';
 import { cardBox } from './cardbox';
 import { closedBox } from './closedbox';
 import { compartmentBox } from './compartmentbox';
+import { consoleBox } from './console';
 import { console2 } from './console2';
+import { coffin } from './coffin';
 import { crate } from './crate';
 import { displayShelf } from './displayshelf';
 import { dividerTray } from './dividertray';
 import { drillBox } from './drillbox';
 import { drillStand, wallDrillBox } from './drillstand';
 import { frameLoom } from './frameloom';
+import { heartBox } from './heart';
 import { notesHolder } from './notesholder';
 import { openBox } from './openbox';
 import { paintStorage } from './paintstorage';
 import { rectangularWall } from './rectangularwall';
+import { roundedRegularBox } from './roundedregularbox';
+import { roundedTrapezoidBox } from './roundedtrapezoidbox';
 import { regularBox } from './regularbox';
 import { slantedTray } from './slantedtray';
 import { spicesRack } from './spicesrack';
 import { storageRack } from './storagerack';
 import { storageShelf } from './storageshelf';
+import { tetris } from './tetris';
 import { trayInsert } from './trayinsert';
 import { twoPiece } from './twopiece';
 import { trayLayout } from './traylayout';
@@ -94,6 +100,12 @@ const DEFS: GeneratorDef[] = [
   crate,
   spicesRack,
   slantedTray,
+  coffin,
+  roundedTrapezoidBox,
+  roundedRegularBox,
+  consoleBox,
+  heartBox,
+  tetris,
   rectangularWall,
 ];
 

@@ -3158,5 +3158,284 @@
       "thickness": 3,
       "labels": true
     }
+  },
+  {
+    "name": "ref_coffin_default",
+    "generator": "coffin",
+    "pythonClass": "Coffin",
+    "params": {
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_coffin_kerf",
+    "generator": "coffin",
+    "pythonClass": "Coffin",
+    "params": {
+      "x": 180,
+      "h": 50,
+      "width": 0.45,
+      "top_width": 0.2,
+      "bottom_width": 0.3,
+      "shoulder_height": 0.65,
+      "cross": 0.15,
+      "thickness": 4,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_coffin_plain_labels",
+    "generator": "coffin",
+    "pythonClass": "Coffin",
+    "params": {
+      "x": 150,
+      "h": 40,
+      "cross": 0,
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_roundedtrapezoidbox_default",
+    "generator": "roundedtrapezoidbox",
+    "pythonClass": "RoundedTrapezoidBox",
+    "params": {
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_roundedtrapezoidbox_trapezoid_lid_kerf",
+    "generator": "roundedtrapezoidbox",
+    "pythonClass": "RoundedTrapezoidBox",
+    "params": {
+      "x_front": 140,
+      "x_back": 90,
+      "y": 110,
+      "h": 70,
+      "radius_front_left": 10,
+      "radius_front_right": 30,
+      "radius_back_right": 5,
+      "radius_back_left": 15,
+      "top": "lid",
+      "wall_pieces": 2,
+      "thickness": 4,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_roundedtrapezoidbox_four_closed",
+    "generator": "roundedtrapezoidbox",
+    "pythonClass": "RoundedTrapezoidBox",
+    "params": {
+      "x_front": 120,
+      "x_back": 160,
+      "y": 100,
+      "h": 60,
+      "top": "closed",
+      "wall_pieces": 4,
+      "outside": false,
+      "dt_size": 4,
+      "flex_distance": 0.7,
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_roundedtrapezoidbox_small_radii_labels",
+    "generator": "roundedtrapezoidbox",
+    "pythonClass": "RoundedTrapezoidBox",
+    "params": {
+      "x_front": 120,
+      "x_back": 100,
+      "y": 90,
+      "h": 50,
+      "radius_front_left": 4,
+      "radius_front_right": 4,
+      "radius_back_right": 4,
+      "radius_back_left": 4,
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_roundedregularbox_default",
+    "generator": "roundedregularbox",
+    "pythonClass": "RoundedRegularBox",
+    "params": {
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_roundedregularbox_hex_lid_kerf",
+    "generator": "roundedregularbox",
+    "pythonClass": "RoundedRegularBox",
+    "params": {
+      "sides": 6,
+      "inner_size": 120,
+      "h": 60,
+      "radius": 10,
+      "wallpieces": 2,
+      "top": "lid",
+      "thickness": 4,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_roundedregularbox_square_closed",
+    "generator": "roundedregularbox",
+    "pythonClass": "RoundedRegularBox",
+    "params": {
+      "sides": 4,
+      "inner_size": 100,
+      "h": 50,
+      "radius": 5,
+      "wallpieces": 1,
+      "top": "closed",
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_roundedregularbox_tri_labels",
+    "generator": "roundedregularbox",
+    "pythonClass": "RoundedRegularBox",
+    "params": {
+      "sides": 3,
+      "inner_size": 120,
+      "h": 40,
+      "radius": 20,
+      "wallpieces": 3,
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_console_default",
+    "generator": "console",
+    "pythonClass": "Console",
+    "params": {
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_console_steep_kerf",
+    "generator": "console",
+    "pythonClass": "Console",
+    "params": {
+      "x": 200,
+      "y": 150,
+      "h": 120,
+      "front_height": 40,
+      "angle": 70,
+      "outside": true,
+      "thickness": 4,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_console_no_front",
+    "generator": "console",
+    "pythonClass": "Console",
+    "params": {
+      "x": 180,
+      "y": 120,
+      "h": 60,
+      "front_height": 0,
+      "angle": 30,
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_console_labels",
+    "generator": "console",
+    "pythonClass": "Console",
+    "params": {
+      "x": 150,
+      "y": 120,
+      "h": 90,
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_tetris_default",
+    "generator": "tetris",
+    "pythonClass": "Tetris",
+    "params": {
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_tetris_t_kerf",
+    "generator": "tetris",
+    "pythonClass": "Tetris",
+    "params": {
+      "shape": "T",
+      "blocksize": 50,
+      "thickness": 4,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_tetris_s",
+    "generator": "tetris",
+    "pythonClass": "Tetris",
+    "params": {
+      "shape": "S",
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_tetris_i_labels",
+    "generator": "tetris",
+    "pythonClass": "Tetris",
+    "params": {
+      "shape": "I",
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_tetris_o",
+    "generator": "tetris",
+    "pythonClass": "Tetris",
+    "params": {
+      "shape": "O",
+      "blocksize": 30,
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_heart_default",
+    "generator": "heart",
+    "pythonClass": "HeartBox",
+    "pythonModule": "heart",
+    "params": {
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_heart_lid_kerf",
+    "generator": "heart",
+    "pythonClass": "HeartBox",
+    "pythonModule": "heart",
+    "params": {
+      "x": 200,
+      "h": 60,
+      "top": "lid",
+      "thickness": 4,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_heart_hole_labels",
+    "generator": "heart",
+    "pythonClass": "HeartBox",
+    "pythonModule": "heart",
+    "params": {
+      "x": 120,
+      "h": 40,
+      "top": "hole",
+      "thickness": 3,
+      "labels": true
+    }
   }
 ]

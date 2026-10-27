@@ -280,6 +280,42 @@
         "boxes/generators/slantedtray.py"
       ],
       "sha": "84e392b39191"
+    },
+    "coffin": {
+      "files": [
+        "boxes/generators/coffin.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "roundedtrapezoidbox": {
+      "files": [
+        "boxes/generators/roundedtrapezoidbox.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "roundedregularbox": {
+      "files": [
+        "boxes/generators/roundedregularbox.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "console": {
+      "files": [
+        "boxes/generators/console.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "tetris": {
+      "files": [
+        "boxes/generators/tetris.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "heart": {
+      "files": [
+        "boxes/generators/heart.py"
+      ],
+      "sha": "84e392b39191"
     }
   }
 }
