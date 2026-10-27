@@ -28,7 +28,7 @@ import {
   setSelectedMaterialId,
   type Material,
 } from '../lib/materials';
-import type { CopiesSuggestion } from '../lib/layout/pack';
+import { sheetsPerPanel, type LayoutSuggestion } from '../lib/layout/pack';
 import type { PreviewData } from '../lib/preview';
 import { Control } from './controls';
 import { Preview } from './Preview';
@@ -61,7 +61,7 @@ export default function App({ generator, name, summary, initial }: Props) {
   const [materialId, setMaterialId] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [copiesHint, setCopiesHint] = useState<CopiesSuggestion | null>(null);
+  const [layoutHint, setLayoutHint] = useState<LayoutSuggestion | null>(null);
 
   const client = useRef<RenderClient>();
 
@@ -103,16 +103,16 @@ export default function App({ generator, name, summary, initial }: Props) {
     client.current?.requestPreview({ generator, values });
   }, [generator, values]);
 
-  // The copy search packs the design up to twenty times, so it waits for the
+  // The layout search packs the design many times over, so it waits for the
   // parameters to settle; asked on every change, previews would queue behind it.
   useEffect(() => {
-    setCopiesHint(null);
+    setLayoutHint(null);
     if (values['pack'] !== true) return;
     let live = true;
     const timer = setTimeout(() => {
       client.current
-        ?.requestCopies({ generator, values })
-        .then((hint) => live && setCopiesHint(hint))
+        ?.requestLayout({ generator, values })
+        .then((hint) => live && setLayoutHint(hint))
         .catch(() => {
           /* a failed search just means no hint; the preview reports the error */
         });
@@ -317,7 +317,22 @@ export default function App({ generator, name, summary, initial }: Props) {
           </button>
         </div>
 
-        {packed && <SheetBar specs={specs} values={values} setValue={setValue} hint={copiesHint} />}
+        {packed && (
+          <SheetBar
+            specs={specs}
+            values={values}
+            setValue={setValue}
+            hint={layoutHint}
+            applyHint={(h) =>
+              setValues((prev) => ({
+                ...prev,
+                sheet_width: h.sheetWidth,
+                sheet_height: h.sheetHeight,
+                pack_copies: h.copies,
+              }))
+            }
+          />
+        )}
 
         <Preview data={data} error={error} visibleLayers={visibleLayers} showGrid={showGrid} />
 
@@ -332,7 +347,7 @@ export default function App({ generator, name, summary, initial }: Props) {
         )}
 
         <div class="statsbar">
-          <Stat k="Sheet" v={data ? sheetSummary(data) : '—'} />
+          <Stat k="Sheet" v={data ? sheetSummary(data, values) : '—'} />
           <Stat k="Parts" v={data ? String(data.stats.partCount) : '—'} />
           <Stat k="Cut length" v={data ? `${(data.stats.cutLengthMm / 1000).toFixed(2)} m` : '—'} />
           <Stat
@@ -367,11 +382,23 @@ function Stat({ k, v }: { k: string; v: string }) {
   );
 }
 
-function sheetSummary(data: PreviewData): string {
+function sheetSummary(data: PreviewData, values: ParamValues): string {
   const s = data.sheets?.[0];
   if (!data.sheets || !s) return `${data.bbox.width.toFixed(0)} × ${data.bbox.height.toFixed(0)} mm`;
   const used = data.sheets.reduce((t, x) => t + x.used, 0) / data.sheets.length;
-  return `${data.sheets.length} × ${s.width.toFixed(0)} × ${s.height.toFixed(0)} mm · ${Math.round(used * 100)}% used`;
+  const sheets = `${data.sheets.length} × ${mm(s.width)} × ${mm(s.height)} mm`;
+  const per =
+    values['use_panels'] === true
+      ? sheetsPerPanel(s.width, s.height, { width: Number(values['panel_width']), height: Number(values['panel_height']) })
+      : 0;
+  const count = per > 0 ? Math.ceil(data.sheets.length / per) : 0;
+  const panels = per > 0 ? ` · ${count} panel${count === 1 ? '' : 's'} (${per} sheets each)` : '';
+  return `${sheets}${panels} · ${Math.round(used * 100)}% used`;
+}
+
+/** Sheet sides from a panel division can be fractional (1200 / 7); a tenth is enough. */
+function mm(n: number): string {
+  return String(Math.round(n * 10) / 10);
 }
 
 /** LightBurn's name for a layer: C00–C29 cut layers, T1 and T2 tool layers from index 30. */

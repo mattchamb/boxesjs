@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { packDrawing, SHEET_GAP, type PackOptions } from '~/lib/layout/pack';
-import { buildDrawing, suggestCopies } from '~/lib/preview';
+import { packDrawing, panelDivisions, sheetsPerPanel, SHEET_GAP, type PackOptions } from '~/lib/layout/pack';
+import { buildDrawing, suggestLayout } from '~/lib/preview';
 import { decodeParams } from '~/lib/permalink';
 import { defaultsFor, listGenerators } from '~/lib/generators/registry';
 import { emptyLayerRecord, toPathData, type BBox, type Drawing, type DrawingPart } from '~/lib/render';
@@ -126,47 +126,123 @@ describe('copies', () => {
   });
 });
 
-describe('suggested copies', () => {
-  // Settings from trays and racks cut on 300 × 400 stock.
-  const tray = decodeParams('typetray', 'sx=78*3&sy=280&h=102&outside=0&bottom_edge=F&fingerholes=front&thickness=3.3&burn=0.08&pack=1');
-  const rack = decodeParams('storagerack', 'x=249&depth=289&sh=107*2&rail=45&outside=0&bottom_edge=s&top_edge=S&thickness=3.3&burn=0.08&pack=1');
+describe('panels', () => {
+  const panel = { width: 600, height: 1200 };
+  const bed = { width: 400, height: 415 };
 
-  it('finds the count that wastes least', () => {
-    const hint = suggestCopies('typetray', tray)!;
-    expect(hint).toMatchObject({ copies: 3, sheets: 8, current: { copies: 1, sheets: 3 } });
-    expect(hint.used).toBeGreaterThan(0.7);
-    // And that is what packing that many actually gives.
-    expect(buildDrawing('typetray', { ...tray, pack_copies: 3 }).sheets).toHaveLength(8);
+  it('count the sheets a panel cuts into, either way round', () => {
+    expect(sheetsPerPanel(300, 400, panel)).toBe(6);
+    expect(sheetsPerPanel(400, 300, panel)).toBe(6);
+    expect(sheetsPerPanel(320, 400, panel)).toBe(3);
+    expect(sheetsPerPanel(700, 400, panel)).toBe(1);
+    expect(sheetsPerPanel(700, 700, panel)).toBe(0);
+  });
+
+  it('offer only even divisions that fit the bed, turned to fit it', () => {
+    const sizes = panelDivisions(panel, bed);
+    expect(sizes).toContainEqual({ width: 300, height: 400 });
+    expect(sizes).toContainEqual({ width: 200, height: 300 });
+    for (const s of sizes) {
+      expect(s.width).toBeLessThanOrEqual(bed.width);
+      expect(s.height).toBeLessThanOrEqual(bed.height);
+      expect(Math.min(s.width, s.height)).toBeGreaterThanOrEqual(150);
+      expect(sheetsPerPanel(s.width, s.height, panel) * s.width * s.height).toBeCloseTo(600 * 1200, 6);
+    }
+    expect(sizes.some((s) => s.width === 600 || s.height === 600)).toBe(false);
+  });
+});
+
+describe('suggested copies, sheets bought as they are', () => {
+  const tray = decodeParams('typetray', 'sx=78*3&sy=280&h=102&outside=0&bottom_edge=F&fingerholes=front&thickness=3.3&burn=0.08&pack=1');
+
+  it('finds the count with the fewest sheets per copy, at the sheet size asked for', () => {
+    expect(suggestLayout('typetray', tray)).toMatchObject({
+      sheetWidth: 300,
+      sheetHeight: 400,
+      copies: 3,
+      sheets: 8,
+      current: { copies: 1, sheets: 3 },
+    });
   });
 
   it('takes the count asked for as a minimum', () => {
-    expect(suggestCopies('typetray', { ...tray, pack_copies: 4 })).toMatchObject({ copies: 6, sheets: 16 });
+    expect(suggestLayout('typetray', { ...tray, pack_copies: 4 })).toMatchObject({ copies: 6, sheets: 16 });
   });
 
-  it('says nothing when the count asked for is already as good as any', () => {
-    expect(suggestCopies('typetray', { ...tray, pack_copies: 3 })).toBeNull();
-    expect(suggestCopies('storagerack', rack)).toBeNull();
-    expect(suggestCopies('typetray', { ...tray, pack: false })).toBeNull();
+  it('never suggests another sheet size', () => {
+    const hint = suggestLayout('abox', { ...defaultsFor('abox'), pack: true });
+    if (hint) expect([hint.sheetWidth, hint.sheetHeight]).toEqual([300, 400]);
+  });
+});
+
+describe('suggested layout, from stock panels', () => {
+  // Settings from trays and racks cut on 300 × 400 sheets from 600 × 1200 panels.
+  const tray = decodeParams('typetray', 'sx=78*3&sy=280&h=102&outside=0&bottom_edge=F&fingerholes=front&thickness=3.3&burn=0.08&pack=1&use_panels=1');
+  const rack = decodeParams('storagerack', 'x=249&depth=289&sh=107*2&rail=45&outside=0&bottom_edge=s&top_edge=S&thickness=3.3&burn=0.08&pack=1&use_panels=1');
+
+  it('finds the copy count that uses whole panels', () => {
+    expect(suggestLayout('typetray', tray)).toMatchObject({
+      sheetWidth: 300,
+      sheetHeight: 400,
+      perPanel: 6,
+      copies: 9,
+      sheets: 24,
+      panels: 4,
+      current: { copies: 1, sheets: 3, panels: 1 },
+    });
+    expect(suggestLayout('storagerack', rack)).toMatchObject({ copies: 6, sheets: 30, panels: 5 });
+    // And that is what packing that many actually gives.
+    expect(buildDrawing('typetray', { ...tray, pack_copies: 9 }).sheets).toHaveLength(24);
   });
 
-  it('agrees with packing every count, despite skipping the hopeless ones', () => {
-    for (const id of ['typetray', 'rectangularwall', 'cardbox', 'trayinsert']) {
-      const base: ParamValues = { ...defaultsFor(id), pack: true };
-      const all = Array.from({ length: 20 }, (_, i) => ({
-        copies: i + 1,
-        sheets: buildDrawing(id, { ...base, pack_copies: i + 1 }).sheets!.length,
-      }));
-      const rate = Math.min(...all.map((r) => r.sheets / r.copies));
-      const hint = suggestCopies(id, base);
-      if (all[0]!.sheets <= rate + 1e-9) {
-        expect(hint, id).toBeNull();
-      } else {
-        expect(hint, id).not.toBeNull();
-        expect(hint!.sheets / hint!.copies, id).toBeCloseTo(rate, 9);
-        expect(hint!.copies, id).toBe(all.find((r) => Math.abs(r.sheets / r.copies - rate) < 1e-9)!.copies);
+  it('takes the count asked for as a minimum', () => {
+    const hint = suggestLayout('typetray', { ...tray, pack_copies: 10 })!;
+    expect(hint.copies).toBeGreaterThanOrEqual(10);
+    expect(hint.panels / hint.copies).toBeCloseTo(4 / 9, 9);
+  });
+
+  it('suggests another sheet size when one wastes less', () => {
+    const base: ParamValues = { ...defaultsFor('abox'), pack: true, use_panels: true };
+    const hint = suggestLayout('abox', base)!;
+    expect([hint.sheetWidth, hint.sheetHeight]).not.toEqual([300, 400]);
+    expect(hint.perPanel).toBe(sheetsPerPanel(hint.sheetWidth, hint.sheetHeight, { width: 600, height: 1200 }));
+    const packed = buildDrawing('abox', {
+      ...base,
+      sheet_width: hint.sheetWidth,
+      sheet_height: hint.sheetHeight,
+      pack_copies: hint.copies,
+    });
+    expect(packed.sheets).toHaveLength(hint.sheets);
+    expect(packed.warnings).toEqual([]);
+    expect(Math.ceil(hint.sheets / hint.perPanel)).toBe(hint.panels);
+  });
+
+  it('says nothing when what was asked for is already as good as any', () => {
+    expect(suggestLayout('typetray', { ...tray, pack_copies: 9 })).toBeNull();
+    expect(suggestLayout('typetray', { ...tray, pack: false })).toBeNull();
+  });
+
+  it('agrees with packing every size and count, despite skipping the hopeless ones', () => {
+    const panel = { width: 600, height: 1200 };
+    for (const id of ['abox', 'trayinsert']) {
+      const base: ParamValues = { ...defaultsFor(id), pack: true, use_panels: true };
+      const plain = buildDrawing(id, { ...base, pack: false });
+      const opts = { margin: 5, gap: 2, rotate: true };
+      let rate = Infinity;
+      for (const size of [{ width: 300, height: 400 }, ...panelDivisions(panel, { width: 400, height: 415 })]) {
+        const per = Math.max(1, sheetsPerPanel(size.width, size.height, panel));
+        for (let copies = 1; copies <= 20; copies++) {
+          const p = packDrawing(plain, { ...opts, sheetWidth: size.width, sheetHeight: size.height, copies });
+          if (p.warnings.length > plain.warnings.length) break;
+          rate = Math.min(rate, Math.ceil(p.sheets!.length / per) / copies);
+        }
       }
+      const hint = suggestLayout(id, base);
+      const current = Math.ceil(buildDrawing(id, base).sheets!.length / 6);
+      if (current <= rate + 1e-9) expect(hint, id).toBeNull();
+      else expect(hint!.panels / hint!.copies, id).toBeCloseTo(rate, 9);
     }
-  });
+  }, 60000);
 });
 
 const p = (d: Drawing, i: number) => d.parts[i]!.bbox;

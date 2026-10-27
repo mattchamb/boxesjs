@@ -10,7 +10,7 @@
 import { LAYERS, type Layer } from './geom/colors';
 import { toBoxesConfig } from './params/common';
 import { defaultsFor, getGenerator, paramsFor } from './generators/registry';
-import { bestCopies, packDrawing, type CopiesSuggestion, type PackOptions } from './layout/pack';
+import { bestLayout, packDrawing, type LayoutSuggestion, type PackOptions } from './layout/pack';
 import { renderBox, type BBox, type Drawing, type DrawingStats, type Sheet } from './render';
 import type { ParamValues } from './params/schema';
 
@@ -62,17 +62,23 @@ function packOptions(full: ParamValues): PackOptions {
 }
 
 /**
- * The copy count that wastes the least stock, when it beats the one asked
- * for; null otherwise, and whenever packing is off. Searches as far as the
- * Copies control goes.
+ * The sheet size and copy count that waste the least stock, when they beat
+ * what was asked for; null otherwise, and whenever packing is off. Searches as
+ * far as the Copies control goes.
  */
-export function suggestCopies(generator: string, values: ParamValues): CopiesSuggestion | null {
+export function suggestLayout(generator: string, values: ParamValues): LayoutSuggestion | null {
   const full = { ...defaultsFor(generator), ...values };
   if (full['pack'] !== true) return null;
   const spec = paramsFor(generator).find((s) => s.key === 'pack_copies');
   const max = spec && 'max' in spec ? spec.max : 1;
+  const num = (k: string) => Number(full[k]);
   const drawing = renderBox(getGenerator(generator).create(full, toBoxesConfig(full)));
-  return bestCopies(drawing, packOptions(full), max);
+  const panels = full['use_panels'] === true;
+  return bestLayout(drawing, packOptions(full), {
+    panel: panels ? { width: num('panel_width'), height: num('panel_height') } : undefined,
+    bed: panels ? { width: num('bed_width'), height: num('bed_height') } : undefined,
+    max,
+  });
 }
 
 export function toPreview(drawing: Drawing): PreviewData {

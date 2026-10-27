@@ -13,7 +13,7 @@ import type {
   WorkerRequest,
   WorkerResponse,
 } from '../workers/protocol';
-import type { CopiesSuggestion } from './layout/pack';
+import type { LayoutSuggestion } from './layout/pack';
 import type { PreviewData } from './preview';
 import type { ParamValues } from './params/schema';
 
@@ -33,7 +33,7 @@ export class RenderClient {
   /** Newest job seen while a render was running. */
   private queued: PreviewJob | null = null;
   private listener: PreviewListener | null = null;
-  /** Exports and copy searches waiting on the worker, by request id. */
+  /** Exports and layout searches waiting on the worker, by request id. */
   private pending = new Map<number, (r: WorkerResponse) => void>();
 
   constructor() {
@@ -121,17 +121,17 @@ export class RenderClient {
   }
 
   /**
-   * Search for the copy count that wastes least. It packs the design up to
-   * twenty times, so callers should ask once the parameters have settled
-   * rather than on every change, or previews would queue behind it.
+   * Search for the sheet size and copy count that waste least. It packs the
+   * design many times over, so callers should ask once the parameters have
+   * settled rather than on every change, or previews would queue behind it.
    */
-  requestCopies(job: PreviewJob): Promise<CopiesSuggestion | null> {
+  requestLayout(job: PreviewJob): Promise<LayoutSuggestion | null> {
     const id = this.nextId++;
-    const req: WorkerRequest = { id, kind: 'copies', generator: job.generator, values: job.values };
+    const req: WorkerRequest = { id, kind: 'layout', generator: job.generator, values: job.values };
 
     return new Promise((resolve, reject) => {
       this.pending.set(id, (res) => {
-        if (res.ok && res.kind === 'copies') resolve(res.data);
+        if (res.ok && res.kind === 'layout') resolve(res.data);
         else reject(new Error(res.ok ? 'Unexpected response' : res.error));
       });
 

@@ -434,54 +434,164 @@ export function packDrawing(drawing: Drawing, o: PackOptions): Drawing {
   };
 }
 
-export interface CopiesSuggestion {
-  copies: number;
-  sheets: number;
-  /** Fraction of those sheets covered by the parts' bounding boxes. */
-  used: number;
-  /** What the copies asked for in the options come to, for comparison. */
-  current: { copies: number; sheets: number };
+/** Stock as bought: a panel that is cut down into laser-sized sheets. */
+export interface Panel {
+  width: number;
+  height: number;
 }
 
 /**
- * The number of copies that wastes the least stock, counting a partly used
- * last sheet as waste: the fewest sheets per copy, up to `max` copies.
- *
- * The best rate usually comes round again at multiples (3, 6, 9 …), so of the
- * counts that reach it, this picks the smallest no fewer than were asked for —
- * asking for four is taken as needing four. Returns null when the copies
- * asked for are already as good as any.
+ * How many sheets one panel cuts into, in a grid, whichever way round fits
+ * more. Saw kerf is not allowed for: the sheet's edge offset absorbs it, and
+ * bought panels are seldom exactly to size anyway.
  */
-export function bestCopies(drawing: Drawing, o: PackOptions, max: number): CopiesSuggestion | null {
+export function sheetsPerPanel(sheetW: number, sheetH: number, panel: Panel): number {
+  const across = (len: number, side: number) => Math.floor(len / side + 1e-9);
+  return Math.max(
+    across(panel.width, sheetW) * across(panel.height, sheetH),
+    across(panel.width, sheetH) * across(panel.height, sheetW),
+  );
+}
+
+/**
+ * Sheet sizes that cut a panel evenly and fit the laser bed: everything else
+ * leaves an offcut on every panel. Each is turned to fit the bed, the way the
+ * sheet will be loaded. Below `minSide` a sheet is more sawing and loading
+ * than it is worth, and too narrow to hold down.
+ */
+export function panelDivisions(panel: Panel, bed: Panel, minSide = 150): { width: number; height: number }[] {
+  const out: { width: number; height: number }[] = [];
+  for (let a = 1; panel.width / a >= minSide; a++) {
+    for (let b = 1; panel.height / b >= minSide; b++) {
+      const w = panel.width / a;
+      const h = panel.height / b;
+      const sized =
+        w <= bed.width + 1e-9 && h <= bed.height + 1e-9 ? { width: w, height: h }
+        : h <= bed.width + 1e-9 && w <= bed.height + 1e-9 ? { width: h, height: w }
+        : null;
+      if (sized && !out.some((x) => Math.abs(x.width - sized.width) < 1e-6 && Math.abs(x.height - sized.height) < 1e-6)) {
+        out.push(sized);
+      }
+    }
+  }
+  return out;
+}
+
+export interface LayoutSuggestion {
+  sheetWidth: number;
+  sheetHeight: number;
+  /** Sheets cut from each panel at that size. */
+  perPanel: number;
+  copies: number;
+  sheets: number;
+  panels: number;
+  /** Fraction of the sheets cut covered by the parts' bounding boxes, unused sheets included. */
+  used: number;
+  /** What the options asked for come to, for comparison. */
+  current: { copies: number; sheets: number; panels: number };
+}
+
+interface Rate {
+  copies: number;
+  sheets: number;
+  panels: number;
+}
+
+/** a is a better rate than b: fewer panels per copy, compared as fractions. */
+const cheaper = (a: Rate, b: Rate) => a.panels * b.copies < b.panels * a.copies;
+const same = (a: Rate, b: Rate) => a.panels * b.copies === b.panels * a.copies;
+
+/**
+ * The sheet size and copy count that waste the least stock: the fewest panels
+ * per copy, counting a partly used panel as waste. With no panel given, every
+ * sheet is its own panel and only the copy count is searched.
+ *
+ * Sizes tried are the sheet asked for and every even division of the panel
+ * that fits the bed and holds every part; counts run up to `max`. The best
+ * rate usually comes round again at multiples (3, 6, 9 …), so of the counts
+ * that reach it this picks the smallest no fewer than were asked for —
+ * asking for four is taken as needing four — and between sizes that tie it
+ * keeps the one asked for, then the larger sheet. Returns null when what was asked for is already as
+ * good as any.
+ */
+export function bestLayout(
+  drawing: Drawing,
+  o: PackOptions,
+  stock: { panel?: Panel; bed?: Panel; max: number },
+): LayoutSuggestion | null {
   const once = piecesOf(drawing.parts);
   if (once.length === 0) return null;
   const asked = Math.max(1, Math.round(o.copies ?? 1));
-  const sheetsFor = (copies: number) => plan(drawing, { ...o, copies }, once).best.bins.length;
+  const area = once.reduce((s, p) => s + p.bbox.width * p.bbox.height, 0);
 
-  // No packing beats the stock's area, so a count whose lower bound is already
-  // worse than the best rate found cannot be the answer and is never packed.
-  const area = once.reduce((s, p) => s + p.bbox.width * p.bbox.height, 0) / (o.sheetWidth * o.sheetHeight);
+  const fitsEveryPiece = (w: number, h: number) => {
+    const bw = w - 2 * o.margin;
+    const bh = h - 2 * o.margin;
+    return once.every(
+      ({ bbox: b }) =>
+        (b.width <= bw + FIT_EPS && b.height <= bh + FIT_EPS) ||
+        (o.rotate && b.height <= bw + FIT_EPS && b.width <= bh + FIT_EPS),
+    );
+  };
 
-  // Rates compared as fractions, sheets × copies, so equal rates are equal.
-  const results: { copies: number; sheets: number }[] = [];
-  let best: { copies: number; sheets: number } | null = null;
-  for (let copies = 1; copies <= Math.max(max, asked); copies++) {
-    const bound = Math.ceil(copies * area - 1e-9);
-    if (best && bound * best.copies > best.sheets * copies) continue;
-    const sheets = sheetsFor(copies);
-    results.push({ copies, sheets });
-    if (!best || sheets * best.copies < best.sheets * copies) best = { copies, sheets };
+  // Without stock panels each sheet is bought as it is: the size stays, and
+  // the search is over copies alone, in sheets per copy.
+  const sizes = [{ width: o.sheetWidth, height: o.sheetHeight }];
+  const divisions = stock.panel && stock.bed ? panelDivisions(stock.panel, stock.bed) : [];
+  for (const d of divisions) {
+    if (!sizes.some((x) => Math.abs(x.width - d.width) < 1e-6 && Math.abs(x.height - d.height) < 1e-6)) sizes.push(d);
   }
 
-  const current = results.find((r) => r.copies === asked) ?? { copies: asked, sheets: sheetsFor(asked) };
-  if (current.sheets * best!.copies <= best!.sheets * current.copies) return null;
+  const rateAt = (w: number, h: number, per: number, copies: number): Rate => {
+    const sheets = plan(drawing, { ...o, sheetWidth: w, sheetHeight: h, copies }, once).best.bins.length;
+    return { copies, sheets, panels: Math.ceil(sheets / per) };
+  };
 
-  const tied = results.filter((r) => r.sheets * best!.copies === best!.sheets * r.copies);
-  const pick = tied.find((r) => r.copies >= asked) ?? tied[0]!;
+  let current: Rate | null = null;
+  let best: (Rate & { size: number; per: number; tied: Rate[] }) | null = null;
+
+  sizes.forEach((size, si) => {
+    const per = stock.panel ? sheetsPerPanel(size.width, size.height, stock.panel) : 1;
+    // A sheet larger than the panel is bought some other way: count it whole.
+    const perSheet = Math.max(1, per);
+    if (si > 0 && !fitsEveryPiece(size.width, size.height)) return;
+
+    const results: Rate[] = [];
+    for (let copies = 1; copies <= Math.max(stock.max, asked); copies++) {
+      // No packing beats the parts' own area, so a count whose bound is
+      // already worse than the best rate found anywhere is never packed —
+      // except the count asked for, which is what the answer is measured against.
+      const bound = Math.ceil(Math.ceil((copies * area) / (size.width * size.height) - 1e-9) / perSheet);
+      const hopeless = best && bound * best.copies > best.panels * copies;
+      if (hopeless && !(si === 0 && copies === asked)) continue;
+      const r = rateAt(size.width, size.height, perSheet, copies);
+      results.push(r);
+      if (si === 0 && copies === asked) current = r;
+    }
+
+    // Between sizes that waste the same, keep the one asked for, then the
+    // larger sheet: fewer of them to saw and load.
+    const larger = () => best!.size !== 0 && size.width * size.height > sizes[best!.size]!.width * sizes[best!.size]!.height;
+    for (const r of results) {
+      if (!best || cheaper(r, best) || (same(r, best) && best.size !== si && larger())) {
+        best = { ...r, size: si, per: perSheet, tied: [] };
+      }
+    }
+    if (best && best.size === si) best.tied = results.filter((r) => same(r, best!));
+  });
+
+  if (!best || !current || !cheaper(best, current)) return null;
+  const b = best as Rate & { size: number; per: number; tied: Rate[] };
+  const pick = b.tied.find((r) => r.copies >= asked) ?? b.tied[0]!;
+  const size = sizes[b.size]!;
   return {
+    sheetWidth: size.width,
+    sheetHeight: size.height,
+    perPanel: b.per,
     copies: pick.copies,
     sheets: pick.sheets,
-    used: (area * pick.copies) / pick.sheets,
+    panels: pick.panels,
+    used: (area * pick.copies) / (pick.panels * b.per * size.width * size.height),
     current,
   };
 }
