@@ -626,7 +626,17 @@ clear it warns. PaintStorage is not bolted: its pot holes start a few
 millimetres from the shelf edges, so a T-slot would cut into one wherever a
 bolt landed. A test in `test/params.test.ts` runs over each bolted shelf: T-slots and
 bolt holes must come out equal in number, with no warnings, which catches a
-joint bolted on one side only. Add new bolted generators to it. UniversalBox bolts only its bottom, as
+joint bolted on one side only. Add new bolted generators to it. TypeTray is
+bolted for use as a drawer, where pulling on the front loads its corners along
+the side walls: the front and back are bolted to the sides and to every divider
+along (their ends take a `BoltedEdge`, since a `CompoundEdge` passes no call
+options to its parts and a divider taller than the walls is one), and the walls
+to the bottom on an `F` or `h` bottom edge. The dividers across fit dry. Its
+bolts default to M4, and each corner and each divider end takes at least two,
+falling back to one with a warning where the fingers leave room for only one. `ignoreWidths`
+runs the corner joints on past the bottom edge, so their bolts are counted
+over that longer length and kept off the bottom edge's own holes, which cross
+the joint there. UniversalBox bolts only its bottom, as
 upstream does, and only on an `F` or `h` bottom edge: a stackable edge draws its
 slots without the bolts, so upstream would cut T-slots its walls have no holes
 for. RectangularWall puts `bolts` on its `f`, `F` and `h` edges and not on

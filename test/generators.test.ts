@@ -139,6 +139,9 @@ const VARIANTS: { id: string; name: string; values: ParamValues }[] = [
   { id: 'storagerack', name: 'bolted, open bottom', values: { assembly: 'bolts', thickness: 6, bottom_edge: 'e' } },
   { id: 'displayshelf', name: 'bolted', values: { assembly: 'bolts', thickness: 6, include_back: true, include_front: true, include_bottom: true } },
   { id: 'displayshelf', name: 'bolted, sloped', values: { assembly: 'bolts', thickness: 6, slope_top: true, include_back: true, include_bottom: true } },
+  { id: 'typetray', name: 'bolted', values: { assembly: 'bolts', thickness: 6 } },
+  { id: 'typetray', name: 'bolted, tall dividers, closed top', values: { assembly: 'bolts', thickness: 6, hi: 130, top_edge: 'f', bottom_edge: 'F' } },
+  { id: 'typetray', name: 'bolted, stackable bottom', values: { assembly: 'bolts', thickness: 6, bottom_edge: 's', fingerholes: 'front-and-back' } },
 ];
 
 describe.each(VARIANTS)('$id with $name', ({ id, values }) => {

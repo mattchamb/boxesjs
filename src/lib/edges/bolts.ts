@@ -57,9 +57,10 @@ export function bedBoltSettingsFor(c: BoltChoice, thickness: number): [number, n
  * least one. Both halves of a joint ask with the same length, so they agree.
  * boxes.py's own boxes use a fixed two or three; a shelf's joints run from a
  * short rail to a long floor, so the count follows the length instead.
+ * A joint that carries more load can ask for a higher `min`.
  */
-export function boltsAlong(length: number): BoltsPolicy {
-  return new BoltsPolicy(Math.max(1, Math.round(length / 100)));
+export function boltsAlong(length: number, min = 1): BoltsPolicy {
+  return new BoltsPolicy(Math.max(min, Math.round(length / 100)));
 }
 
 /** Where along an edge another cut comes near it: a point, or a stretch. */
@@ -98,8 +99,9 @@ export function boltsClearOf(
   length: number,
   across: Span[],
   clear: number,
+  min = 1,
 ): BoltPolicy {
-  const usual = boltsAlong(length);
+  const usual = boltsAlong(length, min);
   if (!across.length) return usual;
   // The edges on either side of a joint run in opposite directions: keep
   // clear of both readings of each position.
@@ -136,10 +138,11 @@ export function shelfBolts(
   box: { thickness: number; bedBoltSettings: readonly number[]; getEdge(c: string): { settings: unknown } },
   length: number,
   across: Span[] = [],
+  min = 1,
 ): BoltPolicy {
   // Half the nut's pocket one side, half the slot the other, and a margin.
   const clear = (box.bedBoltSettings[1]! + box.thickness) / 2 + 1;
-  return boltsClearOf(box.getEdge('f').settings as FingerJointSettings, length, across, clear);
+  return boltsClearOf(box.getEdge('f').settings as FingerJointSettings, length, across, clear, min);
 }
 
 /** The centres of the walls between `sizes`, in `thickness` material, measured along them. */

@@ -4,13 +4,21 @@
  * A compartmented tray built from interlocking dividers. The most useful
  * generator in the library, and the one that makes the compartment editor in
  * the UI worth having.
+ *
+ * `assembly: 'bolts'` is this port's own option, for a tray used as a drawer:
+ * pulling on the front loads its corners along the side walls, which a finger
+ * joint resists with glue alone. Bolted, captive-nut bolts run through the
+ * front and back into the ends of the side walls and of the dividers that run
+ * between them, and through the walls into the bottom where its edge allows.
  */
 import { Boxes, type BoxesConfig, type EdgeSpec } from '../boxes';
-import { CompoundEdge } from '../edges/base';
+import { BaseEdge, CompoundEdge, type BoltPolicy } from '../edges/base';
+import { boltPositions, checkBolts, shelfBolts, wallsBetween, type BoltedJoint, type Span } from '../edges/bolts';
+import type { FingerJointSettings } from '../edges/fingerjoint';
 import { FingerHoleEdge, FingerHoleEdgeSettings } from '../edges/fingerhole';
 import { SlottedEdge } from '../edges/slots';
 import { ETCHING } from '../geom/colors';
-import { HANDLE_PARAMS, LID_PARAMS } from '../params/common';
+import { BOLT_PARAMS, HANDLE_PARAMS, LID_PARAMS, assemblyParam } from '../params/common';
 import { parseSections } from '../params/sections';
 import type { ParamValues } from '../params/schema';
 import { BOTTOM_EDGE_CHOICES, drawLid, isClosedTop, topEdges, TOP_EDGE_CHOICES } from '../topedge';
@@ -36,6 +44,40 @@ interface TypeTrayOptions {
   textDistanceX: number;
   textDistanceY: number;
   textAtFront: boolean;
+  bolted: boolean;
+}
+
+/**
+ * Bottom edges that pass bolts on to their slots. A stackable edge draws its
+ * slots without them, so its walls would have no holes for the bottom's T-slots.
+ */
+const BOLTABLE_BOTTOMS = 'Fh';
+
+/**
+ * An edge drawn with a fixed bolt policy. CompoundEdge passes no call options
+ * to its parts, so this is how a divider taller than the walls gets bolts on
+ * the stretch that meets the front and back.
+ */
+class BoltedEdge extends BaseEdge {
+  constructor(boxes: Boxes, private inner: BaseEdge, private policy: BoltPolicy) {
+    super(boxes, inner.settings);
+  }
+
+  call(length: number): void {
+    this.inner.call(length, { bedBolts: this.policy });
+  }
+
+  override startWidth(): number {
+    return this.inner.startWidth();
+  }
+
+  override endWidth(): number {
+    return this.inner.endWidth();
+  }
+
+  override margin(): number {
+    return this.inner.margin();
+  }
 }
 
 class TypeTray extends Boxes {
@@ -83,12 +125,15 @@ class TypeTray extends Boxes {
     }
   };
 
+  /** Bolts through the front and back into each divider along, when bolted. */
+  private dividerBolts: BoltPolicy | null = null;
+
   private xHoles = (): void => {
     const t = this.thickness;
     let posx = -0.5 * t;
     for (const x of this.sx.slice(0, -1)) {
       posx += x + t;
-      this.fingerHolesAt(posx, 0, Math.min(this.h, this.hi));
+      this.fingerHolesAt(posx, 0, Math.min(this.h, this.hi), 90, this.dividerBolts);
     }
   };
 
@@ -134,6 +179,29 @@ class TypeTray extends Boxes {
     }
   };
 
+  /**
+   * The corners and the dividers along carry the pull on the front, so each
+   * takes at least two bolts, which also stops the front pivoting about a
+   * single one. boxes.py's policy never bolts the end gaps nor, for an even
+   * count, the middle one, so a low wall with few fingers can fit only one; it
+   * keeps that rather than none, and says so. `across` is where other cuts
+   * cross the joint.
+   */
+  private atLeastTwoBolts(length: number, across: Span[], what: string): BoltPolicy {
+    const fj = this.getEdge('f').settings as FingerJointSettings;
+    const two = shelfBolts(this, length, across, 2);
+    if (boltPositions(fj, length, two).length >= 2) return two;
+    const usual = shelfBolts(this, length, across);
+    if (boltPositions(fj, length, usual).length === 1) {
+      this.warn(
+        `${what} only have room for one bolt per joint at these finger sizes. ` +
+          'Make them taller, or the fingers narrower, for two.',
+        'assembly',
+      );
+    }
+    return usual;
+  }
+
   private fingerHoleDepth(): number {
     return this.o.fingerholes === 'none' ? 0 : this.hi * 0.9;
   }
@@ -174,11 +242,38 @@ class TypeTray extends Boxes {
     const re: EdgeSpec =
       hi <= h ? 'f' : new CompoundEdge(this, [this.getEdge('f'), this.getEdge('e')], [h, hi - h]);
 
+    // Bolted, each joint's bolts keep off the slots that run in from its
+    // edge: the bottom's from the dividers' finger holes. The corners and the
+    // dividers' ends have nothing running in across them.
+    const bolted = this.o.bolted;
+    const botBolted = bolted && BOLTABLE_BOTTOMS.includes(bottom);
+    // ignoreWidths lengthens the corner joints by the bottom edge's width, so
+    // that is the length both halves are drawn at.
+    const bottomWidth = this.getEdge(bottom).startWidth();
+    const cornerLength = h + bottomWidth;
+    // The joint runs on past the bottom edge, where that edge's own holes or
+    // fingers cross it.
+    const cornerB = bolted
+      ? this.atLeastTwoBolts(cornerLength, bottomWidth ? [[0, bottomWidth]] : [], 'The corners')
+      : null;
+    const botX = botBolted ? shelfBolts(this, x, wallsBetween(this.sx, t)) : null;
+    const botY = botBolted ? shelfBolts(this, y, wallsBetween(this.sy, t)) : null;
+    this.dividerBolts =
+      bolted && this.sx.length > 1 ? this.atLeastTwoBolts(Math.min(h, hi), [], 'The dividers along') : null;
+    // The dividers along get end edges of their own, so the dividers across,
+    // which meet the side walls dry, stay unbolted.
+    const fb: BaseEdge = this.dividerBolts
+      ? new BoltedEdge(this, this.getEdge('f'), this.dividerBolts)
+      : this.getEdge('f');
+    const leAlong: EdgeSpec = hi <= h ? fb : new CompoundEdge(this, [this.getEdge('e'), fb], [hi - h, h]);
+    const reAlong: EdgeSpec = hi <= h ? fb : new CompoundEdge(this, [fb, this.getEdge('e')], [h, hi - h]);
+
     this.savedContext(() => {
       // Floor
       if (bottom !== 'e') {
         this.rectangularWall(x, y, 'ffff', {
           callback: [this.xSlots, this.ySlots],
+          bedBolts: [botX, botY, botX, botY],
           move: 'up',
           label: 'Bottom',
         });
@@ -203,6 +298,7 @@ class TypeTray extends Boxes {
       this.rectangularWall(x, h, [bottom, 'F', tf, 'F'], {
         callback: frontCBs,
         ignoreWidths,
+        bedBolts: [botX, cornerB, null, cornerB],
         move: 'up',
         label: 'Front',
       });
@@ -228,6 +324,7 @@ class TypeTray extends Boxes {
       this.rectangularWall(x, h, [bottom, 'F', tb, 'F'], {
         callback: [this.xHoles],
         ignoreWidths,
+        bedBolts: [botX, cornerB, null, cornerB],
         move: 'mirror up',
         label: 'Back',
       });
@@ -252,12 +349,14 @@ class TypeTray extends Boxes {
     this.rectangularWall(y, h, [bottom, 'f', tl, 'f'], {
       callback: [this.yHoles],
       ignoreWidths,
+      bedBolts: [botY, cornerB, null, cornerB],
       move: 'up',
       label: 'Left side',
     });
     this.rectangularWall(y, h, [bottom, 'f', tr, 'f'], {
       callback: [this.mirrorX(this.yHoles, y)],
       ignoreWidths,
+      bedBolts: [botY, cornerB, null, cornerB],
       move: 'up',
       label: 'Right side',
     });
@@ -269,12 +368,20 @@ class TypeTray extends Boxes {
         closedtop && sameh
           ? [
               new SlottedEdge(this, this.sy, be, 0.5 * hi),
-              re,
+              reAlong,
               new SlottedEdge(this, [...this.sy].reverse(), 'f'),
-              le,
+              leAlong,
             ]
-          : [new SlottedEdge(this, this.sy, be, 0.5 * hi), re, 'e', le];
+          : [new SlottedEdge(this, this.sy, be, 0.5 * hi), reAlong, 'e', leAlong];
       this.rectangularWall(y, hi, e, { move: 'up', label: `Divider along ${i + 1}` });
+    }
+
+    if (bolted) {
+      const joints: BoltedJoint[] = [{ label: 'the corners', length: cornerLength, policy: cornerB! }];
+      if (this.dividerBolts) joints.push({ label: 'the dividers along', length: Math.min(h, hi), policy: this.dividerBolts });
+      if (botX) joints.push({ label: 'the bottom’s width edges', length: x, policy: botX });
+      if (botY) joints.push({ label: 'the bottom’s depth edges', length: y, policy: botY });
+      checkBolts(this, this.getEdge('f').settings as FingerJointSettings, joints);
     }
   }
 
@@ -301,7 +408,9 @@ export const typeTray: GeneratorDef = {
   },
   // Tray dividers are short walls; the standard edge margin would leave many of
   // them with no fingers at all, so this generator starts with a smaller one.
-  paramDefaults: { fj_surroundingspaces: 0.5, rt_outset: 1 },
+  // M4 rather than the shared M3: a bolted tray is a drawer carrying weight,
+  // and in the 6 mm ply that suits one an M4 leaves plenty of wall either side.
+  paramDefaults: { fj_surroundingspaces: 0.5, rt_outset: 1, bolt_size: 'M4' },
   params: [
     {
       key: 'sx',
@@ -423,6 +532,12 @@ export const typeTray: GeneratorDef = {
       ],
       group: 'advanced',
     },
+    assemblyParam(['bolts'], {
+      bolts:
+        'For a tray pulled out as a drawer. The front and back are bolted to the side walls and to every divider along, ' +
+        'and the walls to the bottom where its edge is finger joints or finger holes. The dividers across fit dry.',
+    }),
+    ...BOLT_PARAMS,
   ],
   create: (v: ParamValues, config: BoxesConfig) =>
     new TypeTray(
@@ -443,6 +558,7 @@ export const typeTray: GeneratorDef = {
         textDistanceX: 2.0,
         textDistanceY: 2.0,
         textAtFront: false,
+        bolted: s(v, 'assembly', 'glue') === 'bolts',
       },
       config,
     ),

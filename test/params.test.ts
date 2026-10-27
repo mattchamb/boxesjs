@@ -75,6 +75,11 @@ describe('warnings land on fields the panel shows', () => {
     ['closedbox', { assembly: 'bolts', thickness: 7 }],
     ['rectangularwall', { bolts: 2, bottom_edge: 'f', x: 30 }],
     ['rectangularwall', { bolts: 2 }],
+    // M4 by default here, which is too fat for the shared 3 mm default.
+    ['typetray', { assembly: 'bolts' }],
+    // The bottom's one bolt on a 108 mm edge lands on the middle divider.
+    ['typetray', { assembly: 'bolts', thickness: 6, sx: '40*5', sy: '30*4', h: 70 }],
+    ['typetray', { assembly: 'bolts', thickness: 6, h: 60, bottom_edge: 's' }],
   ];
   for (const [id, values] of cases) {
     it(`${id} ${JSON.stringify(values)}`, () => {
@@ -156,6 +161,11 @@ describe('bolts', () => {
     ['storagerack', { bottom_edge: 'e', sh: '80*4' }],
     ['displayshelf', { y: 150, include_back: true, include_front: true, include_bottom: true }],
     ['displayshelf', { y: 150, slope_top: true, include_back: true, include_bottom: true }],
+    ['typetray', {}],
+    ['typetray', { hi: 130 }],
+    ['typetray', { hi: 60, bottom_edge: 'F', fj_finger: 1, fj_space: 1 }],
+    ['typetray', { bottom_edge: 's' }],
+    ['typetray', { sx: '200', sy: '200', top_edge: 'f' }],
   ] as const)('on %s %o, put a hole opposite every T-slot, clear of the other cuts', (id, extra) => {
     const v = { ...defaultsFor(id), assembly: 'bolts', thickness: 6, ...extra };
     expect(renderPreview(id, v).warnings).toEqual([]);
@@ -168,6 +178,31 @@ describe('bolts', () => {
     const holes = cuts.filter(([a, b]) => Math.abs(Math.hypot(b![0] - a![0], b![1] - a![1]) - d) < 1e-6).length;
     expect(holes).toBeGreaterThan(0);
     expect(cuts.length - holes).toBe(holes);
+  });
+
+  it('take two to each of a type tray’s corners and divider ends where the fingers leave room', () => {
+    const cornerSlots = (extra: ParamValues) => {
+      const v = { ...defaultsFor('typetray'), assembly: 'bolts', thickness: 6, bottom_edge: 's', ...extra };
+      const box = getGenerator('typetray').create(v, toBoxesConfig(v));
+      box.open();
+      box.render();
+      // With a stackable bottom, a side's only bolt cuts are its corners' T-slots.
+      return box.close().parts.find((p) => p.name === 'Left side')!.boltCuts.length / 2;
+    };
+    expect(cornerSlots({ h: 100 })).toBe(2);
+    const dividerSlots = (extra: ParamValues) => {
+      const v = { ...defaultsFor('typetray'), assembly: 'bolts', thickness: 6, ...extra };
+      const box = getGenerator('typetray').create(v, toBoxesConfig(v));
+      box.open();
+      box.render();
+      return box.close().parts.find((p) => p.name === 'Divider along 1')!.boltCuts.length / 2;
+    };
+    expect(dividerSlots({})).toBe(2);
+    expect(dividerSlots({ hi: 130 })).toBe(2);
+    expect(dividerSlots({ hi: 60 })).toBe(1);
+    expect(cornerSlots({ h: 70, fj_finger: 1, fj_space: 1 })).toBe(2);
+    // Too low for two at the default fingers: one, with a warning.
+    expect(cornerSlots({ h: 60 })).toBe(1);
   });
 
   it('do not take the blame for crossings away from them', () => {
