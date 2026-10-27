@@ -7,6 +7,11 @@ import { defaultValues, type ParamSpec, type ParamValues } from '../params/schem
 import type { GeneratorDef } from './types';
 
 import { aBox } from './abox';
+import { stackableBin } from './stackablebin';
+import { discRack } from './discrack';
+import { microRack } from './microrack';
+import { binTray } from './bintray';
+import { wineRack } from './winerack';
 import { breadBox } from './breadbox';
 import { flexBook } from './flexbook';
 import { folder } from './folder';
@@ -128,6 +133,11 @@ const DEFS: GeneratorDef[] = [
   breadBox,
   shutterBox,
   flexBook,
+  wineRack,
+  binTray,
+  microRack,
+  discRack,
+  stackableBin,
   rectangularWall,
 ];
 

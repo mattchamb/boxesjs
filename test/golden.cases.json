@@ -3846,5 +3846,182 @@
       "thickness": 4,
       "labels": true
     }
+  },
+  {
+    "name": "ref_winerack_default",
+    "generator": "winerack",
+    "pythonClass": "WineRack",
+    "params": {}
+  },
+  {
+    "name": "ref_winerack_minimal",
+    "generator": "winerack",
+    "pythonClass": "WineRack",
+    "params": {
+      "walls": "minimal",
+      "x": 300,
+      "y": 260,
+      "h": 150,
+      "radius": 40,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_winerack_noverticals",
+    "generator": "winerack",
+    "pythonClass": "WineRack",
+    "params": {
+      "walls": "no_verticals",
+      "x": 350,
+      "y": 200,
+      "h": 100,
+      "radius": 35
+    }
+  },
+  {
+    "name": "ref_winerack_labels",
+    "generator": "winerack",
+    "pythonClass": "WineRack",
+    "params": {
+      "x": 250,
+      "y": 250,
+      "h": 120,
+      "radius": 40,
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_bintray_default",
+    "generator": "bintray",
+    "pythonClass": "BinTray",
+    "params": {}
+  },
+  {
+    "name": "ref_bintray_inside",
+    "generator": "bintray",
+    "pythonClass": "BinTray",
+    "params": {
+      "sx": "40:60",
+      "sh": "30:50:40",
+      "y": 80,
+      "outside": false,
+      "front": 0.5,
+      "hole_dD": "4",
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_bintray_labels",
+    "generator": "bintray",
+    "pythonClass": "BinTray",
+    "params": {
+      "sx": "50*2",
+      "sh": "60*2",
+      "y": 90,
+      "front": 0.3,
+      "hole_dD": "3:7",
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_microrack_default",
+    "generator": "microrack",
+    "pythonClass": "SBCMicroRack",
+    "pythonModule": "microrack",
+    "params": {}
+  },
+  {
+    "name": "ref_microrack_switch",
+    "generator": "microrack",
+    "pythonClass": "SBCMicroRack",
+    "pythonModule": "microrack",
+    "params": {
+      "sbcs": 3,
+      "stable": true,
+      "switch": true,
+      "clearance_z": 30,
+      "hole_diameter": 3,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_microrack_labels",
+    "generator": "microrack",
+    "pythonClass": "SBCMicroRack",
+    "pythonModule": "microrack",
+    "params": {
+      "sbcs": 2,
+      "x": 60,
+      "y": 90,
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_discrack_default",
+    "generator": "discrack",
+    "pythonClass": "DiscRack",
+    "params": {}
+  },
+  {
+    "name": "ref_discrack_wide",
+    "generator": "discrack",
+    "pythonClass": "DiscRack",
+    "params": {
+      "sx": "10*5 20*3",
+      "disc_diameter": 300,
+      "disc_thickness": 3,
+      "disc_outset": 10,
+      "angle": 25,
+      "lower_factor": 0.7,
+      "rear_factor": 0.8,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_discrack_labels",
+    "generator": "discrack",
+    "pythonClass": "DiscRack",
+    "params": {
+      "sx": "15*6",
+      "disc_diameter": 120,
+      "angle": 10,
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_stackablebin_default",
+    "generator": "stackablebin",
+    "pythonClass": "StackableBin",
+    "params": {}
+  },
+  {
+    "name": "ref_stackablebin_dividers",
+    "generator": "stackablebin",
+    "pythonClass": "StackableBin",
+    "params": {
+      "sx": "40:60:40",
+      "h": 70,
+      "d": 120,
+      "front": 0.5,
+      "outside": false,
+      "st_height": 3,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_stackablebin_labels",
+    "generator": "stackablebin",
+    "pythonClass": "StackableBin",
+    "params": {
+      "sx": "50*2",
+      "h": 60,
+      "d": 90,
+      "thickness": 3,
+      "labels": true
+    }
   }
 ]

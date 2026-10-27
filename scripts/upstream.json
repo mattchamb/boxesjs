@@ -382,6 +382,36 @@
         "boxes/generators/flexbook.py"
       ],
       "sha": "84e392b39191"
+    },
+    "winerack": {
+      "files": [
+        "boxes/generators/winerack.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "bintray": {
+      "files": [
+        "boxes/generators/bintray.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "microrack": {
+      "files": [
+        "boxes/generators/microrack.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "discrack": {
+      "files": [
+        "boxes/generators/discrack.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "stackablebin": {
+      "files": [
+        "boxes/generators/stackablebin.py"
+      ],
+      "sha": "84e392b39191"
     }
   }
 }
