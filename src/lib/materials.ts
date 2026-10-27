@@ -57,16 +57,21 @@ const toolLayer: LayerMachineSettings = {
   enabled: false,
 };
 
+/**
+ * Inner cuts get the outline's settings. The layer exists for its order —
+ * holes first, while the part is still held by the sheet — not for different
+ * settings: the controller already slows for tight features, and a slower
+ * feed only puts more heat into the finger holes and slots, widening them.
+ */
 function makeLayers(
   cutSetting: LayerMachineSettings,
-  innerSetting: LayerMachineSettings,
   engraveSetting: LayerMachineSettings,
   scoreSetting: LayerMachineSettings,
 ): Record<Layer, LayerMachineSettings> {
   return {
     engrave: engraveSetting,
     score: scoreSetting,
-    inner: innerSetting,
+    inner: { ...cutSetting },
     cut: cutSetting,
     annotate: toolLayer,
   };
@@ -92,7 +97,7 @@ export const BUILTIN_MATERIALS: Material[] = [
     name: '7mm Plywood',
     thickness: 7.0,
     kerf: 0.1,
-    layers: makeLayers(cut(8.33, 100), cut(7, 100), engrave(150, 20), engrave(60, 45)),
+    layers: makeLayers(cut(8.33, 100), engrave(150, 20), engrave(60, 45)),
     builtin: true,
   },
   {
@@ -100,7 +105,7 @@ export const BUILTIN_MATERIALS: Material[] = [
     name: '3mm Birch Ply',
     thickness: 3.0,
     kerf: 0.09,
-    layers: makeLayers(cut(12, 100), cut(10, 100), engrave(150, 20), engrave(60, 45)),
+    layers: makeLayers(cut(12, 100), engrave(150, 20), engrave(60, 45)),
     builtin: true,
   },
   {
@@ -108,7 +113,7 @@ export const BUILTIN_MATERIALS: Material[] = [
     name: '6mm MDF',
     thickness: 6.0,
     kerf: 0.1,
-    layers: makeLayers(cut(5, 100, 3), cut(4, 100, 3), engrave(120, 25), engrave(50, 50)),
+    layers: makeLayers(cut(5, 100, 3), engrave(120, 25), engrave(50, 50)),
     builtin: true,
   },
   {
@@ -116,7 +121,7 @@ export const BUILTIN_MATERIALS: Material[] = [
     name: '3mm Black Acrylic',
     thickness: 3.0,
     kerf: 0.07,
-    layers: makeLayers(cut(6, 100, 2), cut(5, 100, 2), engrave(100, 15), engrave(40, 40)),
+    layers: makeLayers(cut(6, 100, 2), engrave(100, 15), engrave(40, 40)),
     builtin: true,
   },
   {
@@ -124,7 +129,20 @@ export const BUILTIN_MATERIALS: Material[] = [
     name: '2mm Greyboard',
     thickness: 2.0,
     kerf: 0.05,
-    layers: makeLayers(cut(25, 70), cut(22, 70), engrave(200, 12), engrave(100, 25)),
+    layers: makeLayers(cut(25, 70), engrave(200, 12), engrave(100, 25)),
+    builtin: true,
+  },
+  {
+    // Single-wall corrugated, as from a shipping box. The cut is measured on
+    // the owner's machine: 2100 mm/min at 70% clears it in one pass. The
+    // engrave layers are still starting points. The flutes char wider than a
+    // solid sheet does, hence the kerf. Air assist keeps them from catching, and
+    // engraving burns through the thin outer liner quickly, so it runs light.
+    id: 'corrugated-3',
+    name: '3mm Corrugated Cardboard',
+    thickness: 3.0,
+    kerf: 0.1,
+    layers: makeLayers(cut(35, 70), engrave(250, 10), engrave(120, 20)),
     builtin: true,
   },
 ];
