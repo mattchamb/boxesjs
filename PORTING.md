@@ -165,6 +165,28 @@ intersect or nest. Finger tabs interleave routinely, so boxes.py packs layouts
 whose part boxes touch at a corner while the outlines stay millimetres apart —
 CardBox at defaults is one.
 
+### Snapshots of the port's own geometry
+
+Wedged tenons and chosen bolts (§9) have no boxes.py output to compare against.
+`test/snapshots.test.ts` renders every entry in `test/variants.ts` and compares
+it with an SVG in `test/snapshots/`, one group per part and one path per line,
+with any warnings as comments. These are not evidence of correctness, only of
+change: they exist so that re-translating a generator after an upstream change
+cannot move its wedged or bolted parts without a diff to review. After a
+deliberate change, `npx vitest run test/snapshots.test.ts -u`, then read the
+diff before committing it.
+
+### Upstream drift
+
+`scripts/upstream.json` records, for the engine and for each generator, the
+boxes.py files it was translated from (including other generators it imports,
+such as RegularBox's `bayonetbox.py`) and the commit it was last checked
+against. `./scripts/upstream-drift.py [id…]` lists every boxes.py commit since
+then that touched those files. Goldens only see drift that an existing case
+exercises; a new option or lid style changes no reference file, and this is
+how it gets noticed. When you re-verify a generator against a newer boxes.py,
+bump its `sha`; when you port a new one, add it.
+
 ---
 
 ## 3. Architecture
@@ -222,7 +244,8 @@ enrolls it in `test/generators.test.ts`, which asserts it renders at defaults,
 names every part, never overlaps parts, and survives every edge type, enum
 option and numeric extreme the UI can produce.
 
-**6. Add golden cases** (§2) and make them pass.
+**6. Add golden cases** (§2) and make them pass, and record the files and
+boxes.py commit you ported from in `scripts/upstream.json`.
 
 **7. Check the UI.** `npm run dev`, open `/b/<id>`, confirm the parameter panel
 reads sensibly and the preview looks like the thing it claims to be.
@@ -455,31 +478,53 @@ WallDrillBox) — plus the RectangularWall part. All of them match boxes.py
 coordinate-for-coordinate across 194 golden cases, regenerated against
 boxes.py master at `84e392b` (2026-10-22).
 
-When the boxes.py checkout moves, regenerate and diff before porting anything
-new: a golden that changes for a generator you did not touch is upstream drift
-to port, not noise. The sync to `84e392b` brought the flat lid's
+When the boxes.py checkout moves, run `./scripts/upstream-drift.py`, then
+regenerate and diff before porting anything new: a golden that changes for a
+generator you did not touch is upstream drift to port, not noise. The sync to `84e392b` brought the flat lid's
 `brim_spacing`, the `flatbrim` and `flatfang` lid styles, Console2's corrected
 panel angle and etched corner marks, and TrayLayout decoding a literal `\n` in
 a pasted layout. Everything else in that range was typing and f-strings.
 
-boxes.py has 169 further generators. **53 of them need no new engine
-machinery at all** — every method, settings family and edge they touch is
-already here (`basedbox`, `two_piece`, `crate`, `slantedtray`, `angledbox`,
-`spicesrack`, `discrack`, `penholderbox`, `halfbox` and more). That count is
-the original survey minus the ones since ported, not a fresh one; re-survey
-before relying on it.
+### What can be ported next
 
-Of the rest, the biggest single blocker was `FlexSettings` (living hinge, 19
-generators). The edge itself is now ported (see the table below). The flexbox
-family and RoundedBox also bend walls through `surroundingWall` (and
-`roundedPlate`), which is not; `flextest`, `flexbook`, `folder`, `breadbox`,
-`shutterbox` and `shoe` call `X` directly and may need nothing else — check
-their other dependencies before starting.
-`_WallMountedBox`, `roundedPlate` and `flangedWall` are now ported too (see
-below), along with every wall-mounted generator, and so are dovetail joints.
-JointPanel, AirPurifier and GridfinityBase were blocked only by dovetails;
-re-survey before assuming what is largest now. Note that a generator referencing `edges.BaseEdge` is *not* blocked — that
-is the generator-local edge pattern of §7, which already works.
+Re-surveyed on 2026-10-28 against `84e392b`, by grepping each of the ~150
+unported generator files for `self.X(` calls, `edges.X` classes,
+`self.parts.X` and hard-coded edge characters, and checking each against what
+`src/lib` has. A grep has false negatives (raw `self.ctx.*` calls, custom base
+classes), so §4 steps 1–2 still come first. Note that `paintbox.py` is
+PaintStorage, already ported.
+
+**About 70 need no new engine machinery.** The most useful, by boxes.py's own
+groups:
+
+| Group | Generators |
+| --- | --- |
+| Box | `two_piece` (upstream already passes `bedBolts`), `basedbox`, `angledbox`, `halfbox`, `crate`, `rackbox`, `rack19halfwidth`, `eurorackskiff`, `regularstarbox`, `electronicsbox`, `displaycase`, `brick_sorter` |
+| Shelf | `spicesrack`, `winerack`, `bintray`, `microrack`, `discrack`, `stackablebin` |
+| Tray | `slantedtray`, `smallpartstray`, `penholderbox`, `gridfinitybase` |
+| FlexBox | `shutterbox`, `breadbox`, `flexbook`, `folder` — `X` directly, no `surroundingWall` |
+| WallMounted | `wallrack`, `rollholder`, `keyholder`, `skadis`, `skadisstand` |
+| Misc | `airpurifier`, `jointpanel`, `bookholder`, `magazinefile`, `laptopstand`, `phoneholder`, `agricolainsert`, and some 25 small parts and test pieces |
+
+`smallpartstray2` and `ubox` also need `_TopEdge.addTopEdgeSettings`, which
+`topedge.ts` does not have.
+
+**The engine pieces still missing, by what each unlocks:**
+
+1. `surroundingWall` (with `latch`): flexbox 1–5, lamp, silverwarebox,
+   doubleflexdoorbox, roundedbox.
+2. `polygonWalls` (plural; `@restore`): coffin and roundedtrapezoidbox, both
+   new upstream, plus roundedregularbox, console, tetris, heart.
+3. The hinge families (`Hinge`, `ChestHinge`, `CabinetHinge`): hingebox,
+   dicebox, integratedhingebox, piratechest and others, and hinged top-edge
+   choices on the boxes already ported.
+4. `SlideOnLid`: royalgame, kamishibai, and slide-on top edges likewise.
+5. `Grooved`: cardholder, slidingdrawer, unevenheightbox.
+6. NEMA, gears, pulleys, servos, `fillHoles`, `hexHolesPlate`, and the two that
+   import shapely/numpy (sphere, stevensonscreenbox).
+
+A generator referencing `edges.BaseEdge` is *not* blocked — that is the
+generator-local edge pattern of §7, which already works.
 
 If you are adding a *new* generator from boxes.py, §§1-8 are what you need; this
 section is a record of what the engine now has and where the sharp edges were.
@@ -585,9 +630,9 @@ inside the mating panel and leaves `end_margin` at the tip (also under kerf),
 each wedge is exactly `gap` wide at its middle. One test runs over every
 wedged generator: tenon holes, wedge slots and wedges must come out equal in
 number, with no warnings, which catches a part wedged on one side of a joint
-only. Add new generators to it. `test/generators.test.ts` has a
-`VARIANTS` list so options that are off at defaults still get the overlap and
-naming checks; add to it when you add an option like this. Keep these off by
+only. Add new generators to it. `test/variants.ts` lists options that are off
+at defaults, so they still get the overlap and naming checks and a snapshot
+(§2); add to it when you add an option like this. Keep these off by
 default, so every golden-covered default stays exactly boxes.py's.
 
 **Captive-nut bolts** are boxes.py's, but choosing them is not: upstream wires
@@ -658,6 +703,35 @@ plain ones, which would take them as a butt joint but are usually meant plain.
   warning on a hidden field goes to the general list.
 - `test/params.test.ts` pins which fields show, and that every warning the
   generators raise in its cases lands on a field the panel shows.
+
+### Adding wedges or bolts to a generator
+
+Everything above as a checklist. Do it in a commit of its own, after the
+generator's plain port is golden-green, so that `git log -p` on the file shows
+which lines are the port's own when upstream changes it later.
+
+1. **Leave the translation's control flow alone.** Key every addition on
+   `this.o.wedged` / `this.o.bolted`, comment it as this port's own, and keep
+   the glue path exactly boxes.py's: the goldens run only that path.
+2. **Offer it** with `assemblyParam([...], help)` from `params/common.ts`, plus
+   `WEDGED_TENON_PARAMS` and/or `BOLT_PARAMS`; `create()` reads `assembly`.
+3. **Choose the joints.** Wedge what holds the sides apart; leave short parts
+   (lips, rails' ends, dividers, retainers) dry. A wedged panel's mating edge
+   becomes `w`, its hole edge `W` or `tenonHolesAt`; a recessed panel costs
+   depth, so `adjustSize` takes `'W'` where it took `true`, and a
+   `move: 'right only'` step may need the wider edge.
+4. **Bolts** go through `bedBolts` / `fingerHolesAt`'s `bolts` argument, from
+   `shelfBolts(this, length, across)`; pass `across` (`wallsBetween`) where
+   another part's slots run in from the same edge. End with `checkBolts`, and
+   set `partCutsCheck` if T-slots could reach other cuts.
+5. **Wedge clearance:** lay the tenons on each side's face with
+   `tenonFootprints` (or `walkBorders` + `legTenonFootprints` for a polygon
+   wall) and warn from `wedgeClearance` on `wt_pitch` / `wt_wedge_length`.
+   Draw the loose wedges with `this.wedges(count, 'up')`.
+6. **Tests:** cases in `test/variants.ts` (then `-u` the snapshots), in "every
+   wedged generator" in `test/wedgedtenon.test.ts`, in the T-slot/hole count in
+   `test/params.test.ts`, and any warning case in "warnings land on fields the
+   panel shows".
 
 ### Wall edges
 

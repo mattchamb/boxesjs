@@ -1,0 +1,249 @@
+{
+  "engine": {
+    "files": [
+      "boxes/__init__.py",
+      "boxes/edges.py",
+      "boxes/lids.py",
+      "boxes/walledges.py",
+      "boxes/parts.py",
+      "boxes/drawing.py",
+      "boxes/Color.py",
+      "boxes/extents.py",
+      "boxes/vectors.py"
+    ],
+    "sha": "84e392b39191"
+  },
+  "generators": {
+    "abox": {
+      "files": [
+        "boxes/generators/abox.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "bayonetbox": {
+      "files": [
+        "boxes/generators/bayonetbox.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "cardbox": {
+      "files": [
+        "boxes/generators/cardbox.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "closedbox": {
+      "files": [
+        "boxes/generators/closedbox.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "compartmentbox": {
+      "files": [
+        "boxes/generators/compartmentbox.py",
+        "boxes/generators/typetray.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "console2": {
+      "files": [
+        "boxes/generators/console2.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "displayshelf": {
+      "files": [
+        "boxes/generators/displayshelf.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "dividertray": {
+      "files": [
+        "boxes/generators/dividertray.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "drillbox": {
+      "files": [
+        "boxes/generators/drillbox.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "drillstand": {
+      "files": [
+        "boxes/generators/drillstand.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "frameloom": {
+      "files": [
+        "boxes/generators/frameloom.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "notesholder": {
+      "files": [
+        "boxes/generators/notesholder.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "openbox": {
+      "files": [
+        "boxes/generators/openbox.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "paintstorage": {
+      "files": [
+        "boxes/generators/paintbox.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "rectangularwall": {
+      "files": [
+        "boxes/generators/rectangularWall.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "regularbox": {
+      "files": [
+        "boxes/generators/regularbox.py",
+        "boxes/generators/bayonetbox.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "storagerack": {
+      "files": [
+        "boxes/generators/storagerack.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "storageshelf": {
+      "files": [
+        "boxes/generators/storageshelf.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "trayinsert": {
+      "files": [
+        "boxes/generators/trayinsert.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "traylayout": {
+      "files": [
+        "boxes/generators/traylayout.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "typetray": {
+      "files": [
+        "boxes/generators/typetray.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "universalbox": {
+      "files": [
+        "boxes/generators/universalbox.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "wallcaliperholder": {
+      "files": [
+        "boxes/generators/wallcaliperholder.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "wallchiselholder": {
+      "files": [
+        "boxes/generators/wallchiselholder.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "wallconsole": {
+      "files": [
+        "boxes/generators/wallconsole.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "walldrillbox": {
+      "files": [
+        "boxes/generators/walldrillbox.py",
+        "boxes/generators/drillstand.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "walledges": {
+      "files": [
+        "boxes/generators/walledges.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "wallhook": {
+      "files": [
+        "boxes/generators/wallhook.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "wallhopper": {
+      "files": [
+        "boxes/generators/wallhopper.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "wallpinrow": {
+      "files": [
+        "boxes/generators/wallpinrow.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "wallplaneholder": {
+      "files": [
+        "boxes/generators/wallplaneholder.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "wallpliersholder": {
+      "files": [
+        "boxes/generators/wallpliersholder.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "wallrollholder": {
+      "files": [
+        "boxes/generators/wallrollholder.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "wallslottedholder": {
+      "files": [
+        "boxes/generators/wallslottedholder.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "wallstackablebin": {
+      "files": [
+        "boxes/generators/wallstackablebin.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "wallstairs": {
+      "files": [
+        "boxes/generators/wallstairs.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "walltypetray": {
+      "files": [
+        "boxes/generators/walltypetray.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "wallwrenchholder": {
+      "files": [
+        "boxes/generators/wallwrenchholder.py"
+      ],
+      "sha": "84e392b39191"
+    }
+  }
+}

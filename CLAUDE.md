@@ -29,6 +29,7 @@ npm test                 # full suite (should stay green)
 npm run check            # tsc --noEmit
 npm run build            # static site into dist/
 ./scripts/gen-golden.sh  # regenerate boxes.py reference SVGs (needs ~/src/boxes)
+./scripts/upstream-drift.py  # boxes.py commits each port has not caught up with
 ```
 
 ## Layout
