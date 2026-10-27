@@ -466,7 +466,7 @@ this reason).
 
 ## 9. State of the port
 
-**Every generator on the list is done.** Fifty-six generators are registered —
+**Every generator on the list is done.** Fifty-seven generators are registered —
 ABox, ClosedBox, OpenBox, CardBox, Console2, UniversalBox, RegularBox,
 BayonetBox, NotesHolder, TypeTray, TrayLayout, TrayInsert, DividerTray,
 CompartmentBox, DrillBox, DrillStand, DisplayShelf, StorageRack, StorageShelf,
@@ -477,8 +477,8 @@ WallTypeTray, WallStackableBin, WallCaliper, WallHook, WallRollHolder,
 WallDrillBox), the first batch from the survey below (TwoPiece, BasedBox,
 AngledBox, Crate, SpicesRack, SlantedTray), and every `polygonWalls` user
 (Coffin, RoundedTrapezoidBox, RoundedRegularBox, Console, Tetris, HeartBox),
-and the flex boxes (FlexBox 1–5, RoundedBox) — plus the RectangularWall part.
-All of them match boxes.py coordinate-for-coordinate across 261 golden cases,
+and the flex boxes (FlexBox 1–5, RoundedBox, DoubleFlexDoorBox) — plus the RectangularWall part.
+All of them match boxes.py coordinate-for-coordinate across 264 golden cases,
 regenerated against boxes.py master at `84e392b` (2026-10-22).
 
 When the boxes.py checkout moves, run `./scripts/upstream-drift.py`, then
@@ -505,7 +505,7 @@ batch since ported). The most useful, by boxes.py's own groups:
 | Box | `halfbox`, `rackbox`, `rack19halfwidth`, `eurorackskiff`, `regularstarbox`, `electronicsbox`, `displaycase`, `brick_sorter` |
 | Shelf | `winerack`, `bintray`, `microrack`, `discrack`, `stackablebin` |
 | Tray | `smallpartstray`, `penholderbox`, `gridfinitybase` |
-| FlexBox | `shutterbox`, `breadbox`, `flexbook`, `folder`, `doubleflexdoorbox`, `lamp` (`silverwarebox` also needs `Boxes.handle`) |
+| FlexBox | `shutterbox`, `breadbox`, `flexbook`, `folder` (`silverwarebox` also needs `Boxes.handle`; `lamp` needs `holesMargin` and is hidden from boxes.py's own web interface) |
 | WallMounted | `wallrack`, `rollholder`, `keyholder`, `skadis`, `skadisstand` |
 | Misc | `airpurifier`, `jointpanel`, `bookholder`, `magazinefile`, `laptopstand`, `phoneholder`, `agricolainsert`, and some 25 small parts and test pieces |
 

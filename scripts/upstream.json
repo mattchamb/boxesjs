@@ -352,6 +352,12 @@
         "boxes/generators/roundedbox.py"
       ],
       "sha": "84e392b39191"
+    },
+    "doubleflexdoorbox": {
+      "files": [
+        "boxes/generators/doubleflexdoorbox.py"
+      ],
+      "sha": "84e392b39191"
     }
   }
 }

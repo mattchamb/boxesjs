@@ -19,6 +19,7 @@ import { coffin } from './coffin';
 import { crate } from './crate';
 import { displayShelf } from './displayshelf';
 import { dividerTray } from './dividertray';
+import { doubleFlexDoorBox } from './doubleflexdoorbox';
 import { drillBox } from './drillbox';
 import { drillStand, wallDrillBox } from './drillstand';
 import { flexBox } from './flexbox';
@@ -118,6 +119,7 @@ const DEFS: GeneratorDef[] = [
   flexBox4,
   flexBox5,
   roundedBox,
+  doubleFlexDoorBox,
   rectangularWall,
 ];
 

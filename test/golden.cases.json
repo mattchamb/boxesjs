@@ -3685,5 +3685,41 @@
       "thickness": 3,
       "labels": true
     }
+  },
+  {
+    "name": "ref_doubleflexdoorbox_default",
+    "generator": "doubleflexdoorbox",
+    "pythonClass": "DoubleFlexDoorBox",
+    "params": {
+      "thickness": 3
+    }
+  },
+  {
+    "name": "ref_doubleflexdoorbox_kerf",
+    "generator": "doubleflexdoorbox",
+    "pythonClass": "DoubleFlexDoorBox",
+    "params": {
+      "x": 160,
+      "y": 80,
+      "h": 70,
+      "radius": 20,
+      "latchsize": 6,
+      "thickness": 4,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_doubleflexdoorbox_labels",
+    "generator": "doubleflexdoorbox",
+    "pythonClass": "DoubleFlexDoorBox",
+    "params": {
+      "x": 140,
+      "y": 60,
+      "h": 90,
+      "radius": 0,
+      "outside": false,
+      "thickness": 3,
+      "labels": true
+    }
   }
 ]
