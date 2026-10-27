@@ -4261,5 +4261,177 @@
       "thickness": 3,
       "labels": true
     }
+  },
+  {
+    "name": "ref_wallrack_default",
+    "generator": "wallrack",
+    "pythonClass": "WallRack",
+    "params": {}
+  },
+  {
+    "name": "ref_wallrack_flat",
+    "generator": "wallrack",
+    "pythonClass": "WallRack",
+    "params": {
+      "x": 150,
+      "y": 60,
+      "sh": "80:120",
+      "outside": true,
+      "top_edge": "y",
+      "full_height_top": false,
+      "wall_height": 15,
+      "back_height": 2,
+      "side_edges": "F",
+      "flat_bottom": true,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_wallrack_mount",
+    "generator": "wallrack",
+    "pythonClass": "WallRack",
+    "params": {
+      "top_edge": "G",
+      "mount_style": "straight edge, extended",
+      "mount_num": 3,
+      "sh": "90*2"
+    }
+  },
+  {
+    "name": "ref_wallrack_labels",
+    "generator": "wallrack",
+    "pythonClass": "WallRack",
+    "params": {
+      "x": 180,
+      "y": 50,
+      "sh": "100*2",
+      "top_edge": "e",
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_rollholder_default",
+    "generator": "rollholder",
+    "pythonClass": "RollHolder",
+    "params": {}
+  },
+  {
+    "name": "ref_rollholder_split",
+    "generator": "rollholder",
+    "pythonClass": "RollHolder",
+    "params": {
+      "one_piece": false,
+      "width": 200,
+      "diameter": 100,
+      "height": 40,
+      "axle": 20,
+      "screw_holes": 5,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_rollholder_labels",
+    "generator": "rollholder",
+    "pythonClass": "RollHolder",
+    "params": {
+      "width": 150,
+      "diameter": 90,
+      "thickness": 3,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_keyholder_default",
+    "generator": "keyholder",
+    "pythonClass": "KeyHolder",
+    "params": {}
+  },
+  {
+    "name": "ref_keyholder_mount",
+    "generator": "keyholder",
+    "pythonClass": "KeyHolder",
+    "params": {
+      "num_hooks": 4,
+      "hook_distance": 30,
+      "hook_thickness": 6,
+      "hook_height": 25,
+      "padding_top": 20,
+      "padding_left_right": 10,
+      "padding_bot": 20,
+      "mounting": true,
+      "thickness": 6
+    }
+  },
+  {
+    "name": "ref_keyholder_labels",
+    "generator": "keyholder",
+    "pythonClass": "KeyHolder",
+    "params": {
+      "num_hooks": 3,
+      "thickness": 4,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_skadis_small",
+    "generator": "skadis",
+    "pythonClass": "SkadisBoard",
+    "pythonModule": "skadis",
+    "params": {
+      "columns": 5,
+      "rows": 4
+    }
+  },
+  {
+    "name": "ref_skadis_default",
+    "generator": "skadis",
+    "pythonClass": "SkadisBoard",
+    "pythonModule": "skadis",
+    "params": {
+      "thickness": 5
+    }
+  },
+  {
+    "name": "ref_skadis_labels",
+    "generator": "skadis",
+    "pythonClass": "SkadisBoard",
+    "pythonModule": "skadis",
+    "params": {
+      "columns": 7,
+      "rows": 6,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_skadisstand_default",
+    "generator": "skadisstand",
+    "pythonClass": "SkadisStand",
+    "params": {}
+  },
+  {
+    "name": "ref_skadisstand_front",
+    "generator": "skadisstand",
+    "pythonClass": "SkadisStand",
+    "params": {
+      "angle": 80,
+      "foot": 120,
+      "foot_front": 60,
+      "connectors": "2:3:6",
+      "extra_height_top": 30,
+      "extra_height_bottom": 10,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_skadisstand_labels",
+    "generator": "skadisstand",
+    "pythonClass": "SkadisStand",
+    "params": {
+      "angle": 60,
+      "foot_front": 40,
+      "thickness": 3,
+      "labels": true
+    }
   }
 ]

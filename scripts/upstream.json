@@ -436,6 +436,36 @@
         "boxes/generators/gridfinitybase.py"
       ],
       "sha": "84e392b39191"
+    },
+    "wallrack": {
+      "files": [
+        "boxes/generators/wallrack.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "rollholder": {
+      "files": [
+        "boxes/generators/rollholder.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "keyholder": {
+      "files": [
+        "boxes/generators/keyholder.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "skadis": {
+      "files": [
+        "boxes/generators/skadis.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "skadisstand": {
+      "files": [
+        "boxes/generators/skadisstand.py"
+      ],
+      "sha": "84e392b39191"
     }
   }
 }

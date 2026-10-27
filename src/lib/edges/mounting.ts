@@ -87,7 +87,11 @@ export class MountingEdge extends BaseEdge {
       throw new Error(`MountingEdge: margin needs to be in [0, 0.5] but is ${margin}`);
     }
     if (dh !== 0 && !(dh > ds)) {
-      throw new Error(`MountingEdge: d_head needs to be 0 or > ${ds}, but is ${dh}`);
+      // boxes.py raises here. Both sizes are form fields, so a head no wider
+      // than the shaft is one slider away; warn and leave the edge plain.
+      this.boxes.warn(`The screw head must be wider than its ${ds} mm shaft, or 0 for plain round holes.`, 'mount_d_head');
+      this.edge(length);
+      return;
     }
 
     let count = Math.max(1, Math.trunc(num));
