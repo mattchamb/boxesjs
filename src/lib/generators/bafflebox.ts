@@ -29,6 +29,7 @@ import type { BoltPolicy } from '../edges/base';
 import { checkBolts, shelfBolts } from '../edges/bolts';
 import type { FingerJointSettings } from '../edges/fingerjoint';
 import { tenonFootprints, wedgeClearance } from '../edges/wedgedtenon';
+import { ETCHING } from '../geom/colors';
 import { BOLT_PARAMS, WEDGED_TENON_PARAMS, assemblyParam } from '../params/common';
 import type { ParamSpec, ParamValues } from '../params/schema';
 import { b, n, s, type GeneratorDef } from './types';
@@ -84,8 +85,24 @@ export interface BaffleBoxOptions {
   outside: boolean;
   thickness: number;
   vent: VentShape;
-  /** The front panel's opening: the duct port, or a light trap's room-side opening. */
+  /**
+   * The vent's centre from the back's centre, right and up as seen from the
+   * front. The back is etched to show which way round it goes when it is not
+   * centred.
+   */
+  ventOffset: [number, number];
+  /** The room-side opening: the duct port, or a light trap's intake. */
   port: Opening;
+  /**
+   * Which panel it is in. In the bottom, it sits in the front chamber, which
+   * is made deep enough for it, and the first baffle stands up behind it.
+   */
+  portSide: 'front' | 'bottom';
+  /**
+   * In the bottom, how far it keeps from the front panel's inner face: past
+   * the front's wedges when wedged.
+   */
+  frontClear: number;
   flange: number;
   screw: number;
   baffles: number;
@@ -135,12 +152,18 @@ export interface BaffleBoxLayout {
   xi: number;
   hi: number;
   yi: number;
-  /** The front opening as cut, and its centre in the front panel's inner coordinates. */
+  /**
+   * The room-side opening as cut, and its centre: in the front panel's inner
+   * coordinates (x, z), or in the bottom wall's (x, y from the back).
+   */
   portShape: Opening;
   port: [number, number];
   vent: VentShape;
-  /** Depth of each chamber between baffles. */
+  /** The vent's centre on the back, in its inner coordinates (x, z). */
+  ventAt: [number, number];
+  /** Depth of each chamber between baffles, and of the front one, deeper for an opening in the bottom. */
   pitch: number;
+  frontChamber: number;
   baffles: BaffleLayout[];
   baffleHeight: number;
   /**
@@ -188,7 +211,8 @@ export function sightWindow(ws: Window[]): number {
     for (let j = i + 1; j < edges.length; j++) {
       const [yi, zi] = edges[i]!;
       const [yj, zj] = edges[j]!;
-      if (yi !== yj) best = Math.max(best, width((zi - zj) / (yi - yj)));
+      // A one-sided limit has no edge on its open side.
+      if (yi !== yj && Number.isFinite(zi) && Number.isFinite(zj)) best = Math.max(best, width((zi - zj) / (yi - yj)));
     }
   }
   return best;
@@ -207,16 +231,26 @@ export function baffleBoxLayout(o: BaffleBoxOptions): BaffleBoxLayout {
   const [xi, hi, yIn] = o.outside ? [o.x - 2 * t, o.h - 2 * t - 2 * e, o.y - 2 * t - 2 * e] : [o.x, o.h, o.y];
   const fit = Math.max(1, Math.min(xi, hi) - 2);
 
+  // The room-side opening's room across the panel and along it: up the
+  // front, or front to back in the bottom, short of the front and of a
+  // thickness for the first baffle to stand behind it.
+  const bottom = o.portSide === 'bottom';
+  const panel = bottom ? 'bottom' : 'front panel';
+  const roomW = Math.max(1, xi - 2);
+  const roomH = Math.max(1, bottom ? yIn - o.frontClear - t : hi - 2);
+  const pfit = Math.min(roomW, roomH);
+  const grow = bottom ? 'wide and deep' : 'wide and tall';
   let portShape = o.port;
-  if (portShape.shape === 'round' && portShape.d > fit) {
-    warn(`The opening is wider than the front panel's inside, so it is cut at ${mm(fit)}. Make the box at least ${mm(portShape.d + 2 + (o.outside ? 2 * t + 2 * e : 0))} wide and tall.`, 'duct_d');
-    portShape = { shape: 'round', d: fit };
-  } else if (portShape.shape === 'rect' && (portShape.w > xi - 2 || portShape.h > hi - 2)) {
-    warn('The opening is larger than the front panel\'s inside, so it is cut to fit.', portShape.w > xi - 2 ? 'port_w' : 'port_h');
-    portShape = { shape: 'rect', w: Math.max(1, Math.min(portShape.w, xi - 2)), h: Math.max(1, Math.min(portShape.h, hi - 2)) };
-  } else if (portShape.shape === 'fan' && portShape.size > Math.min(xi, hi)) {
-    warn(`A ${portShape.size} mm fan does not fit inside the front panel, so only a ${mm(Math.min(FANS[portShape.size]!.hole, fit))} hole is cut. Make the box at least ${mm(portShape.size + (o.outside ? 2 * t + 2 * e : 0))} wide and tall.`, 'fan_size');
-    portShape = { shape: 'round', d: Math.min(FANS[portShape.size]!.hole, fit) };
+  if (portShape.shape === 'round' && portShape.d > pfit) {
+    warn(`The opening is wider than the ${panel}'s inside allows, so it is cut at ${mm(pfit)}. Make the box ${grow}er.`, 'duct_d');
+    portShape = { shape: 'round', d: pfit };
+  } else if (portShape.shape === 'rect' && (portShape.w > roomW || portShape.h > roomH)) {
+    warn(`The opening is larger than the ${panel}'s inside allows, so it is cut to fit.`, portShape.w > roomW ? 'port_w' : 'port_h');
+    portShape = { shape: 'rect', w: Math.min(portShape.w, roomW), h: Math.min(portShape.h, roomH) };
+  } else if (portShape.shape === 'fan' && portShape.size > Math.min(roomW, roomH) + 2) {
+    const d = Math.min(FANS[portShape.size]!.hole, pfit);
+    warn(`A ${portShape.size} mm fan does not fit inside the ${panel}, so only a ${mm(d)} hole is cut. Make the box ${grow}er.`, 'fan_size');
+    portShape = { shape: 'round', d };
   }
 
   let vent = o.vent;
@@ -227,18 +261,34 @@ export function baffleBoxLayout(o: BaffleBoxOptions): BaffleBoxLayout {
     warn('The vent is larger than the box\'s inside, so its opening is cut to fit.', vent.w > xi - 2 ? 'vent_w' : 'vent_h');
     vent = { shape: 'rect', w: Math.max(1, Math.min(vent.w, xi - 2)), h: Math.max(1, Math.min(vent.h, hi - 2)) };
   }
+  // Off centre, the vent stays a millimetre inside the walls.
+  const [vw, vh] = span(vent);
+  const reach = [Math.max(0, (xi - vw) / 2 - 1), Math.max(0, (hi - vh) / 2 - 1)];
+  const ventAt: [number, number] = [0, 1].map((k) => {
+    const want = o.ventOffset[k]!;
+    const got = Math.max(-reach[k]!, Math.min(reach[k]!, want));
+    if (Math.abs(got - want) > 1e-9) {
+      warn(`The vent cannot sit that far off centre and stay inside the box: it is moved ${mm(Math.abs(got))} ${k ? (want > 0 ? 'up' : 'down') : want > 0 ? 'right' : 'left'} instead.`, k ? 'vent_dz' : 'vent_dx');
+    }
+    return (k ? hi : xi) / 2 + got;
+  }) as [number, number];
   // The passages need be no larger than the smaller of the two openings.
   const area = Math.min(openArea(portShape), openArea(vent));
 
+  // An opening in the bottom needs the front chamber at least as deep as it,
+  // with its clearances; the other chambers share what is left.
+  const portDepth = bottom ? span(portShape)[1] + o.frontClear + t : 0;
   // Every chamber at least a thickness deep, or the walls' holes for
   // neighbouring baffles run into each other.
-  const maxBaffles = Math.max(0, Math.floor((yIn - t) / (2 * t)));
+  const maxBaffles = Math.max(0, Math.floor((yIn - Math.max(t, portDepth)) / (2 * t)));
   let count = o.baffles;
   if (count > maxBaffles) {
     warn(`Only ${maxBaffles} baffle${maxBaffles === 1 ? '' : 's'} fit in this depth.`, 'baffles');
     count = maxBaffles;
   }
-  const pitch = (yIn - count * t) / (count + 1);
+  const even = (yIn - count * t) / (count + 1);
+  const frontChamber = Math.max(even, portDepth);
+  const pitch = count > 0 ? (yIn - count * t - frontChamber) / count : frontChamber;
 
   let gap = o.gap;
   const minBaffle = Math.min(hi / 2, 2 * t);
@@ -253,50 +303,66 @@ export function baffleBoxLayout(o: BaffleBoxOptions): BaffleBoxLayout {
     warn(`The gaps at the baffles' free edges are smaller than the openings and will choke the airflow: make the gap at least ${mm(area / xi)}.`, 'baffle_gap');
   }
   const needPitch = Math.max(area / xi, area / perimeter(portShape), area / perimeter(vent));
-  if (pitch < needPitch) {
+  if (Math.min(pitch, frontChamber) < needPitch) {
     warn(
       count > 0
-        ? `The spaces between the baffles (${mm(pitch)}) are narrower than the airflow needs (${mm(needPitch)}): use fewer baffles or make the box deeper.`
+        ? `The spaces between the baffles (${mm(Math.min(pitch, frontChamber))}) are narrower than the airflow needs (${mm(needPitch)}): use fewer baffles or make the box deeper.`
         : `The box is shallower than the airflow needs (${mm(needPitch)} inside) and will choke it.`,
       count > 0 ? 'baffles' : 'y',
     );
   }
 
-  // The first baffle hangs from the top: the port's air goes down under it.
+  // Facing the front opening, the first baffle hangs from the top and the
+  // air goes down under it. Behind a bottom one it stands up instead, so
+  // light coming up through the floor would have to climb over it and drop
+  // under the next, which no straight line does.
   const baffles: BaffleLayout[] = [];
   for (let i = 0; i < count; i++) {
-    baffles.push({ y: yIn - ((i + 1) * pitch + i * t + t / 2), top: i % 2 === 0 });
+    baffles.push({ y: yIn - (frontChamber + i * (pitch + t) + t / 2), top: (i % 2 === 0) !== bottom });
   }
 
-  const port: [number, number] = [xi / 2, hi / 2];
+  const port: [number, number] = bottom ? [xi / 2, yIn - o.frontClear - span(portShape)[1] / 2] : [xi / 2, hi / 2];
 
   // Seen from the side, every opening and gap is a window a straight ray has
   // to pass; the baffles span the width, so nothing gets round them sideways.
-  const windows = (g: number): Window[] => {
+  //
+  // A hole in the bottom is a window lying flat, which a line z = a + b·y
+  // passes falling or rising; either way it is two one-sided limits, at the
+  // hole's back and front edges, above the floor's top and below its
+  // underside. The sight is the wider of the two cases.
+  const windowSets = (g: number): Window[][] => {
     const at = (y0: number, y1: number, lo: number, up: number) => [
       { y: y0, lo, hi: up },
       { y: y1, lo, hi: up },
     ];
     const around = (o: Opening) => span(o)[1] / 2;
-    return [
-      ...at(-t, 0, port[1] - around(vent), port[1] + around(vent)),
+    const zc = hi / 2;
+    const zv = ventAt[1];
+    const inside = [
+      ...at(-t, 0, zv - around(vent), zv + around(vent)),
       ...baffles.flatMap((bf) => at(bf.y - t / 2, bf.y + t / 2, bf.top ? 0 : hi - g, bf.top ? g : hi)),
-      ...at(yIn, yIn + t, port[1] - around(portShape), port[1] + around(portShape)),
+    ];
+    if (!bottom) return [[...inside, ...at(yIn, yIn + t, zc - around(portShape), zc + around(portShape))]];
+    const [y0, y1] = [port[1] - around(portShape), port[1] + around(portShape)];
+    return [
+      [...inside, { y: y0, lo: 0, hi: Infinity }, { y: y1, lo: -Infinity, hi: -t }],
+      [...inside, { y: y0, lo: -Infinity, hi: -t }, { y: y1, lo: 0, hi: Infinity }],
     ];
   };
-  const sight = sightWindow(windows(count > 0 ? gap : 0));
+  const sightAt = (g: number) => Math.max(...windowSets(g).map(sightWindow));
+  const sight = sightAt(count > 0 ? gap : 0);
 
   if (o.lightTrap) {
     const gapMax = hi - minBaffle;
     // The window only widens as the gap opens, so halve towards the widest tight one.
     let tight = -1;
-    if (count > 0 && sightWindow(windows(0)) <= -LIGHT_MARGIN) {
+    if (count > 0 && sightAt(0) <= -LIGHT_MARGIN) {
       let [lo, up] = [0, gapMax];
-      if (sightWindow(windows(up)) <= -LIGHT_MARGIN) tight = up;
+      if (sightAt(up) <= -LIGHT_MARGIN) tight = up;
       else {
         for (let i = 0; i < 40; i++) {
           const mid = (lo + up) / 2;
-          if (sightWindow(windows(mid)) <= -LIGHT_MARGIN) lo = mid;
+          if (sightAt(mid) <= -LIGHT_MARGIN) lo = mid;
           else up = mid;
         }
         tight = lo;
@@ -333,9 +399,8 @@ export function baffleBoxLayout(o: BaffleBoxOptions): BaffleBoxLayout {
     // face, and the box is built round it.
     const c = o.mountInset;
     screws.push([c, c], [pw - c, c], [pw - c, ph - c], [c, ph - c]);
-    const [vw, vh] = span(vent);
     const clear = ([sx, sy]: [number, number]) => {
-      const [dx, dy] = [Math.abs(sx - pw / 2), Math.abs(sy - ph / 2)];
+      const [dx, dy] = [Math.abs(sx - ventAt[0]), Math.abs(sy - ventAt[1])];
       const room = o.screw / 2 + 2;
       return vent.shape === 'round' ? Math.hypot(dx, dy) > vw / 2 + room : dx > vw / 2 + room || dy > vh / 2 + room;
     };
@@ -345,7 +410,8 @@ export function baffleBoxLayout(o: BaffleBoxOptions): BaffleBoxLayout {
   }
 
   let gate: GateLayout | null = null;
-  if (o.gate) {
+  // A gate needs the port in the front, so the slider can rise out of the top.
+  if (o.gate && !bottom) {
     const r = o.rail;
     // Only a round duct takes the gate; the other openings are the light trap's.
     const duct = span(portShape)[0];
@@ -400,7 +466,9 @@ export function baffleBoxLayout(o: BaffleBoxOptions): BaffleBoxLayout {
     portShape,
     port,
     vent,
+    ventAt,
     pitch,
+    frontChamber,
     baffles,
     baffleHeight: hi - gap,
     sight,
@@ -486,21 +554,36 @@ class BaffleBox extends Boxes {
     const bolted = o.assembly === 'bolts';
     // Bolted, the back's corner screws stay past the reach of its T-slots.
     const slotReach = bolted ? this.bedBoltSettings[3]! + this.bedBoltSettings[1]! : 0;
-    const lay = baffleBoxLayout({ ...o, thickness: t, recess: ws.holeInset(), mountInset: Math.max(slotReach, o.screw + 6) });
+    // An opening in the bottom keeps a thickness from the front panel, or,
+    // wedged, clears the front's wedges lying across the bottom's underside.
+    const frontClear = wedged ? Math.max(t, ws.wedge_length / 2 - t / 2 + 1) : t;
+    const lay = baffleBoxLayout({ ...o, thickness: t, recess: ws.holeInset(), mountInset: Math.max(slotReach, o.screw + 6), frontClear });
     for (const w of lay.warnings) this.warn(w.message, w.param);
     const { xi, hi, yi, gate } = lay;
     const bh = lay.baffleHeight;
 
-    const vent = (cx: number, cy: number) => {
+    // The vent and, off centre, the mark for which way round the back goes,
+    // from the back's inner corner at (dx, dy) in the frame being drawn.
+    const vent = (dx: number, dy: number) => {
       const v = lay.vent;
+      const [cx, cy] = [dx + lay.ventAt[0], dy + lay.ventAt[1]];
       if (v.shape === 'round') this.hole(cx, cy, v.d / 2);
       else this.rectangularHole(cx, cy, v.w, v.h);
+      if (o.ventOffset[0] === 0 && o.ventOffset[1] === 0) return;
+      // Above the vent or below it, whichever has more room; it reads the
+      // right way up from the front either way.
+      const fs = 6;
+      const vh = span(v)[1];
+      const above = hi - (lay.ventAt[1] + vh / 2);
+      const below = lay.ventAt[1] - vh / 2;
+      if (Math.max(above, below) < fs + 4) return;
+      const z = above >= below ? hi - Math.max(t, (above - fs) / 2) - fs / 2 : Math.max(t, (below - fs) / 2) + fs / 2;
+      this.text('\u2191 top, seen from the front', dx + xi / 2, dy + z, 0, 'middle center', fs, ETCHING);
     };
     const screws = (dx = 0, dy = 0) => {
       for (const [x, y] of lay.plate.screws) this.hole(x + dx, y + dy, o.screw / 2);
     };
-    const front = () => {
-      const [px, pz] = lay.port;
+    const opening = (px: number, pz: number) => {
       const ps = lay.portShape;
       if (ps.shape === 'rect') this.rectangularHole(px, pz, ps.w, ps.h);
       else this.hole(px, pz, span(ps)[0] / 2);
@@ -508,7 +591,15 @@ class BaffleBox extends Boxes {
         const q = FANS[ps.size]!.pitch / 2;
         for (const [dx, dz] of [[-q, -q], [q, -q], [q, q], [-q, q]] as const) this.hole(px + dx, pz + dz, FAN_SCREW / 2);
       }
+    };
+    const inFloor = o.portSide === 'bottom';
+    const front = () => {
+      if (!inFloor) opening(lay.port[0], lay.port[1]);
       if (gate) this.boltHoles(gate.bolts, gate.x0, gate.z0);
+    };
+    // The bottom's opening, at `dy` from the frame its holes are drawn in to the back's inner face.
+    this.floorOpening = (dy) => {
+      if (inFloor) opening(lay.port[0], lay.port[1] + dy);
     };
     const baffleLabel = (i: number) => `baffle ${i + 1}`;
 
@@ -522,11 +613,12 @@ class BaffleBox extends Boxes {
         this.fingerHolesAt(fl + t, fl + t + hi + t / 2, xi, 0);
         this.fingerHolesAt(fl + t / 2, fl + t, hi, 90);
         this.fingerHolesAt(fl + t + xi + t / 2, fl + t, hi, 90);
-        vent(fl + t + xi / 2, fl + t + hi / 2);
+        vent(fl + t, fl + t);
         screws();
       };
       const holesFor = (top: boolean) => () => {
         for (const bf of lay.baffles) if (bf.top === top) this.fingerHolesAt(0, bf.y, xi, 0);
+        if (!top) this.floorOpening(0);
       };
       const sideHoles = () => {
         for (const bf of lay.baffles) this.fingerHolesAt(bf.top ? hi - bh : 0, bf.y, bh, 0);
@@ -567,6 +659,7 @@ class BaffleBox extends Boxes {
   }
 
   private wedgeCount = 0;
+  private floorOpening: (dy: number) => void = () => {};
 
   /**
    * Bolted, it is ClosedBox's bolted box with baffles: the back and front sit
@@ -588,6 +681,7 @@ class BaffleBox extends Boxes {
     const baffle = shelfBolts(this, bh);
     const holesFor = (top: boolean) => () => {
       for (const bf of lay.baffles) if (bf.top === top) this.fingerHolesAt(0, bf.y, xi, 0);
+      if (!top) this.floorOpening(0);
     };
     const sideHoles = () => {
       for (const bf of lay.baffles) this.fingerHolesAt(bf.top ? hi - bh : 0, bf.y, bh, 0, baffle);
@@ -600,7 +694,7 @@ class BaffleBox extends Boxes {
     if (lay.baffles.length) joints.push({ label: 'the baffles', length: bh, policy: baffle });
     checkBolts(this, this.getEdge('f').settings as FingerJointSettings, joints);
     return [
-      this.wall(xi, hi, 'ffff', 'back', [() => { vent(xi / 2, hi / 2); screws(); }], [backX, backH, backX, backH]),
+      this.wall(xi, hi, 'ffff', 'back', [() => { vent(0, 0); screws(); }], [backX, backH, backX, backH]),
       this.wall(xi, hi, 'ffff', 'front', [front], [frontX, frontH, frontX, frontH]),
       this.wall(xi, yi, 'FFFF', 'top', [holesFor(true)], [backX, corner, frontX, corner]),
       this.wall(xi, yi, 'FFFF', 'bottom', [holesFor(false)], [backX, corner, frontX, corner]),
@@ -655,6 +749,7 @@ class BaffleBox extends Boxes {
     const cap = (top: boolean) => () => {
       for (const [x, y, l, a] of capLines(top)) this.tenonHolesAt(x, y, l, a);
       for (const bf of lay.baffles) if (bf.top === top) this.fingerHolesAt(0, wy(bf.y), xi, 0);
+      if (!top) this.floorOpening(e + t);
       if (top && gate) {
         // The slider's slot, over the gate's spacer on the front's outer face.
         const play = this.o.play;
@@ -670,7 +765,7 @@ class BaffleBox extends Boxes {
     const n = (l: number) => this.tenonCount(l);
     this.wedgeCount = 2 * n(xi) + 2 * n(hi) + (gate ? 1 : 2) * n(xi) + 2 * n(hi) + 4 * n(D) + 2 * lay.baffles.length * n(bh);
     return [
-      this.wall(xi, hi, 'wwww', 'back', [() => { vent(xi / 2, hi / 2); screws(); }]),
+      this.wall(xi, hi, 'wwww', 'back', [() => { vent(0, 0); screws(); }]),
       this.wall(xi, hi, gate ? 'wwew' : 'wwww', 'front', [front]),
       this.wall(xi, D, 'ewew', 'top', [cap(true)]),
       this.wall(xi, D, 'ewew', 'bottom', [cap(false)]),
@@ -711,6 +806,19 @@ const ventParams = (what: string): ParamSpec[] => [
   { key: 'vent_d', kind: 'length', label: `${what} diameter`, unit: 'mm', default: 100, min: 20, max: 1000, step: 0.5, group: 'dimensions', showIf: (v) => v.vent_shape !== 'rect' },
   { key: 'vent_w', kind: 'length', label: `${what} width`, unit: 'mm', default: 150, min: 20, max: 1000, step: 0.5, group: 'dimensions', showIf: (v) => v.vent_shape === 'rect' },
   { key: 'vent_h', kind: 'length', label: `${what} height`, unit: 'mm', default: 75, min: 20, max: 1000, step: 0.5, group: 'dimensions', showIf: (v) => v.vent_shape === 'rect' },
+  {
+    key: 'vent_dx',
+    kind: 'length',
+    label: `${what} off centre, right`,
+    unit: 'mm',
+    default: 0,
+    min: -500,
+    max: 500,
+    step: 0.5,
+    group: 'dimensions',
+    help: 'From the box\'s centre, seen from the front; negative is left. Off centre, the back is etched with which way up it goes.',
+  },
+  { key: 'vent_dz', kind: 'length', label: `${what} off centre, up`, unit: 'mm', default: 0, min: -500, max: 500, step: 0.5, group: 'dimensions', help: 'From the box\'s centre; negative is down.' },
 ];
 
 const BAFFLE_PARAMS: ParamSpec[] = [
@@ -791,14 +899,17 @@ function common(v: ParamValues) {
     outside: b(v, 'outside', true),
     thickness: 0,
     vent: readVent(v),
+    ventOffset: [n(v, 'vent_dx', 0), n(v, 'vent_dz', 0)] as [number, number],
     flange: n(v, 'flange', 25),
     screw: n(v, 'screw_d', 5),
     baffles: Math.max(0, Math.round(n(v, 'baffles', 2))),
     gap: n(v, 'baffle_gap', 60),
     assembly: readAssembly(v),
-    // Both are measured off the joints once the box is built.
+    portSide: 'front' as const,
+    // These are measured off the joints once the box is built.
     recess: 0,
     mountInset: 0,
+    frontClear: 0,
   };
 }
 
@@ -867,7 +978,8 @@ export const lightTrapVent: GeneratorDef = {
       '',
       '- The back plate goes against the case, its opening cut to match the hole there, with a flange round the ' +
         'box for the screws.',
-      '- The front opening can be round, rectangular, or cut for a standard case fan to blow air in.',
+      '- The room-side opening can be round, rectangular, or cut for a standard case fan to blow air in, in the ' +
+        'front or in the bottom. In the bottom it faces the floor, so any light that does get out goes down.',
       `- The baffles overlap every straight line through the box by at least ${LIGHT_MARGIN} mm. The box warns ` +
         'when they do not, and says what gap would, or that it needs another baffle.',
       '',
@@ -882,9 +994,20 @@ export const lightTrapVent: GeneratorDef = {
     ...adapt(SIZE_PARAMS, { h: { default: 200 }, y: { default: 200, help: 'Out from the case.' } }),
     ...ventParams('Case opening'),
     {
+      key: 'port_side',
+      kind: 'enum',
+      label: 'Room-side opening in',
+      default: 'front',
+      group: 'dimensions',
+      choices: [
+        { value: 'front', label: 'Front' },
+        { value: 'bottom', label: 'Bottom', help: 'Faces the floor, so light that does get out goes down. The front chamber is made deep enough for it.' },
+      ],
+    },
+    {
       key: 'port_shape',
       kind: 'enum',
-      label: 'Front opening',
+      label: 'Room-side opening',
       default: 'round',
       group: 'dimensions',
       choices: [
@@ -895,7 +1018,7 @@ export const lightTrapVent: GeneratorDef = {
     },
     { key: 'duct_d', kind: 'length', label: 'Opening diameter', unit: 'mm', default: 100, min: 20, max: 400, step: 0.5, group: 'dimensions', showIf: (v) => (v.port_shape ?? 'round') === 'round' },
     { key: 'port_w', kind: 'length', label: 'Opening width', unit: 'mm', default: 150, min: 20, max: 1000, step: 0.5, group: 'dimensions', showIf: (v) => v.port_shape === 'rect' },
-    { key: 'port_h', kind: 'length', label: 'Opening height', unit: 'mm', default: 60, min: 20, max: 1000, step: 0.5, group: 'dimensions', showIf: (v) => v.port_shape === 'rect' },
+    { key: 'port_h', kind: 'length', label: 'Opening height', help: 'In the bottom, its depth front to back.', unit: 'mm', default: 60, min: 20, max: 1000, step: 0.5, group: 'dimensions', showIf: (v) => v.port_shape === 'rect' },
     { key: 'fan_size', kind: 'enum', label: 'Fan size', default: '120', group: 'dimensions', choices: FAN_CHOICES, showIf: (v) => v.port_shape === 'fan' },
     ...adapt(BAFFLE_PARAMS, { baffles: { default: 3 }, baffle_gap: { default: 50 } }),
     ...MOUNT_PARAMS,
@@ -910,7 +1033,7 @@ export const lightTrapVent: GeneratorDef = {
           ? { shape: 'fan', size: Number(s(v, 'fan_size', '120')) }
           : { shape: 'round', d: n(v, 'duct_d', 100) };
     return new BaffleBox(
-      { ...common(v), port, gate: false, rail: 15, play: 0.5, bolt: 4, lightTrap: true },
+      { ...common(v), port, portSide: s(v, 'port_side', 'front') === 'bottom' ? 'bottom' : 'front', gate: false, rail: 15, play: 0.5, bolt: 4, lightTrap: true },
       config,
     );
   },

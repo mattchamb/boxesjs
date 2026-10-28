@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import { LIGHT_MARGIN, baffleBoxLayout, sightWindow, type BaffleBoxOptions, type Opening, type Window } from '~/lib/generators/bafflebox';
 import { defaultsFor } from '~/lib/generators/registry';
 import { buildDrawing } from '~/lib/preview';
+import { toSVG } from '~/lib/export/svg';
 import type { ParamValues } from '~/lib/params/schema';
 
 function opts(over: Partial<BaffleBoxOptions> = {}): BaffleBoxOptions {
@@ -18,7 +19,10 @@ function opts(over: Partial<BaffleBoxOptions> = {}): BaffleBoxOptions {
     outside: true,
     thickness: 3,
     vent: { shape: 'round', d: 100 },
+    ventOffset: [0, 0],
     port: { shape: 'round', d: 100 },
+    portSide: 'front',
+    frontClear: 3,
     lightTrap: false,
     assembly: 'glue',
     recess: 12,
@@ -236,5 +240,123 @@ describe('knocked down', () => {
     // The same port and box inside, so past the channel the slider is longer by the top wall it passes.
     expect(g.slider.length - (g.h - g.channelBottom)).toBeCloseTo(glued.slider.length - (glued.h - glued.channelBottom) + 3, 9);
     expect(wedged.warnings).toEqual([]);
+  });
+});
+
+/**
+ * Whether any of a grid of straight rays from the outer face of the
+ * room-side opening to the back of the vent gets past every part, traced
+ * through the parts themselves rather than the windows the layout uses.
+ * `inFloor` for an opening in the bottom; `widen` opens every baffle gap by that much.
+ */
+function rayGetsThrough(lay: ReturnType<typeof baffleBoxLayout>, { inFloor = false, widen = 0 } = {}): boolean {
+  const t = lay.t;
+  const half = (o: Opening) => (o.shape === 'round' ? o.d / 2 : o.shape === 'rect' ? o.h / 2 : NaN);
+  const r = half(lay.portShape);
+  const v = half(lay.vent);
+  const [z0, z1] = [lay.ventAt[1] - v, lay.ventAt[1] + v];
+  const g = lay.hi - lay.baffleHeight + widen;
+  const N = 300;
+  for (let i = 0; i <= N; i++) {
+    for (let j = 0; j <= N; j++) {
+      // From the opening's outer face, through its inner face, to the vent's back.
+      const [py, pz] = inFloor ? [lay.port[1] - r + (2 * r * i) / N, -t] : [lay.yi + t, lay.port[1] - r + (2 * r * i) / N];
+      const [qy, qz] = [-t, z0 + ((z1 - z0) * j) / N];
+      const zAt = (y: number) => pz + ((qz - pz) * (y - py)) / (qy - py);
+      const yAt = (z: number) => py + ((qy - py) * (z - pz)) / (qz - pz);
+      if (inFloor) {
+        if (Math.abs(yAt(0) - lay.port[1]) > r) continue;
+      } else if (Math.abs(zAt(lay.yi) - lay.port[1]) > r) continue;
+      if (zAt(0) < z0 || zAt(0) > z1) continue;
+      const blocked = lay.baffles.some((bf) =>
+        [bf.y - t / 2, bf.y + t / 2].some((y) => {
+          const z = zAt(y);
+          return bf.top ? z > g : z < lay.hi - g;
+        }),
+      );
+      if (!blocked) return true;
+    }
+  }
+  return false;
+}
+
+describe('the light trap with its opening in the bottom', () => {
+  const floor = (over: Partial<BaffleBoxOptions> = {}) =>
+    baffleBoxLayout(opts({ gate: false, lightTrap: true, portSide: 'bottom', h: 200, y: 200, baffles: 1, gap: 50, ...over }));
+
+  it('stands the first baffle up behind the opening, in a front chamber deep enough for it', () => {
+    const lay = floor({ baffles: 2 });
+    expect(lay.baffles.map((b) => b.top)).toEqual([false, true]);
+    const d = (lay.portShape as { d: number }).d;
+    expect(lay.frontChamber).toBeCloseTo(d + 3 + 3, 9);
+    // The opening's edge stays the clearance off the front, and a thickness off the first baffle.
+    expect(lay.yi - (lay.port[1] + d / 2)).toBeCloseTo(3, 9);
+    expect(lay.port[1] - d / 2 - (lay.baffles[0]!.y + lay.t / 2)).toBeCloseTo(3, 9);
+    const faces = [lay.baffles[0]!.y - lay.t / 2, lay.baffles[1]!.y + lay.t / 2, lay.baffles[1]!.y - lay.t / 2, 0];
+    expect(faces[0]! - faces[1]!).toBeCloseTo(lay.pitch, 9);
+    expect(faces[2]! - faces[3]!).toBeCloseTo(lay.pitch, 9);
+  });
+
+  it('agrees with rays traced through the parts: open with no baffle, shut with one, by its margin', () => {
+    const open = floor({ baffles: 0 });
+    expect(open.sight).toBeGreaterThan(0);
+    expect(rayGetsThrough(open, { inFloor: true })).toBe(true);
+
+    const shut = floor();
+    expect(shut.sight).toBeLessThanOrEqual(-LIGHT_MARGIN);
+    expect(shut.warnings).toEqual([]);
+    expect(rayGetsThrough(shut, { inFloor: true })).toBe(false);
+    // Still shut with the gap opened by most of the margin.
+    expect(rayGetsThrough(shut, { inFloor: true, widen: LIGHT_MARGIN - 1 })).toBe(false);
+  });
+
+  it('warns, and names the gap that would do, once a ray gets through', () => {
+    const leaky = floor({ gap: 120 });
+    expect(rayGetsThrough(leaky, { inFloor: true })).toBe(true);
+    const msg = leaky.warnings.find((w) => /Light/.test(w.message))!.message;
+    const most = Number(/at most (\d+) mm/.exec(msg)![1]);
+    expect(rayGetsThrough(floor({ gap: most }), { inFloor: true })).toBe(false);
+  });
+
+  it('keeps clear of the front panel\'s wedges when wedged', () => {
+    const lay = floor({ assembly: 'wedges', y: 240, frontClear: 12 });
+    const d = (lay.portShape as { d: number }).d;
+    expect(lay.yi - (lay.port[1] + d / 2)).toBeCloseTo(12, 9);
+  });
+});
+
+describe('an off-centre vent', () => {
+  it('moves the vent, and keeps it inside the walls with a warning', () => {
+    const lay = baffleBoxLayout(opts({ ventOffset: [20, -30] }));
+    expect(lay.ventAt).toEqual([lay.xi / 2 + 20, lay.hi / 2 - 30]);
+    expect(lay.warnings).toEqual([]);
+    const far = baffleBoxLayout(opts({ ventOffset: [0, 200] }));
+    expect(far.ventAt[1] + 50).toBeCloseTo(far.hi - 1, 9);
+    expect(far.warnings.map((w) => w.param)).toEqual(['vent_dz']);
+  });
+
+  it('is what the light check sees: one hung baffle stops light to a high vent, not to a low one', () => {
+    const trap = (dz: number) =>
+      baffleBoxLayout(opts({ gate: false, lightTrap: true, h: 200, y: 200, baffles: 1, gap: 35, ventOffset: [0, dz] }));
+    const high = trap(40);
+    expect(high.sight).toBeLessThanOrEqual(-LIGHT_MARGIN);
+    expect(rayGetsThrough(high)).toBe(false);
+    const low = trap(-40);
+    expect(low.sight).toBeGreaterThan(0);
+    expect(rayGetsThrough(low)).toBe(true);
+    expect(low.warnings.some((w) => /light/i.test(w.message))).toBe(true);
+  });
+
+  it('keeps the back\'s corner screws clear of it, wherever it is', () => {
+    const lay = baffleBoxLayout(opts({ assembly: 'bolts', y: 200, h: 280, ventOffset: [-40, 60] }));
+    const crowded = lay.plate.screws.some(([x, y]) => Math.hypot(x - lay.ventAt[0], y - lay.ventAt[1]) < 50 + 2.5 + 2);
+    expect(crowded).toBe(lay.warnings.some((w) => /screws in the back/.test(w.message)));
+  });
+
+  it('etches which way up the back goes, only when it is off centre', () => {
+    const etched = (values: ParamValues) =>
+      toSVG(buildDrawing('lighttrap', { ...defaultsFor('lighttrap'), labels: false, ...values })).includes('top, seen from the front');
+    expect(etched({})).toBe(false);
+    expect(etched({ vent_dz: 30 })).toBe(true);
   });
 });

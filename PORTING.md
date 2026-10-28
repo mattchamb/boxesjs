@@ -817,6 +817,22 @@ sweep. The baffles must block every line by `LIGHT_MARGIN`, and the warning
 names the largest gap that does, found by halving, since the band only
 widens as the gap opens.
 
+Its opening can go in the bottom instead, in the front chamber, which is
+made deep enough for it, with the other chambers sharing the rest. The
+first baffle then stands up behind it, so light from the floor would have
+to climb over it and drop under the next; one baffle is usually enough. A
+hole in the floor is a window lying flat, which a line passes falling or
+rising: each case is two one-sided limits at the hole's edges, so the sight
+is the wider of two `sightWindow`s. A test traces rays through the parts
+themselves to check it. No gate is offered with it.
+
+The opening in the back (the case opening, or the wall vent) can sit off
+centre, which the sight check, the corner screws' clearance and the clamp
+inside the walls all follow. Off centre, the back's outline and slots no
+longer show which way round it goes, and fitted upside down it would put the
+opening where the check did not look, so the back is etched with which way
+is up, reading right from the front.
+
 Both offer wedges and bolts. Either needs room on the far side of the panel
 a joint passes through, which on the flanged back is against the wall, so
 knocked down the back sits inside the walls with no flange, is screwed up

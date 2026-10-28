@@ -82,6 +82,10 @@ describe('warnings land on fields the panel shows', () => {
     ['bafflebox', { assembly: 'bolts', thickness: 6, vent_shape: 'rect', vent_w: 180, vent_h: 230 }],
     ['lighttrap', { baffles: 1 }],
     ['lighttrap', { port_shape: 'fan', fan_size: '140', x: 120 }],
+    ['lighttrap', { port_side: 'bottom' }],
+    ['lighttrap', { vent_dz: 300 }],
+    ['lighttrap', { baffles: 1, vent_dz: -40 }],
+    ['lighttrap', { port_side: 'bottom', port_shape: 'rect', port_h: 300 }],
     // The bottom's one bolt on a 108 mm edge lands on the middle divider.
     ['typetray', { assembly: 'bolts', thickness: 6, sx: '40*5', sy: '30*4', h: 70 }],
     ['typetray', { assembly: 'bolts', thickness: 6, h: 60, bottom_edge: 's' }],
