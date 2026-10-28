@@ -7,6 +7,7 @@
  * five strings means a parameter change is five `setAttribute` calls instead of
  * rebuilding thousands of DOM nodes.
  */
+import type { ChartData } from './chart';
 import { LAYERS, type Layer } from './geom/colors';
 import { toBoxesConfig } from './params/common';
 import { defaultsFor, getGenerator, paramsFor } from './generators/registry';
@@ -37,6 +38,7 @@ export interface PreviewData {
   bbox: BBox;
   stats: DrawingStats;
   warnings: { param?: string; message: string }[];
+  charts?: ChartData[];
   sheets?: Sheet[];
   /** The sheets are laid out by an optimised layout, not MaxRects. */
   optimised?: boolean;
@@ -124,6 +126,7 @@ export function toPreview(drawing: Drawing): PreviewData {
     bbox: drawing.bbox,
     stats: drawing.stats,
     warnings: drawing.warnings,
+    ...(drawing.charts ? { charts: drawing.charts } : {}),
     ...(drawing.sheets ? { sheets: drawing.sheets } : {}),
     ...(drawing.optimised ? { optimised: true } : {}),
   };

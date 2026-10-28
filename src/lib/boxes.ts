@@ -9,6 +9,7 @@
  *
  * Generators subclass this and implement `render()`.
  */
+import type { ChartData } from './chart';
 import { Context, Surface, type FontStyle, type InnerCorners, type TextAlign } from './geom/context';
 import { Extents } from './geom/extents';
 import { ANNOTATIONS, Color, INNER_CUT, OUTER_CUT, type RGB } from './geom/colors';
@@ -113,6 +114,8 @@ export abstract class Boxes {
 
   /** Collected non-fatal problems, surfaced next to the offending field. */
   warnings: { param?: string; message: string }[] = [];
+  /** Diagrams for the panel; never drawn on the sheet. */
+  charts: ChartData[] = [];
 
   /**
    * Set by a generator whose cuts reach into its parts — captive-nut T-slots —

@@ -31,4 +31,6 @@ export const VARIANTS: { id: string; name: string; values: ParamValues }[] = [
   { id: 'typetray', name: 'bolted', values: { assembly: 'bolts', thickness: 6 } },
   { id: 'typetray', name: 'bolted, tall dividers, closed top', values: { assembly: 'bolts', thickness: 6, hi: 130, top_edge: 'f', bottom_edge: 'F' } },
   { id: 'typetray', name: 'bolted, stackable bottom', values: { assembly: 'bolts', thickness: 6, bottom_edge: 's', fingerholes: 'front-and-back' } },
+  { id: 'cam', name: 'knife edge, offset, clockwise', values: { follower: 'knife', offset: 8, direction: 'cw', motion: 'rise 15 90 harmonic\nfall 5 45\nreturn 90 uniform' } },
+  { id: 'cam', name: 'flat face, D shaft', values: { follower: 'flat', base_radius: 40, shaft_flat: 1 } },
 ];

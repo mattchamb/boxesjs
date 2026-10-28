@@ -532,6 +532,7 @@ export function realise(drawing: Drawing, o: PackOptions, arrangement: Arrangeme
       ) as Drawing['stats']['lengthByLayer'],
     },
     warnings,
+    ...(drawing.charts ? { charts: drawing.charts } : {}),
     sheets,
   };
 }

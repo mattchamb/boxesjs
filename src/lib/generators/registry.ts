@@ -35,6 +35,7 @@ import { burnTest } from './burntest';
 import { bottleTag } from './bottletag';
 import { fanHole } from './fanhole';
 import { linkage } from './linkage';
+import { cam } from './cam';
 import { laserHoldfast } from './laserholdfast';
 import { laserClamp } from './laserclamp';
 import { bookHolder } from './bookholder';
@@ -219,6 +220,7 @@ const DEFS: GeneratorDef[] = [
   laserClamp,
   laserHoldfast,
   linkage,
+  cam,
   fanHole,
   bottleTag,
   burnTest,

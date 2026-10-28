@@ -728,6 +728,17 @@ plain ones, which would take them as a butt joint but are usually meant plain.
 - `test/params.test.ts` pins which fields show, and that every warning the
   generators raise in its cases lands on a field the panel shows.
 
+**Cam** (`generators/cam.ts`) is a whole generator boxes.py does not have: a
+plate cam for a translating knife-edge, roller or flat-faced follower, cut to a
+displacement diagram typed as rise/fall/return/dwell lines. It draws its
+outline with `ctx.lineTo` in closed form rather than with the turtle, whose
+kerf arc at every vertex would scallop a curve of hundreds of chords; the kerf
+is a normal offset of the whole curve instead. With no golden, the geometry is
+pinned by `test/cam.test.ts`: at every cam angle the follower, placed where the
+diagram says, touches the outline without cutting into it, for each follower
+and both directions. Two variants in `test/variants.ts` snapshot the knife and
+flat-face paths.
+
 ### Adding wedges or bolts to a generator
 
 Everything above as a checklist. Do it in a commit of its own, after the

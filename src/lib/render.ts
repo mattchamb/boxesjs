@@ -6,6 +6,7 @@
  */
 import { cutsMeet } from './geom/crossings';
 import type { Boxes, BoxesConfig } from './boxes';
+import type { ChartData } from './chart';
 import { LAYERS, layerForRGB, type Layer } from './geom/colors';
 import { EPS, Path, pointsEqual, type PathCmd, type TextParams } from './geom/context';
 import { Affine } from './geom/affine';
@@ -66,6 +67,7 @@ export interface Drawing {
   bbox: BBox;
   stats: DrawingStats;
   warnings: { param?: string; message: string }[];
+  charts?: ChartData[];
   /**
    * Present only when the parts have been packed onto stock sheets: the sheets,
    * side by side, in the same coordinates as the parts.
@@ -263,6 +265,7 @@ export function renderBox(box: Boxes): Drawing {
       lengthByLayer,
     },
     warnings: box.warnings,
+    ...(box.charts.length ? { charts: box.charts } : {}),
   };
 }
 

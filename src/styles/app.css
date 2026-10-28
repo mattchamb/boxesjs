@@ -931,3 +931,39 @@ input:focus-visible, select:focus-visible, textarea:focus-visible, button:focus-
   overflow: hidden; clip: rect(0 0 0 0);
   white-space: nowrap; border: 0;
 }
+
+/* Generator diagrams in the panel (Chart.tsx). One series, so it wears the
+   accent; everything else stays recessive. */
+.chart {
+  position: relative;
+  margin: 4px 0 14px;
+  padding: 8px 10px 6px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+.chart-title { font-size: 12px; font-weight: 600; color: var(--fg-muted); margin-bottom: 2px; }
+.chart svg { display: block; touch-action: none; }
+.chart-grid { stroke: var(--grid); stroke-width: 1; }
+.chart-span { stroke: var(--border-strong); stroke-width: 1; stroke-dasharray: 2 3; }
+.chart-tick { fill: var(--fg-faint); font-size: 10px; font-family: var(--font); }
+.chart-line { fill: none; stroke: var(--accent); stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.chart-cross { stroke: var(--fg-faint); stroke-width: 1; }
+.chart-dot { fill: var(--accent); stroke: var(--bg); stroke-width: 2; }
+.chart-tip {
+  position: absolute;
+  transform: translateX(-50%);
+  pointer-events: none;
+  padding: 4px 8px;
+  font-size: 11px;
+  color: var(--fg);
+  background: var(--bg-panel);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  white-space: nowrap;
+}
+.chart-tip-sub { color: var(--fg-muted); }
+.chart-table summary { font-size: 11px; color: var(--fg-muted); cursor: pointer; }
+.chart-table table { width: 100%; margin-top: 4px; font-size: 11px; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.chart-table th { text-align: left; font-weight: 500; color: var(--fg-muted); }
+.chart-table th, .chart-table td { padding: 2px 4px; border-bottom: 1px solid var(--border); }

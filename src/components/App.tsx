@@ -5,6 +5,7 @@
  * the worker feeds the preview, and the same worker produces the download when
  * asked. Exporting therefore cannot disagree with what is on screen.
  */
+import { Fragment } from 'preact';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'preact/hooks';
 import { LAYERS, LAYER_INFO, type Layer } from '../lib/geom/colors';
 import {
@@ -33,6 +34,7 @@ import {
 import type { NestResult } from '../lib/layout/nest';
 import { sheetsPerPanel, type LayoutSuggestion } from '../lib/layout/pack';
 import type { PreviewData } from '../lib/preview';
+import { Chart } from './Chart';
 import { Control } from './controls';
 import { Preview } from './Preview';
 import { SheetBar, type Optimiser } from './SheetBar';
@@ -339,16 +341,27 @@ export default function App({ generator, name, summary, description, initial }: 
   // is missing from the file too; say so where the file is made.
   const leftOut = layerChips.filter((l) => !visibleLayers.has(l)).map((l) => LAYER_INFO[l].name);
 
-  const control = (spec: ParamSpec) => (
-    <Control
-      key={spec.key}
-      spec={spec}
-      value={values[spec.key] ?? spec.default}
-      onChange={(v) => setValue(spec.key, v)}
-      warning={warningFor(spec.key)}
-      reset={isChanged(spec) ? { to: baseline[spec.key]!, apply: () => resetKeys([spec.key]) } : undefined}
-    />
-  );
+  const control = (spec: ParamSpec) => {
+    const field = (
+      <Control
+        key={spec.key}
+        spec={spec}
+        value={values[spec.key] ?? spec.default}
+        onChange={(v) => setValue(spec.key, v)}
+        warning={warningFor(spec.key)}
+        reset={isChanged(spec) ? { to: baseline[spec.key]!, apply: () => resetKeys([spec.key]) } : undefined}
+      />
+    );
+    // A generator's diagram sits under the setting it illustrates.
+    const charts = data?.charts?.filter((c) => c.param === spec.key) ?? [];
+    if (!charts.length) return field;
+    return (
+      <Fragment key={spec.key}>
+        {field}
+        {charts.map((c) => <Chart key={c.title} chart={c} />)}
+      </Fragment>
+    );
+  };
 
   // While searching, every group with a match is open; what you open or close
   // is only remembered while you are not.
