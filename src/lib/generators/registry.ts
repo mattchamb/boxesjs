@@ -7,6 +7,12 @@ import { defaultValues, type ParamSpec, type ParamValues } from '../params/schem
 import type { GeneratorDef } from './types';
 
 import { aBox } from './abox';
+import { clock } from './clock';
+import { trafficLight } from './trafficlight';
+import { carbonFilter } from './carbonfilter';
+import { paperBox } from './paperbox';
+import { phoneHolder } from './phoneholder';
+import { laptopStand } from './laptopstand';
 import { matrix } from './matrix';
 import { triangleLamp } from './trianglelamp';
 import { makitaPowerSupply } from './makitapowersupply';
@@ -226,6 +232,12 @@ const DEFS: GeneratorDef[] = [
   makitaPowerSupply,
   triangleLamp,
   matrix,
+  laptopStand,
+  phoneHolder,
+  paperBox,
+  carbonFilter,
+  trafficLight,
+  clock,
   rectangularWall,
 ];
 

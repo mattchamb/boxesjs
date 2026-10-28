@@ -1,0 +1,44 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg height="275.20mm" viewBox="0.0 0.0 250.20 275.20" width="250.20mm" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<!--
+PaperBox - Box made of paper, with lid.
+
+
+
+This box is made of paper.
+
+There is marks in the "outside leftover paper" to help see where to fold
+(cutting with tabs helps use them). The cut is very precise, and could be too tight if misaligned when glued. A plywood box (such as a simple TypeTray) of the same size is a great guide during folding and gluing. Just fold the box against it. Accurate quick and easy.
+
+A paper creaser (or bone folder) is also useful.
+
+
+
+Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
+Command line (remove spaces between dashes): boxes PaperBox - -x - -y - -h - -design - -lid_sides - -mark_length - -tab_angle_rad - -thickness - -reference - -labels
+-->
+<title>PaperBox</title>
+<metadata>
+<rdf:RDF><cc:Work>
+<dc:title>Misc - PaperBox</dc:title>
+<dc:source>boxes PaperBox --x 120 --y 80 --h 40 --design widebox --lid_sides 15 --mark_length 0 --tab_angle_rad 0.15 --thickness 0.5 --reference 0 --labels 0</dc:source>
+<dc:description>Box made of paper, with lid.
+
+
+This box is made of paper.
+
+There is marks in the "outside leftover paper" to help see where to fold
+(cutting with tabs helps use them). The cut is very precise, and could be too tight if misaligned when glued. A plywood box (such as a simple TypeTray) of the same size is a great guide during folding and gluing. Just fold the box against it. Accurate quick and easy.
+
+A paper creaser (or bone folder) is also useful.
+
+
+Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
+Command line: boxes PaperBox --x 120 --y 80 --h 40 --design widebox --lid_sides 15 --mark_length 0 --tab_angle_rad 0.15 --thickness 0.5 --reference 0 --labels 0
+Command line short: boxes PaperBox --x --y --h --design --lid_sides --mark_length --tab_angle_rad --thickness --reference --labels
+</dc:description>
+</cc:Work></rdf:RDF></metadata>
+<g id="p-0" style="fill:none;stroke-linecap:round;stroke-linejoin:round;">
+  <path d="M 65.100 265.200 H 117.600 C 117.655 265.200 117.700 265.155 117.700 265.100 C 117.700 263.801 118.042 262.525 118.691 261.400 C 119.341 260.275 120.275 259.341 121.400 258.691 C 122.525 258.042 123.801 257.700 125.100 257.700 C 126.399 257.700 127.675 258.042 128.800 258.691 C 129.925 259.341 130.859 260.275 131.509 261.400 C 132.158 262.525 132.500 263.801 132.500 265.100 C 132.500 265.155 132.545 265.200 132.600 265.200 H 185.100 C 185.155 265.200 185.200 265.155 185.200 265.100 C 185.200 265.149 185.164 265.191 185.115 265.199 L 225.115 259.153 C 225.164 259.146 225.200 259.104 225.200 259.055 V 231.145 C 225.200 231.096 225.164 231.054 225.115 231.047 L 185.115 225.001 C 185.164 225.009 185.200 225.051 185.200 225.100 C 185.200 225.155 185.155 225.200 185.100 225.200 H 225.100 C 225.155 225.200 225.200 225.155 225.200 225.100 C 225.200 225.149 225.164 225.191 225.115 225.199 L 240.115 222.932 C 240.164 222.924 240.200 222.882 240.200 222.833 V 147.367 C 240.200 147.318 240.164 147.276 240.115 147.268 L 225.115 145.001 C 225.164 145.009 225.200 145.051 225.200 145.100 C 225.200 145.045 225.155 145.000 225.100 145.000 H 185.100 C 185.155 145.000 185.200 145.045 185.200 145.100 C 185.200 145.149 185.164 145.191 185.115 145.199 L 225.115 139.153 C 225.164 139.146 225.200 139.104 225.200 139.055 V 111.145 C 225.200 111.096 225.164 111.054 225.115 111.047 L 185.200 105.014 C 185.115 105.001 185.200 105.100 185.200 105.014 V 25.100 V 17.100 C 185.200 15.854 184.872 14.629 184.249 13.550 C 183.626 12.471 182.729 11.574 181.650 10.951 C 180.571 10.328 179.346 10.000 178.100 10.000 H 72.100 C 70.854 10.000 69.629 10.328 68.550 10.951 C 67.471 11.574 66.574 12.471 65.951 13.550 C 65.328 14.629 65.000 15.854 65.000 17.100 V 25.100 V 105.014 C 65.000 105.100 65.085 105.001 65.000 105.014 L 25.085 111.047 C 25.036 111.054 25.000 111.096 25.000 111.145 V 139.055 C 25.000 139.104 25.036 139.146 25.085 139.153 L 65.085 145.199 C 65.036 145.191 65.000 145.149 65.000 145.100 C 65.000 145.045 65.045 145.000 65.100 145.000 H 25.100 C 25.045 145.000 25.000 145.045 25.000 145.100 C 25.000 145.051 25.036 145.009 25.085 145.001 L 10.085 147.268 C 10.036 147.276 10.000 147.318 10.000 147.367 V 222.833 C 10.000 222.882 10.036 222.924 10.085 222.932 L 25.085 225.199 C 25.036 225.191 25.000 225.149 25.000 225.100 C 25.000 225.155 25.045 225.200 25.100 225.200 H 65.100 C 65.045 225.200 65.000 225.155 65.000 225.100 C 65.000 225.051 65.036 225.009 65.085 225.001 L 25.085 231.047 C 25.036 231.054 25.000 231.096 25.000 231.145 V 259.055 C 25.000 259.104 25.036 259.146 25.085 259.153 L 65.085 265.199 C 65.036 265.191 65.000 265.149 65.000 265.100 C 65.000 265.155 65.045 265.200 65.100 265.200 Z" stroke="rgb(0,0,0)" stroke-width="0.20" />
+</g>
+</svg>

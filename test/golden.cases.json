@@ -5483,5 +5483,220 @@
       "physical_led_y": 200,
       "labels": true
     }
+  },
+  {
+    "name": "ref_laptopstand_default",
+    "generator": "laptopstand",
+    "pythonClass": "LaptopStand",
+    "params": {}
+  },
+  {
+    "name": "ref_laptopstand_steep",
+    "generator": "laptopstand",
+    "pythonClass": "LaptopStand",
+    "params": {
+      "l_depth": 320,
+      "l_thickness": 18,
+      "angle": 28,
+      "ground_offset": 25,
+      "nub_size": 14,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_laptopstand_labels",
+    "generator": "laptopstand",
+    "pythonClass": "LaptopStand",
+    "params": {
+      "l_depth": 200,
+      "angle": 10,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_phoneholder_default",
+    "generator": "phoneholder",
+    "pythonClass": "PhoneHolder",
+    "params": {}
+  },
+  {
+    "name": "ref_phoneholder_tablet",
+    "generator": "phoneholder",
+    "pythonClass": "PhoneHolder",
+    "params": {
+      "phone_height": 200,
+      "phone_width": 120,
+      "phone_depth": 9,
+      "angle": 15,
+      "bottom_margin": 40,
+      "tab_size": 90,
+      "bottom_support_spacing": 3,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_phoneholder_labels",
+    "generator": "phoneholder",
+    "pythonClass": "PhoneHolder",
+    "params": {
+      "angle": 35,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_paperbox_default",
+    "generator": "paperbox",
+    "pythonClass": "PaperBox",
+    "params": {}
+  },
+  {
+    "name": "ref_paperbox_tuck",
+    "generator": "paperbox",
+    "pythonClass": "PaperBox",
+    "params": {
+      "x": 60,
+      "y": 30,
+      "h": 90,
+      "lid_height": 12,
+      "lid_radius": 4,
+      "margin": 0.5,
+      "mark_length": 2,
+      "finger_hole_diameter": 12
+    }
+  },
+  {
+    "name": "ref_paperbox_wide",
+    "generator": "paperbox",
+    "pythonClass": "PaperBox",
+    "params": {
+      "x": 120,
+      "y": 80,
+      "h": 40,
+      "design": "widebox",
+      "lid_sides": 15,
+      "mark_length": 0,
+      "tab_angle_rad": 0.15,
+      "thickness": 0.5
+    }
+  },
+  {
+    "name": "ref_paperbox_labels",
+    "generator": "paperbox",
+    "pythonClass": "PaperBox",
+    "params": {
+      "x": 80,
+      "y": 50,
+      "h": 60,
+      "design": "tuckbox",
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_carbonfilter_default",
+    "generator": "carbonfilter",
+    "pythonClass": "CarbonFilter",
+    "params": {}
+  },
+  {
+    "name": "ref_carbonfilter_small",
+    "generator": "carbonfilter",
+    "pythonClass": "CarbonFilter",
+    "params": {
+      "x": 300,
+      "y": 250,
+      "h": 180,
+      "pockets": 2,
+      "ribs": 2,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_carbonfilter_labels",
+    "generator": "carbonfilter",
+    "pythonClass": "CarbonFilter",
+    "params": {
+      "x": 400,
+      "y": 300,
+      "h": 200,
+      "pockets": 2,
+      "ribs": 5,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_trafficlight_default",
+    "generator": "trafficlight",
+    "pythonClass": "TrafficLight",
+    "params": {}
+  },
+  {
+    "name": "ref_trafficlight_sidebyside",
+    "generator": "trafficlight",
+    "pythonClass": "TrafficLight",
+    "params": {
+      "h": 60,
+      "depth": 70,
+      "shades": 30,
+      "n": 4,
+      "upright": false,
+      "back_edge": "h",
+      "hole_dD": "4",
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_trafficlight_noback",
+    "generator": "trafficlight",
+    "pythonClass": "TrafficLight",
+    "params": {
+      "h": 80,
+      "depth": 60,
+      "shades": 40,
+      "n": 2,
+      "back_edge": "e"
+    }
+  },
+  {
+    "name": "ref_trafficlight_labels",
+    "generator": "trafficlight",
+    "pythonClass": "TrafficLight",
+    "params": {
+      "h": 70,
+      "n": 2,
+      "back_edge": "s",
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_clock_default",
+    "generator": "clock",
+    "pythonClass": "Clock",
+    "params": {}
+  },
+  {
+    "name": "ref_clock_arabic",
+    "generator": "clock",
+    "pythonClass": "Clock",
+    "params": {
+      "ExternalRadius": 80,
+      "ClockHandsMaxLength": 50,
+      "Margin": 4,
+      "BackLegDistance": 40,
+      "NeedlesAxisHoleDiameter": 10,
+      "NumberStyle": "Arabic",
+      "FontSize": 0.15,
+      "HourLines": 0.1,
+      "MinuteLines": 0.05,
+      "thickness": 4
+    }
+  },
+  {
+    "name": "ref_clock_labels",
+    "generator": "clock",
+    "pythonClass": "Clock",
+    "params": {
+      "NumberStyle": "None",
+      "labels": true
+    }
   }
 ]

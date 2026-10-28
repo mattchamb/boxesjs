@@ -471,7 +471,7 @@ this reason).
 
 ## 9. State of the port
 
-**Every generator on the list is done.** A hundred and ten generators are registered —
+**Every generator on the list is done.** A hundred and sixteen generators are registered —
 ABox, ClosedBox, OpenBox, CardBox, Console2, UniversalBox, RegularBox,
 BayonetBox, NotesHolder, TypeTray, TrayLayout, TrayInsert, DividerTray,
 CompartmentBox, DrillBox, DrillStand, DisplayShelf, StorageRack, StorageShelf,
@@ -493,8 +493,9 @@ and the first Misc parts (LBeam, ZBeam, FlexTest, Display, AngledCutJig,
 JointPanel, MagazineFile, BookHolder, LaserClamp, LaserHoldfast, Linkage,
 FanHole, BottleTag, BurnTest, Desksign, Stachel, Spool, PizzaShovel,
 DrillGauge, CoinDisplay, CoffeeCapsuleHolder, BottleStack, Dispenser, Hook,
-AirPurifier, MakitaPowerSupply, TriangleLamp, Matrix) — plus the RectangularWall part.
-All of them match boxes.py coordinate-for-coordinate across 429 golden cases,
+AirPurifier, MakitaPowerSupply, TriangleLamp, Matrix, LaptopStand,
+PhoneHolder, PaperBox, CarbonFilter, TrafficLight, Clock) — plus the RectangularWall part.
+All of them match boxes.py coordinate-for-coordinate across 449 golden cases,
 regenerated against boxes.py master at `84e392b` (2026-10-22).
 
 When the boxes.py checkout moves, run `./scripts/upstream-drift.py`, then
@@ -513,12 +514,12 @@ unported generator files for `self.X(` calls, `edges.X` classes,
 classes), so §4 steps 1–2 still come first. Note that `paintbox.py` is
 PaintStorage, already ported.
 
-**Seven need no new engine machinery** (70 at the survey, less those
+**One needs no new engine machinery** (70 at the survey, less those
 since ported). The most useful, by boxes.py's own groups:
 
 | Group | Generators |
 | --- | --- |
-| Misc | `laptopstand`, `phoneholder`, `agricolainsert`, `paperbox`, `carbonfilter`, `trafficlight`, `clock` |
+| Misc | `agricolainsert` |
 
 `silverwarebox` also needs `Boxes.handle`; `lamp` needs `holesMargin` and is
 hidden from boxes.py's own web interface. `castle` and `organpipe` are skipped too:

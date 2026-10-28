@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg height="222.63mm" viewBox="0.0 0.0 461.30 222.63" width="461.30mm" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<!--
+LaptopStand - A simple X shaped frame to support a laptop on a given angle
+
+Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
+Command line (remove spaces between dashes): boxes LaptopStand - -l_depth - -l_thickness - -angle - -ground_offset - -nub_size - -thickness - -reference - -labels
+-->
+<title>LaptopStand</title>
+<metadata>
+<rdf:RDF><cc:Work>
+<dc:title>Misc - LaptopStand</dc:title>
+<dc:source>boxes LaptopStand --l_depth 320 --l_thickness 18 --angle 28 --ground_offset 25 --nub_size 14 --thickness 4 --reference 0 --labels 0</dc:source>
+<dc:description>A simple X shaped frame to support a laptop on a given angle
+
+Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
+Command line: boxes LaptopStand --l_depth 320 --l_thickness 18 --angle 28 --ground_offset 25 --nub_size 14 --thickness 4 --reference 0 --labels 0
+Command line short: boxes LaptopStand --l_depth --l_thickness --angle --ground_offset --nub_size --thickness --reference --labels
+</dc:description>
+</cc:Work></rdf:RDF></metadata>
+<g id="p-0" style="fill:none;stroke-linecap:round;stroke-linejoin:round;">
+  <path d="M 31.959 37.300 V 212.531 C 31.959 212.586 32.004 212.631 32.059 212.631 H 56.059 C 56.086 212.631 56.111 212.620 56.130 212.602 L 59.636 209.095 C 59.666 209.066 59.595 209.095 59.636 209.095 H 229.883 C 229.938 209.095 229.983 209.051 229.983 208.995 V 162.538 C 229.983 162.438 229.883 162.538 229.983 162.538 H 233.783 C 233.883 162.538 233.783 162.438 233.783 162.538 V 208.995 C 233.783 209.051 233.828 209.095 233.883 209.095 H 404.130 C 404.171 209.095 404.101 209.066 404.130 209.095 L 407.636 212.602 C 407.655 212.620 407.680 212.631 407.707 212.631 H 437.264 C 437.306 212.631 437.343 212.605 437.358 212.566 L 451.239 175.645 C 451.307 175.464 451.327 175.268 451.295 175.078 C 451.264 174.887 451.182 174.708 451.060 174.559 C 450.937 174.410 450.778 174.296 450.597 174.228 L 439.365 170.005 C 439.184 169.937 438.988 169.918 438.798 169.949 C 438.607 169.981 438.429 170.062 438.279 170.184 C 438.130 170.307 438.016 170.466 437.948 170.647 L 431.648 187.402 C 431.613 187.496 431.742 187.437 431.648 187.402 L 32.166 37.206 C 32.150 37.201 32.134 37.199 32.118 37.201 C 32.102 37.203 32.087 37.209 32.073 37.218 C 32.060 37.227 32.049 37.239 32.042 37.254 C 32.034 37.268 32.030 37.284 32.030 37.300 M 429.336 185.331 V 10.100 C 429.336 10.045 429.291 10.000 429.236 10.000 H 405.236 C 405.209 10.000 405.184 10.011 405.165 10.029 L 401.659 13.536 C 401.630 13.565 401.700 13.536 401.659 13.536 H 57.165 C 57.124 13.536 57.194 13.565 57.165 13.536 L 53.659 10.029 C 53.640 10.011 53.615 10.000 53.588 10.000 H 24.031 C 23.989 10.000 23.952 10.026 23.937 10.065 L 10.056 46.986 C 9.988 47.167 9.968 47.363 10.000 47.553 C 10.032 47.744 10.113 47.922 10.235 48.072 C 10.358 48.221 10.517 48.335 10.698 48.403 L 21.930 52.626 C 22.111 52.694 22.307 52.713 22.497 52.682 C 22.688 52.650 22.867 52.569 23.016 52.447 C 23.165 52.324 23.279 52.164 23.347 51.984 L 29.647 35.229 C 29.682 35.135 29.553 35.194 29.647 35.229 L 227.341 109.557 C 227.356 109.563 227.373 109.565 227.389 109.563 C 227.405 109.561 227.420 109.555 227.433 109.546 C 227.447 109.537 227.458 109.524 227.465 109.510 C 227.473 109.496 227.476 109.480 227.476 109.463 V 60.258 C 227.476 60.158 227.376 60.258 227.476 60.258 H 231.276 C 231.376 60.258 231.276 60.158 231.276 60.258 V 110.967 C 231.276 111.009 231.302 111.046 231.341 111.061 L 429.130 185.425 C 429.145 185.430 429.161 185.432 429.177 185.430 C 429.193 185.428 429.208 185.422 429.222 185.413 C 429.235 185.404 429.246 185.392 429.253 185.377 C 429.261 185.363 429.265 185.347 429.265 185.331" stroke="rgb(0,0,0)" stroke-width="0.20" />
+</g>
+</svg>

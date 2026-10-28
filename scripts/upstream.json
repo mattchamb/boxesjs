@@ -676,6 +676,42 @@
         "boxes/generators/matrix.py"
       ],
       "sha": "84e392b39191"
+    },
+    "laptopstand": {
+      "files": [
+        "boxes/generators/laptopstand.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "phoneholder": {
+      "files": [
+        "boxes/generators/phoneholder.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "paperbox": {
+      "files": [
+        "boxes/generators/paperbox.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "carbonfilter": {
+      "files": [
+        "boxes/generators/carbonfilter.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "trafficlight": {
+      "files": [
+        "boxes/generators/trafficlight.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "clock": {
+      "files": [
+        "boxes/generators/clock.py"
+      ],
+      "sha": "84e392b39191"
     }
   }
 }
