@@ -81,6 +81,11 @@ describe('warnings land on fields the panel shows', () => {
     // The bottom's one bolt on a 108 mm edge lands on the middle divider.
     ['typetray', { assembly: 'bolts', thickness: 6, sx: '40*5', sy: '30*4', h: 70 }],
     ['typetray', { assembly: 'bolts', thickness: 6, h: 60, bottom_edge: 's' }],
+    ['automaton', { h: 30, y: 30, pitch: 3 }],
+    ['automaton', { cams: 'output rocker 5\nrise 30 60\nreturn 60', pivot_height: 2, figure_hole: 10 }],
+    ['automaton', { cams: 'output spin 3 3', peg_spacing: 4, front: 'window', window_margin: 100 }],
+    ['automaton', { assembly: 'bolts' }],
+    ['automaton', { assembly: 'wedges', thickness: 6, wt_wedge_length: 12 }],
   ];
   for (const [id, values] of cases) {
     it(`${id} ${JSON.stringify(values)}`, () => {

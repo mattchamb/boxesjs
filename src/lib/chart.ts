@@ -12,7 +12,10 @@ export interface ChartData {
   yLabel: string;
   xUnit: string;
   yUnit: string;
+  /** The one series' points; empty when `series` is given. */
   points: [number, number][];
+  /** Several series on the one axis, each named in a legend, in place of `points`. */
+  series?: { label: string; points: [number, number][] }[];
   /** Labelled spans along x, divided by faint rules and named in the tooltip. */
   spans?: { from: number; to: number; label: string }[];
   /** Where to put x ticks; evenly chosen when absent. */

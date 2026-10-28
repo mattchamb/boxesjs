@@ -33,4 +33,9 @@ export const VARIANTS: { id: string; name: string; values: ParamValues }[] = [
   { id: 'typetray', name: 'bolted, stackable bottom', values: { assembly: 'bolts', thickness: 6, bottom_edge: 's', fingerholes: 'front-and-back' } },
   { id: 'cam', name: 'knife edge, offset, clockwise', values: { follower: 'knife', offset: 8, direction: 'cw', motion: 'rise 15 90 harmonic\nfall 5 45\nreturn 90 uniform' } },
   { id: 'cam', name: 'flat face, D shaft', values: { follower: 'flat', base_radius: 40, shaft_flat: 1 } },
+  { id: 'automaton', name: 'window front, guides on the deck, no index pin', values: { front: 'window', back: 'solid', guides: 'above', index_pin: 0 } },
+  { id: 'automaton', name: 'lifts only, labelled', values: { cams: 'rise 15 120\nreturn 120\n---\nphase 180\nrise 10 90 uniform\nreturn 90', labels: true, back: 'open' } },
+  { id: 'automaton', name: 'peg wheel', values: { cams: 'output spin 12 8\n---\nrise 10 180\nreturn 180', pitch: 40 } },
+  { id: 'automaton', name: 'wedged', values: { assembly: 'wedges' } },
+  { id: 'automaton', name: 'bolted', values: { assembly: 'bolts', thickness: 6 } },
 ];

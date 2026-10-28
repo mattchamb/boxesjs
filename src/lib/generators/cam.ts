@@ -431,6 +431,95 @@ function minConvexRadius(pts: [number, number][]): number {
   return min;
 }
 
+export interface CamCheckOptions {
+  follower: FollowerKind;
+  rollerDiameter: number;
+  /** The offset asked for, before `camProfile` clamped it. */
+  offset: number;
+  law: MotionLaw;
+  /** The motion text, to tell whether any line asks for uniform motion. */
+  motion: string;
+  shaft: number;
+  shaftFlat: number;
+}
+
+export type CamParamKey = 'motion' | 'offset' | 'base_radius' | 'law' | 'roller_diameter' | 'shaft' | 'shaft_flat';
+
+/**
+ * What can go wrong with a cam, warned on the field that would fix it. Shared
+ * with the Automaton, whose fields have other names, hence `keys`.
+ */
+export function camWarnings(
+  p: CamProfile,
+  errors: string[],
+  o: CamCheckOptions,
+  warn: (message: string, param: string) => void,
+  keys: Partial<Record<CamParamKey, string>> = {},
+): void {
+  const key = (k: CamParamKey) => keys[k] ?? k;
+  for (const e of errors) warn(e, key('motion'));
+
+  if (Math.abs(p.drop) > 1e-6) {
+    warn(
+      `The profile ends ${Math.abs(p.drop).toFixed(1)} mm ${p.drop > 0 ? 'above' : 'below'} where it starts, so it is cut ` +
+        'as a sudden step at 0°. Only a knife edge can ride a step, and only one way round; add a "return" to close it.',
+      key('motion'),
+    );
+  }
+  const minS = Math.min(...p.samples.map((x) => x.s));
+  if (minS < -1e-6) {
+    warn(`The profile dips ${(-minS).toFixed(1)} mm inside the base circle.`, key('motion'));
+  }
+  if (o.follower !== 'flat' && Math.abs(p.offset) < Math.abs(o.offset)) {
+    warn('The follower offset is larger than the base circle; it is reduced to fit.', key('offset'));
+  }
+  if (o.follower !== 'flat' && p.maxPressureAngle > 30) {
+    warn(
+      `The pressure angle reaches ${p.maxPressureAngle.toFixed(0)}°. Above about 30° a translating follower tends to ` +
+        'jam in its guide; a larger base circle, a slower rise or an offset lowers it.',
+      key('base_radius'),
+    );
+  }
+  const undercut = o.follower === 'roller' && p.minConvexRadius < o.rollerDiameter / 2 + 0.5;
+  const cusped = o.follower === 'flat' && p.minFlatRadius <= 0.5;
+  if (!undercut && !cusped && p.trimmed.length) {
+    // Left over once the smooth stretches are accounted for: the corners a
+    // sudden change of speed leaves, which only a knife edge can ride.
+    const where = [...new Set(p.trimmed.map((t) => Math.round(t) % 360))].map((t) => `${t}°`).join(', ');
+    const uniform = o.law === 'uniform' || /uniform|linear/i.test(o.motion);
+    warn(
+      `At ${where} the speed changes suddenly, which a ${o.follower === 'roller' ? 'roller' : 'flat face'} cannot ` +
+        'follow. The cam is cut so it still fits, and the follower rounds that corner off instead of following ' +
+        'the motion exactly. ' +
+        (uniform ? 'Uniform motion does this at the end of each move; cycloidal or 3-4-5 polynomial does not.' : ''),
+      o.law === 'uniform' ? key('law') : key('motion'),
+    );
+  }
+  if (undercut) {
+    warn(
+      `The tightest curve of the follower's path has a ${p.minConvexRadius.toFixed(1)} mm radius, too tight for a ` +
+        `${o.rollerDiameter} mm roller: the profile would be undercut and the follower would not follow it. ` +
+        'Use a smaller roller, a larger base circle or a gentler motion.',
+      key('roller_diameter'),
+    );
+  }
+  if (cusped) {
+    warn(
+      'The profile turns back on itself where a flat face would ride it: it rises too fast for this base circle. ' +
+        'Use a larger base circle or a gentler motion.',
+      key('base_radius'),
+    );
+  }
+  const minR = Math.min(...p.outline.map(([x, y]) => Math.hypot(x, y)));
+  const shaftR = o.shaft / 2;
+  if (o.shaft > 0 && minR - shaftR < 2) {
+    warn(`The shaft hole leaves only ${(minR - shaftR).toFixed(1)} mm of material at the cam's narrowest point.`, key('shaft'));
+  }
+  if (o.shaftFlat >= o.shaft && o.shaft > 0) {
+    warn('The flat is as deep as the shaft is wide; the hole is cut round.', key('shaft_flat'));
+  }
+}
+
 interface CamGenOptions {
   motion: string;
   law: MotionLaw;
@@ -446,94 +535,45 @@ interface CamGenOptions {
   marks: boolean;
 }
 
-class Cam extends Boxes {
-  constructor(
-    private o: CamGenOptions,
-    config: Partial<BoxesConfig>,
-  ) {
-    super(config);
+export interface CamPlateOptions {
+  shaft: number;
+  shaftFlat: number;
+  /** The etched mark: its angle in the plate's frame and the way the arrow sweeps from it. */
+  mark: { angle: number; direction: 1 | -1; inner?: number } | null;
+  /** Extra round holes, in the plate's frame. */
+  holes?: { x: number; y: number; d: number }[];
+  label: string;
+}
+
+/**
+ * Draws cam plates. A base class rather than a helper because the hole colour
+ * is the box's protected state; the Automaton cuts its cams with it too.
+ */
+export abstract class CamPlates extends Boxes {
+  /**
+   * One plate, sized on the nominal outline (`move` already leaves a kerf's
+   * room either side) and cut on the kerf-offset one, centred on the shaft.
+   */
+  protected camPlate(nominal: [number, number][], cut: [number, number][], o: CamPlateOptions, move = 'right'): void {
+    const xs = nominal.map((q) => q[0]);
+    const ys = nominal.map((q) => q[1]);
+    const minX = Math.min(...xs);
+    const minY = Math.min(...ys);
+    const w = Math.max(...xs) - minX;
+    const h = Math.max(...ys) - minY;
+
+    if (this.move(w, h, move, true, o.label)) return;
+    this.moveTo(-minX, -minY);
+    cut.forEach(([x, y], i) => (i === 0 ? this.ctx.moveTo(x, y) : this.ctx.lineTo(x, y)));
+    this.ctx.lineTo(cut[0]![0], cut[0]![1]);
+    this.ctx.stroke();
+    this.shaftHole(o.shaft, o.shaftFlat);
+    for (const hl of o.holes ?? []) this.hole(hl.x, hl.y, hl.d / 2);
+    if (o.mark) this.markings(nominal, o.shaft, o.mark);
+    this.move(w, h, move, false, o.label);
   }
 
-  private profile(burn: number): CamProfile {
-    const { segments } = parseMotion(this.o.motion, this.o.law);
-    return camProfile({
-      segments,
-      baseRadius: this.o.baseRadius,
-      follower: this.o.follower,
-      rollerRadius: this.o.rollerDiameter / 2,
-      offset: this.o.offset,
-      direction: this.o.direction,
-      burn,
-    });
-  }
-
-  private check(p: CamProfile, errors: string[]): void {
-    const o = this.o;
-    for (const e of errors) this.warn(e, 'motion');
-
-    if (Math.abs(p.drop) > 1e-6) {
-      this.warn(
-        `The profile ends ${Math.abs(p.drop).toFixed(1)} mm ${p.drop > 0 ? 'above' : 'below'} where it starts, so it is cut ` +
-          'as a sudden step at 0°. Only a knife edge can ride a step, and only one way round; add a "return" to close it.',
-        'motion',
-      );
-    }
-    const minS = Math.min(...p.samples.map((x) => x.s));
-    if (minS < -1e-6) {
-      this.warn(`The profile dips ${(-minS).toFixed(1)} mm inside the base circle.`, 'motion');
-    }
-    if (o.follower !== 'flat' && Math.abs(p.offset) < Math.abs(o.offset)) {
-      this.warn('The follower offset is larger than the base circle; it is reduced to fit.', 'offset');
-    }
-    if (o.follower !== 'flat' && p.maxPressureAngle > 30) {
-      this.warn(
-        `The pressure angle reaches ${p.maxPressureAngle.toFixed(0)}°. Above about 30° a translating follower tends to ` +
-          'jam in its guide; a larger base circle, a slower rise or an offset lowers it.',
-        'base_radius',
-      );
-    }
-    const undercut = o.follower === 'roller' && p.minConvexRadius < o.rollerDiameter / 2 + 0.5;
-    const cusped = o.follower === 'flat' && p.minFlatRadius <= 0.5;
-    if (!undercut && !cusped && p.trimmed.length) {
-      // Left over once the smooth stretches are accounted for: the corners a
-      // sudden change of speed leaves, which only a knife edge can ride.
-      const where = [...new Set(p.trimmed.map((t) => Math.round(t) % 360))].map((t) => `${t}°`).join(', ');
-      const uniform = o.law === 'uniform' || /uniform|linear/i.test(o.motion);
-      this.warn(
-        `At ${where} the speed changes suddenly, which a ${o.follower === 'roller' ? 'roller' : 'flat face'} cannot ` +
-          'follow. The cam is cut so it still fits, and the follower rounds that corner off instead of following ' +
-          'the motion exactly. ' +
-          (uniform ? 'Uniform motion does this at the end of each move; cycloidal or 3-4-5 polynomial does not.' : ''),
-        o.law === 'uniform' ? 'law' : 'motion',
-      );
-    }
-    if (undercut) {
-      this.warn(
-        `The tightest curve of the follower's path has a ${p.minConvexRadius.toFixed(1)} mm radius, too tight for a ` +
-          `${o.rollerDiameter} mm roller: the profile would be undercut and the follower would not follow it. ` +
-          'Use a smaller roller, a larger base circle or a gentler motion.',
-        'roller_diameter',
-      );
-    }
-    if (cusped) {
-      this.warn(
-        'The profile turns back on itself where a flat face would ride it: it rises too fast for this base circle. ' +
-          'Use a larger base circle or a gentler motion.',
-        'base_radius',
-      );
-    }
-    const minR = Math.min(...p.outline.map(([x, y]) => Math.hypot(x, y)));
-    const shaftR = o.shaft / 2;
-    if (o.shaft > 0 && minR - shaftR < 2) {
-      this.warn(`The shaft hole leaves only ${(minR - shaftR).toFixed(1)} mm of material at the cam's narrowest point.`, 'shaft');
-    }
-    if (o.shaftFlat >= o.shaft && o.shaft > 0) {
-      this.warn('The flat is as deep as the shaft is wide; the hole is cut round.', 'shaft_flat');
-    }
-  }
-
-  private shaftHole(): void {
-    const { shaft, shaftFlat } = this.o;
+  private shaftHole(shaft: number, shaftFlat: number): void {
     if (shaft <= 0) return;
     if (shaftFlat <= 0 || shaftFlat >= shaft) {
       this.hole(0, 0, shaft / 2);
@@ -558,15 +598,12 @@ class Cam extends Boxes {
   }
 
   /** A line out to where the follower starts, and an arrow the way the cam turns. */
-  private markings(p: CamProfile): void {
-    const minR = Math.min(...p.outline.map(([x, y]) => Math.hypot(x, y)));
-    const inner = this.o.shaft / 2 + 1.5;
+  private markings(outline: [number, number][], shaft: number, mark: NonNullable<CamPlateOptions['mark']>): void {
+    const minR = Math.min(...outline.map(([x, y]) => Math.hypot(x, y)));
+    const inner = mark.inner ?? shaft / 2 + 1.5;
     const outer = minR - 2;
     if (outer - inner < 4) return;
-    // Along the follower's axis: a flat face's pitch point is where it
-    // touches, which slides off the axis as the cam turns.
-    const [sx, sy] = this.o.follower === 'flat' ? [0, 1] : p.pitch[0]!;
-    const ang = Math.atan2(sy, sx);
+    const ang = mark.angle;
     const rm = (inner + outer) / 2;
     this.ctx.stroke();
     this.savedContext(() => {
@@ -576,7 +613,7 @@ class Cam extends Boxes {
       this.ctx.stroke();
 
       // The arrow sweeps away from the mark in the direction of rotation.
-      const d = this.o.direction;
+      const d = mark.direction;
       const sweep = 40 * DEG;
       const steps = 12;
       for (let i = 0; i <= steps; i++) {
@@ -598,6 +635,29 @@ class Cam extends Boxes {
         );
       }
       this.ctx.stroke();
+    });
+  }
+
+}
+
+class Cam extends CamPlates {
+  constructor(
+    private o: CamGenOptions,
+    config: Partial<BoxesConfig>,
+  ) {
+    super(config);
+  }
+
+  private profile(burn: number): CamProfile {
+    const { segments } = parseMotion(this.o.motion, this.o.law);
+    return camProfile({
+      segments,
+      baseRadius: this.o.baseRadius,
+      follower: this.o.follower,
+      rollerRadius: this.o.rollerDiameter / 2,
+      offset: this.o.offset,
+      direction: this.o.direction,
+      burn,
     });
   }
 
@@ -646,26 +706,19 @@ class Cam extends Boxes {
     const { segments, errors } = parseMotion(this.o.motion, this.o.law);
     const nominal = this.profile(0);
     const cut = this.profile(this.burn);
-    this.check(nominal, errors);
+    const o = this.o;
+    camWarnings(nominal, errors, o, (m, k) => this.warn(m, k));
     this.diagram(nominal, segments);
 
-    // Sized on the nominal outline: `move` already leaves a kerf's room either side.
-    const xs = nominal.outline.map((q) => q[0]);
-    const ys = nominal.outline.map((q) => q[1]);
-    const minX = Math.min(...xs);
-    const minY = Math.min(...ys);
-    const w = Math.max(...xs) - minX;
-    const h = Math.max(...ys) - minY;
-
-    if (!this.move(w, h, 'right', true, 'cam')) {
-      this.moveTo(-minX, -minY);
-      cut.outline.forEach(([x, y], i) => (i === 0 ? this.ctx.moveTo(x, y) : this.ctx.lineTo(x, y)));
-      this.ctx.lineTo(cut.outline[0]![0], cut.outline[0]![1]);
-      this.ctx.stroke();
-      this.shaftHole();
-      if (this.o.marks) this.markings(nominal);
-      this.move(w, h, 'right', false, 'cam');
-    }
+    // Along the follower's axis: a flat face's pitch point is where it
+    // touches, which slides off the axis as the cam turns.
+    const [sx, sy] = o.follower === 'flat' ? [0, 1] : nominal.pitch[0]!;
+    this.camPlate(nominal.outline, cut.outline, {
+      shaft: o.shaft,
+      shaftFlat: o.shaftFlat,
+      mark: o.marks ? { angle: Math.atan2(sy, sx), direction: o.direction } : null,
+      label: 'cam',
+    });
 
     if (this.o.follower === 'roller' && this.o.rollerPart) {
       this.parts.disc(this.o.rollerDiameter, {

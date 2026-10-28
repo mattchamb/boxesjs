@@ -1,8 +1,10 @@
 /**
- * A generator's diagram in the panel (see lib/chart.ts). One series on one
- * axis, so the title names it and there is no legend; hovering reads off the
- * value and the span it falls in, and the table gives the same at each span
- * boundary for anyone not reading the line.
+ * A generator's diagram in the panel (see lib/chart.ts). One axis always. A
+ * single series is named by the title and has no legend; several get a
+ * legend and a colour each, in a fixed order, so identity never rests on
+ * colour alone. Hovering reads off the value (every series' at that x) and
+ * the span it falls in, and the table gives the same for anyone not reading
+ * the lines.
  */
 import { useEffect, useRef, useState } from 'preact/hooks';
 import type { ChartData } from '../lib/chart';
@@ -36,12 +38,15 @@ export function Chart({ chart }: { chart: ChartData }) {
     return () => ro.disconnect();
   }, []);
 
-  const pts = chart.points;
+  const series = chart.series ?? [{ label: chart.yLabel, points: chart.points }];
+  const multi = series.length > 1;
+  // Series share their x samples, so the first stands for all of them when hovering.
+  const pts = series[0]?.points ?? [];
   if (pts.length < 2) return null;
 
-  const xMin = pts[0]![0];
-  const xMax = pts[pts.length - 1]![0];
-  const ys = pts.map((p) => p[1]);
+  const xMin = Math.min(...series.map((sr) => sr.points[0]![0]));
+  const xMax = Math.max(...series.map((sr) => sr.points[sr.points.length - 1]![0]));
+  const ys = series.flatMap((sr) => sr.points.map((p) => p[1]));
   // Zero is always on the axis: lift is measured from it, and velocity changes sign across it.
   const step = niceStep(Math.max(...ys, 0) - Math.min(...ys, 0) || 1, 4);
   const yMin = Math.floor(Math.min(...ys, 0) / step) * step;
@@ -55,7 +60,7 @@ export function Chart({ chart }: { chart: ChartData }) {
   const yTicks: number[] = [];
   for (let v = yMin; v <= yMax + step / 2; v += step) yTicks.push(+v.toFixed(6));
   const xTicks = chart.xTicks ?? [xMin, (xMin + xMax) / 2, xMax];
-  const line = pts.map((p, i) => `${i ? 'L' : 'M'}${sx(p[0]).toFixed(1)},${sy(p[1]).toFixed(1)}`).join('');
+  const lines = series.map((sr) => sr.points.map((p, i) => `${i ? 'L' : 'M'}${sx(p[0]).toFixed(1)},${sy(p[1]).toFixed(1)}`).join(''));
 
   const onMove = (e: PointerEvent) => {
     const rect = (e.currentTarget as SVGElement).getBoundingClientRect();
@@ -73,11 +78,23 @@ export function Chart({ chart }: { chart: ChartData }) {
 
   const hp = hover !== null ? pts[hover] : undefined;
   const hSpan = hp && chart.spans?.find((s) => hp[0] >= s.from && hp[0] <= s.to);
-  const yAt = (x: number) => pts.reduce((best, p) => (Math.abs(p[0] - x) < Math.abs(best[0] - x) ? p : best))[1];
+  const yAt = (x: number, sp = pts) => sp.reduce((best, p) => (Math.abs(p[0] - x) < Math.abs(best[0] - x) ? p : best))[1];
+  // Every whole step of the x ticks, for a table of several series with no spans.
+  const tableXs = chart.spans ? chart.spans.map((s) => s.from) : xTicks;
 
   return (
     <figure class="chart" ref={wrap}>
       <figcaption class="chart-title">{chart.title}</figcaption>
+      {multi && (
+        <ul class="chart-legend">
+          {series.map((sr, i) => (
+            <li key={sr.label}>
+              <span class={`chart-swatch chart-s${(i % 6) + 1}`} />
+              {sr.label}
+            </li>
+          ))}
+        </ul>
+      )}
       <svg
         width={width}
         height={HEIGHT}
@@ -113,11 +130,21 @@ export function Chart({ chart }: { chart: ChartData }) {
         <text class="chart-tick" x={PAD.left - 6} y={PAD.top - 8} text-anchor="end">
           {chart.yUnit}
         </text>
-        <path class="chart-line" d={line} />
+        {lines.map((d, i) => (
+          <path key={series[i]!.label} class={`chart-line${multi ? ` chart-s${(i % 6) + 1}` : ''}`} d={d} />
+        ))}
         {hp && (
           <g>
             <line class="chart-cross" x1={sx(hp[0])} x2={sx(hp[0])} y1={PAD.top} y2={PAD.top + plotH} />
-            <circle class="chart-dot" cx={sx(hp[0])} cy={sy(hp[1])} r={4} />
+            {series.map((sr, i) => (
+              <circle
+                key={sr.label}
+                class={`chart-dot${multi ? ` chart-s${(i % 6) + 1}` : ''}`}
+                cx={sx(hp[0])}
+                cy={sy(yAt(hp[0], sr.points))}
+                r={4}
+              />
+            ))}
           </g>
         )}
       </svg>
@@ -131,15 +158,58 @@ export function Chart({ chart }: { chart: ChartData }) {
             top: `${sy(hp[1]) < PAD.top + plotH / 2 ? sy(hp[1]) + 40 : sy(hp[1]) - 30}px`,
           }}
         >
-          <strong>
-            {fmt(hp[1])} {chart.yUnit}
-          </strong>{' '}
-          at {Math.round(hp[0])}
-          {chart.xUnit}
+          {multi ? (
+            <>
+              At {Math.round(hp[0])}
+              {chart.xUnit}
+              {series.map((sr) => (
+                <div key={sr.label} class="chart-tip-sub">
+                  {sr.label}: <strong>{fmt(yAt(hp[0], sr.points))}</strong> {chart.yUnit}
+                </div>
+              ))}
+            </>
+          ) : (
+            <>
+              <strong>
+                {fmt(hp[1])} {chart.yUnit}
+              </strong>{' '}
+              at {Math.round(hp[0])}
+              {chart.xUnit}
+            </>
+          )}
           {hSpan && <div class="chart-tip-sub">{hSpan.label}</div>}
         </div>
       )}
-      {chart.spans && (
+      {multi && (
+        <details class="chart-table">
+          <summary>Values</summary>
+          <table>
+            <thead>
+              <tr>
+                <th>
+                  {chart.xLabel} ({chart.xUnit})
+                </th>
+                {series.map((sr) => (
+                  <th key={sr.label}>
+                    {sr.label} ({chart.yUnit})
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {tableXs.map((x) => (
+                <tr key={x}>
+                  <td>{fmt(x)}</td>
+                  {series.map((sr) => (
+                    <td key={sr.label}>{fmt(yAt(x, sr.points))}</td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </details>
+      )}
+      {!multi && chart.spans && (
         <details class="chart-table">
           <summary>Values</summary>
           <table>

@@ -739,6 +739,45 @@ diagram says, touches the outline without cutting into it, for each follower
 and both directions. Two variants in `test/variants.ts` snapshot the knife and
 flat-face paths.
 
+**Automaton** (`generators/automaton.ts`) is the other: a hand-cranked cam box.
+A dowel crankshaft through the sides carries a row of stations, each a Cam
+flat-faced profile (or a peg wheel) that drives something up through the
+deck. Cam's plate drawing and checks are shared through `CamPlates` and
+`camWarnings` in `cam.ts`. The rules that shape it:
+
+- **Every pin runs along the shaft.** A laser-cut part can only take a hole
+  through its thickness, so rods, levers, brackets and figure plates all lie
+  in planes across the shaft. That is why `output pair` tilts its plate front
+  to back: its two rods stand either side of the shaft line, three sheets
+  apart, with the plate between them on pins.
+- **The stack along the shaft is whole sheets.** Wall, washers, cam, washers,
+  cam … washers, wall, plus `shaft_play`. The inner width comes from the
+  stack, so it keeps the shaft from sliding. Each station reports what it
+  puts either side of its plane (`lo`/`hi`); spacing grows past `pitch` where
+  neighbours would meet, with a warning. Bolted, the end washers also keep the
+  stations clear of the captive nuts' slots in the deck (`wallClear`).
+- **Height and depth default to as small as the mechanism allows.** The shaft
+  sits so the largest cam clears the base by 3 mm. The deck sits so every
+  foot clears the guide stack at full lift, and every driven peg wheel clears
+  its bearing stack.
+- **Phases come from a common reference.** Each cam is turned by its phase
+  about an etched line straight down from the shaft, which is where the
+  optional index pin goes through every cam and washer.
+
+`automatonLayout` is pure and is what `test/automaton.test.ts` holds the
+drawing to:
+- at every crank angle, each cam's top across its foot is where the foot
+  sits, and the foot clears the guides;
+- each lever's underside is tangent to its rod's round tip at the reported
+  tilt, which comes in closed form (`rockerAngle`);
+- a plate's pins stay inside its slot and above the guides;
+- the peg wheels share a pitch and mesh;
+- the deck's guide holes fall where the layout puts the cams.
+
+Wedges and bolts hold the base and deck to the sides only; the front and back
+fit dry. Five variants cover the panels, guides on the deck, peg wheels,
+wedges and bolts.
+
 ### Adding wedges or bolts to a generator
 
 Everything above as a checklist. Do it in a commit of its own, after the
