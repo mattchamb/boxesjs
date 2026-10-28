@@ -601,11 +601,15 @@ class Cam extends Boxes {
     });
   }
 
-  /** The displacement diagram, for the panel under the motion profile. */
+  /** Displacement and velocity diagrams, for the panel under the motion profile. */
   private diagram(p: CamProfile, segments: MotionSegment[]): void {
-    // A point a degree is plenty for a chart a panel wide.
+    // A point a degree is plenty for a chart a panel wide. Both samples of a
+    // sudden change of speed are kept, so it shows as the step it is.
     const stride = Math.max(1, Math.floor(p.samples.length / 360));
-    const pts = p.samples.filter((_, i) => i % stride === 0 || i === p.samples.length - 1);
+    const sameAngle = (i: number, j: number) => p.samples[j] !== undefined && p.samples[j]!.theta === p.samples[i]!.theta;
+    const pts = p.samples.filter(
+      (_, i) => i % stride === 0 || i === p.samples.length - 1 || sameAngle(i, i - 1) || sameAngle(i, i + 1),
+    );
     let start = 0;
     const spans = segments.map((g) => {
       const span = { from: start, to: start + g.span, label: segmentLabel(g) };
@@ -620,6 +624,19 @@ class Cam extends Boxes {
       xUnit: '°',
       yUnit: 'mm',
       points: pts.map((x) => [x.theta, x.s]),
+      spans,
+      xTicks: [0, 90, 180, 270, 360],
+    });
+    // Per degree of cam rotation rather than per second, so it holds at any
+    // speed; it is what sets the pressure angle.
+    this.charts.push({
+      param: 'motion',
+      title: 'Follower velocity',
+      xLabel: 'Cam angle',
+      yLabel: 'Velocity',
+      xUnit: '°',
+      yUnit: 'mm/°',
+      points: pts.map((x) => [x.theta, x.ds * DEG]),
       spans,
       xTicks: [0, 90, 180, 270, 360],
     });

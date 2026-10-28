@@ -205,10 +205,14 @@ describe('cam generator', () => {
     expect(d.warnings).toEqual([]);
   });
 
-  it('hands the panel a displacement diagram that matches the profile', () => {
+  it('hands the panel displacement and velocity diagrams that match the profile', () => {
     const d = buildDrawing('cam', defaultsFor('cam'));
-    const [chart, ...rest] = d.charts ?? [];
+    const [chart, velocity, ...rest] = d.charts ?? [];
     expect(rest).toEqual([]);
+    // Cycloidal peaks at twice the mean speed: 2 × 20 mm / 120°, up on the rise and down on the return.
+    expect(velocity!.title).toBe('Follower velocity');
+    expect(Math.max(...velocity!.points.map((p) => p[1]))).toBeCloseTo(40 / 120, 3);
+    expect(Math.min(...velocity!.points.map((p) => p[1]))).toBeCloseTo(-40 / 120, 3);
     expect(chart!.param).toBe('motion');
     expect(chart!.points[0]).toEqual([0, 0]);
     expect(chart!.points.at(-1)![0]).toBe(360);
@@ -219,6 +223,15 @@ describe('cam generator', () => {
       [180, 300, 'fall 20 mm, cycloidal'],
       [300, 360, 'dwell'],
     ]);
+  });
+
+  it('shows a uniform move as a step in velocity, not a slope', () => {
+    const d = buildDrawing('cam', { ...defaultsFor('cam'), motion: 'rise 30 90\ndwell 90\nreturn 90\ndwell 90', law: 'uniform' });
+    const velocity = d.charts!.find((c) => c.title === 'Follower velocity')!;
+    const at = (deg: number) => velocity.points.filter((p) => p[0] === deg).map((p) => +p[1].toFixed(6));
+    expect(at(0)).toEqual([+(30 / 90).toFixed(6)]);
+    expect(at(90)).toEqual([+(30 / 90).toFixed(6), 0]);
+    expect(at(180)).toEqual([0, -(30 / 90).toFixed(6)].map(Number));
   });
 
   it('warns on a steep rise, a big roller, a cusped flat face and an open profile', () => {

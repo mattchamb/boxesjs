@@ -18,7 +18,10 @@ function niceStep(span: number, count: number): number {
   return (f <= 1 ? 1 : f <= 2 ? 2 : f <= 5 ? 5 : 10) * mag;
 }
 
-const fmt = (v: number) => String(+v.toFixed(Math.abs(v) < 10 ? 1 : 0));
+/** Enough decimals to tell values apart: velocities in mm/° are mostly under one. */
+const fmt = (v: number) => String(+v.toFixed(Math.abs(v) < 1 ? 2 : Math.abs(v) < 10 ? 1 : 0));
+/** Tick labels carry as many decimals as their step, so 0.05 steps do not read 0.1, 0.1. */
+const fmtTick = (v: number, step: number) => String(+v.toFixed(Math.max(0, -Math.floor(Math.log10(step) + 1e-9))));
 
 export function Chart({ chart }: { chart: ChartData }) {
   const wrap = useRef<HTMLDivElement>(null);
@@ -39,7 +42,7 @@ export function Chart({ chart }: { chart: ChartData }) {
   const xMin = pts[0]![0];
   const xMax = pts[pts.length - 1]![0];
   const ys = pts.map((p) => p[1]);
-  // Lift is measured from zero, so zero is always on the axis.
+  // Zero is always on the axis: lift is measured from it, and velocity changes sign across it.
   const step = niceStep(Math.max(...ys, 0) - Math.min(...ys, 0) || 1, 4);
   const yMin = Math.floor(Math.min(...ys, 0) / step) * step;
   const yMax = Math.ceil(Math.max(...ys, 0) / step) * step || step;
@@ -87,7 +90,7 @@ export function Chart({ chart }: { chart: ChartData }) {
           <g key={`y${v}`}>
             <line class="chart-grid" x1={PAD.left} x2={width - PAD.right} y1={sy(v)} y2={sy(v)} />
             <text class="chart-tick" x={PAD.left - 6} y={sy(v)} text-anchor="end" dominant-baseline="middle">
-              {fmt(v)}
+              {fmtTick(v, step)}
             </text>
           </g>
         ))}
