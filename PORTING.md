@@ -95,6 +95,7 @@ settings arguments:
 | `rt_*` | `--RoundedTriangleEdge_*` |
 | `st_*` | `--Stackable_*` |
 | `he_*` | `--HandleEdge_*` |
+| `gr_*` | `--Grooved_*` |
 | `flex_*` | `--Flex_*` |
 | `dt_*` | `--DoveTail_*` |
 | `mount_*` | `--Mounting_*` |
@@ -169,6 +170,12 @@ only a prefilter, and a pair is reported only when their cut outlines actually
 intersect or nest. Finger tabs interleave routinely, so boxes.py packs layouts
 whose part boxes touch at a corner while the outlines stay millimetres apart —
 CardBox at defaults is one.
+
+The one exception is `SHARED_SEAMS`, for parts boxes.py lays out on a single
+shared cut line: UnevenHeightBox stacks each lid wall on the sloped top of
+the wall it completes. Kerf-compensated separately, the two outlines cross by
+the kerf. A pair belongs there only if they coincide exactly at `burn` 0;
+anything else is a real overlap.
 
 ### Snapshots of the port's own geometry
 
@@ -471,7 +478,7 @@ this reason).
 
 ## 9. State of the port
 
-**Every generator on the list is done.** A hundred and sixteen generators are registered —
+**Every generator on the list is done.** A hundred and twenty generators are registered —
 ABox, ClosedBox, OpenBox, CardBox, Console2, UniversalBox, RegularBox,
 BayonetBox, NotesHolder, TypeTray, TrayLayout, TrayInsert, DividerTray,
 CompartmentBox, DrillBox, DrillStand, DisplayShelf, StorageRack, StorageShelf,
@@ -494,8 +501,9 @@ JointPanel, MagazineFile, BookHolder, LaserClamp, LaserHoldfast, Linkage,
 FanHole, BottleTag, BurnTest, Desksign, Stachel, Spool, PizzaShovel,
 DrillGauge, CoinDisplay, CoffeeCapsuleHolder, BottleStack, Dispenser, Hook,
 AirPurifier, MakitaPowerSupply, TriangleLamp, Matrix, LaptopStand,
-PhoneHolder, PaperBox, CarbonFilter, TrafficLight, Clock) — plus the RectangularWall part.
-All of them match boxes.py coordinate-for-coordinate across 449 golden cases,
+PhoneHolder, PaperBox, CarbonFilter, TrafficLight, Clock, AgricolaInsert,
+CardHolder, SlidingDrawer, UnevenHeightBox) — plus the RectangularWall part.
+All of them match boxes.py coordinate-for-coordinate across 464 golden cases,
 regenerated against boxes.py master at `84e392b` (2026-10-22).
 
 When the boxes.py checkout moves, run `./scripts/upstream-drift.py`, then
@@ -514,17 +522,13 @@ unported generator files for `self.X(` calls, `edges.X` classes,
 classes), so §4 steps 1–2 still come first. Note that `paintbox.py` is
 PaintStorage, already ported.
 
-**One needs no new engine machinery** (70 at the survey, less those
-since ported). The most useful, by boxes.py's own groups:
+**Every generator that needed no new engine machinery is ported** (70 at
+the survey). What is left needs one of the pieces below, or is skipped.
 
-| Group | Generators |
-| --- | --- |
-| Misc | `agricolainsert` |
-
-`silverwarebox` also needs `Boxes.handle`; `lamp` needs `holesMargin` and is
+`silverwarebox` needs `Boxes.handle`; `lamp` needs `holesMargin` and is
 hidden from boxes.py's own web interface. `castle` and `organpipe` are skipped too:
 both are in boxes.py's "Unstable" group, and Castle is a fixed-size table
-decoration with no parameters of its own. `smallpartstray2` and `ubox` also need `_TopEdge.addTopEdgeSettings`, which
+decoration with no parameters of its own. `smallpartstray2` and `ubox` need `_TopEdge.addTopEdgeSettings`, which
 `topedge.ts` does not have.
 
 **The engine pieces still missing, by what each unlocks:**
@@ -533,8 +537,7 @@ decoration with no parameters of its own. `smallpartstray2` and `ubox` also need
    dicebox, integratedhingebox, piratechest and others, and hinged top-edge
    choices on the boxes already ported.
 2. `SlideOnLid`: royalgame, kamishibai, and slide-on top edges likewise.
-3. `Grooved`: cardholder, slidingdrawer, unevenheightbox.
-4. NEMA, gears, pulleys, servos, `fillHoles`, `hexHolesPlate`, and the two that
+3. NEMA, gears, pulleys, servos, `fillHoles`, `hexHolesPlate`, and the two that
    import shapely/numpy (sphere, stevensonscreenbox).
 
 A generator referencing `edges.BaseEdge` is *not* blocked — that is the
@@ -569,6 +572,7 @@ section is a record of what the engine now has and where the sharp edges were.
 | `MOUNTING_PARAMS` (`mount_*`) | `MountingSettings` | `params/common.ts` — the `G` edge's keyhole options, first offered by HalfBox, then KeyHolder and WallRack. `side` is the separate `MOUNTING_SIDE_PARAM`, since only `topEdges` reads it |
 | `ctx.joinPartsFrom`, `ctx.nextPartIndex` | | `geom/context.ts` — JointPanel. Folds pieces drawn abutting as one sheet into a single part, so their shared seams are not read as parts lying on each other. boxes.py has no parts to fold |
 | DrillStand's part methods | `generators/drillstand.py` | `drillstand.ts`, as a mixin over `Boxes` (DrillStand) or `WallMountedBox` (WallDrillBox), standing in for boxes.py's multiple inheritance |
+| `GroovedSettings`, `GroovedEdge` (`z`, `Z`) | `edges.py:544` | `src/lib/edges/grooved.ts` — CardHolder, SlidingDrawer, UnevenHeightBox. `gr_*` in the form, from `groovedParams()`, which takes the condition the block shows under: UnevenHeightBox picks its grooves in a string, not an `_edge` field. The only family whose booleans (`inverse`, `interleave`) reach its settings |
 | `HandleEdge`, `HandleHoleEdge` (`y`, `Y`) | `edges.py:2611` | `src/lib/edges/handle.ts` — DividerTray's bottom-panel handle; not offered as a top edge |
 | `Bolts`, `bedBoltHole`, `bedBolts` on `f`/`F`/`h`/`e` | `edges.py:122`, `__init__.py:994` | `BoltsPolicy` in `fingerjoint.ts`, `bedBoltHole` in `boxes.ts` — ClosedBox and UniversalBox with `assembly: 'bolts'`, as wired upstream (five bolted goldens); RectangularWall's `bolts`; the shelves, below. Choosing the bolt, and where it goes on a shelf, is `src/lib/edges/bolts.ts`. `polygonWall` takes `bedBolts` per leg, which boxes.py's does not |
 

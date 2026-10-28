@@ -5698,5 +5698,149 @@
       "NumberStyle": "None",
       "labels": true
     }
+  },
+  {
+    "name": "ref_agricolainsert_default",
+    "generator": "agricolainsert",
+    "pythonClass": "AgricolaInsert",
+    "params": {}
+  },
+  {
+    "name": "ref_agricolainsert_thick",
+    "generator": "agricolainsert",
+    "pythonClass": "AgricolaInsert",
+    "params": {
+      "thickness": 4,
+      "fj_finger": 3,
+      "fj_space": 3
+    }
+  },
+  {
+    "name": "ref_agricolainsert_labels",
+    "generator": "agricolainsert",
+    "pythonClass": "AgricolaInsert",
+    "params": {
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_cardholder_default",
+    "generator": "cardholder",
+    "pythonClass": "CardHolder",
+    "params": {}
+  },
+  {
+    "name": "ref_cardholder_thick",
+    "generator": "cardholder",
+    "pythonClass": "CardHolder",
+    "params": {
+      "thickness": 4,
+      "burn": 0.15,
+      "sx": "60*2:80",
+      "angle": 12
+    }
+  },
+  {
+    "name": "ref_cardholder_outside",
+    "generator": "cardholder",
+    "pythonClass": "CardHolder",
+    "params": {
+      "outside": true,
+      "stackable": false,
+      "gr_style": "triangle",
+      "gr_margin": 0.1,
+      "gr_interleave": true
+    }
+  },
+  {
+    "name": "ref_cardholder_labels",
+    "generator": "cardholder",
+    "pythonClass": "CardHolder",
+    "params": {
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_slidingdrawer_default",
+    "generator": "slidingdrawer",
+    "pythonClass": "SlidingDrawer",
+    "params": {}
+  },
+  {
+    "name": "ref_slidingdrawer_hi",
+    "generator": "slidingdrawer",
+    "pythonClass": "SlidingDrawer",
+    "params": {
+      "hi": 20,
+      "thickness": 4,
+      "burn": 0.15,
+      "gr_style": "softarc",
+      "gr_width": 0.15,
+      "gr_margin": 0.1
+    }
+  },
+  {
+    "name": "ref_slidingdrawer_inside",
+    "generator": "slidingdrawer",
+    "pythonClass": "SlidingDrawer",
+    "params": {
+      "outside": false,
+      "play": 0.3,
+      "gr_style": "flat",
+      "gr_inverse": true
+    }
+  },
+  {
+    "name": "ref_slidingdrawer_labels",
+    "generator": "slidingdrawer",
+    "pythonClass": "SlidingDrawer",
+    "params": {
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_unevenheightbox_default",
+    "generator": "unevenheightbox",
+    "pythonClass": "UnevenHeightBox",
+    "params": {}
+  },
+  {
+    "name": "ref_unevenheightbox_grooved",
+    "generator": "unevenheightbox",
+    "pythonClass": "UnevenHeightBox",
+    "params": {
+      "edge_types": "zZez",
+      "height0": 60,
+      "height1": 100,
+      "height2": 60,
+      "height3": 100,
+      "lid_height": 10,
+      "thickness": 4,
+      "burn": 0.15,
+      "gr_style": "triangle",
+      "gr_width": 0.1,
+      "gr_margin": 0.05
+    }
+  },
+  {
+    "name": "ref_unevenheightbox_nolid",
+    "generator": "unevenheightbox",
+    "pythonClass": "UnevenHeightBox",
+    "params": {
+      "add_lid": false,
+      "bottom_edge": "e",
+      "outside": false,
+      "edge_types": "zzzz"
+    }
+  },
+  {
+    "name": "ref_unevenheightbox_labels",
+    "generator": "unevenheightbox",
+    "pythonClass": "UnevenHeightBox",
+    "params": {
+      "labels": true,
+      "bottom_edge": "s",
+      "edge_types": "ZeZe"
+    }
   }
 ]

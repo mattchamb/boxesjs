@@ -7,6 +7,10 @@ import { defaultValues, type ParamSpec, type ParamValues } from '../params/schem
 import type { GeneratorDef } from './types';
 
 import { aBox } from './abox';
+import { agricolaInsert } from './agricolainsert';
+import { cardHolder } from './cardholder';
+import { slidingDrawer } from './slidingdrawer';
+import { unevenHeightBox } from './unevenheightbox';
 import { clock } from './clock';
 import { trafficLight } from './trafficlight';
 import { carbonFilter } from './carbonfilter';
@@ -238,6 +242,10 @@ const DEFS: GeneratorDef[] = [
   carbonFilter,
   trafficLight,
   clock,
+  agricolaInsert,
+  cardHolder,
+  slidingDrawer,
+  unevenHeightBox,
   rectangularWall,
 ];
 

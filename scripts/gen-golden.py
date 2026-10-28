@@ -100,6 +100,8 @@ def main() -> int:
                 key = "Mounting_" + key[6:]
             elif key.startswith("he_"):
                 key = "HandleEdge_" + key[3:]
+            elif key.startswith("gr_"):
+                key = "Grooved_" + key[3:]
             argv += [f"--{key}", str(value)]
         # Keep the reference geometry pure unless the case says otherwise.
         argv += ["--reference", "0"]

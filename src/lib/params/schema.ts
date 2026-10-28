@@ -151,6 +151,8 @@ export const EDGE_INFO: Record<string, { name: string; description: string }> = 
   š: { name: 'Stackable feet only', description: 'Feet without the bottom slots' },
   Š: { name: 'Stackable top + holes', description: 'Recesses with finger slots' },
   g: { name: 'Gripping', description: 'Corrugated edge for grip' },
+  z: { name: 'Grooved', description: 'Notches cut into the edge' },
+  Z: { name: 'Grooved (opposite)', description: 'Bumps that nest into a `z` edge' },
   t: { name: 'Triangle handle', description: 'Rounded triangular bump with a hole' },
   T: { name: 'Triangle handle + joint', description: 'Triangle handle on a joined edge' },
   G: { name: 'Mounting holes', description: 'Keyholes to hang the box on screws' },

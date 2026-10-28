@@ -150,7 +150,7 @@ class SlottedEdgeDescriptions {
   }
 }
 
-function generateAllSameAngles(
+export function generateAllSameAngles(
   sections: number[],
   thickness: number,
   extraSlack: number,
@@ -244,7 +244,7 @@ class DividerNotchesEdge extends BaseEdge {
 }
 
 /** Top edge of a side wall: the rounded, possibly leaning, divider slots. */
-class DividerSlotsEdge extends BaseEdge {
+export class DividerSlotsEdge extends BaseEdge {
   override description = 'Edge with multiple angled rounded slots for dividers';
 
   constructor(

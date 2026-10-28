@@ -573,6 +573,106 @@ export const HANDLE_EDGE_PARAMS: ParamSpec[] = [
 ];
 
 /**
+ * Groove options, for generators with `z`/`Z` edges. Widths, gaps and
+ * margins are shares of the edge's length, so the pattern scales with it.
+ * `uses` says whether the current values put grooves anywhere; generators
+ * that choose them other than through an `_edge` parameter pass their own.
+ */
+export function groovedParams(uses: (v: ParamValues) => boolean = (v) => anyEdgeIn(v, 'zZ')): ParamSpec[] {
+  return inSection('Grooves', uses, [
+    {
+      key: 'gr_style',
+      kind: 'enum',
+      label: 'Groove shape',
+      choices: [
+        { value: 'arc', label: 'Arc' },
+        { value: 'flat', label: 'Flat', help: 'A straight run; only the gaps between grooves show.' },
+        { value: 'triangle', label: 'Triangle' },
+        { value: 'softarc', label: 'Soft arc', help: 'An S-curve in and out instead of a sharp corner.' },
+      ],
+      default: 'arc',
+      group: 'joints',
+    },
+    {
+      key: 'gr_arc_angle',
+      kind: 'number',
+      label: 'Arc angle',
+      unit: '°',
+      default: 120,
+      min: 10,
+      max: 180,
+      step: 5,
+      group: 'joints',
+      help: 'How much of a circle each arc spans. Larger is deeper.',
+      showIf: (v) => uses(v) && (v['gr_style'] === 'arc' || v['gr_style'] === 'softarc'),
+    },
+    {
+      key: 'gr_tri_angle',
+      kind: 'number',
+      label: 'Triangle angle',
+      unit: '°',
+      default: 30,
+      min: 5,
+      max: 80,
+      step: 5,
+      group: 'joints',
+      help: 'Slope of each side of the notch. Larger is deeper.',
+      showIf: (v) => uses(v) && v['gr_style'] === 'triangle',
+    },
+    {
+      key: 'gr_width',
+      kind: 'number',
+      label: 'Groove width',
+      unit: '× edge',
+      default: 0.2,
+      min: 0.01,
+      max: 1,
+      step: 0.01,
+      group: 'joints',
+    },
+    {
+      key: 'gr_gap',
+      kind: 'number',
+      label: 'Gap between grooves',
+      unit: '× edge',
+      default: 0.1,
+      min: 0,
+      max: 1,
+      step: 0.01,
+      group: 'joints',
+    },
+    {
+      key: 'gr_margin',
+      kind: 'number',
+      label: 'Plain margin',
+      unit: '× edge',
+      default: 0.3,
+      min: 0,
+      max: 0.5,
+      step: 0.01,
+      group: 'joints',
+      help: 'Kept free of grooves at each end. As many grooves as fit between the margins are cut, centred.',
+    },
+    {
+      key: 'gr_inverse',
+      kind: 'bool',
+      label: 'Invert grooves',
+      default: false,
+      group: 'joints',
+      help: 'Swaps which way `z` and `Z` cut.',
+    },
+    {
+      key: 'gr_interleave',
+      kind: 'bool',
+      label: 'Alternate grooves',
+      default: false,
+      group: 'joints',
+      help: 'Cuts every other groove the opposite way.',
+    },
+  ]);
+}
+
+/**
  * Wall-mounting options, for generators built on WallMountedBox. Only the
  * settings for the chosen wall system are read; the rest are ignored.
  */
@@ -1288,6 +1388,12 @@ export function toBoxesConfig(values: ParamValues): BoxesConfig {
     if (v !== undefined && typeof v !== 'boolean') handleEdge[settingKey] = v;
   }
 
+  // Grooved is the one family with boolean settings, so it keeps them.
+  const grooved: Record<string, number | string | boolean> = {};
+  for (const [k, v] of Object.entries(values)) {
+    if (k.startsWith('gr_') && v !== undefined) grooved[k.slice(3)] = v;
+  }
+
   const flex: Record<string, number | string> = {};
   const flexMap: Record<string, string> = {
     flex_distance: 'distance',
@@ -1354,6 +1460,7 @@ export function toBoxesConfig(values: ParamValues): BoxesConfig {
       RoundedTriangleEdge: handle,
       Stackable: stackable,
       HandleEdge: handleEdge,
+      Grooved: grooved,
       Flex: flex,
       DoveTail: dovetail,
       Mounting: mounting,

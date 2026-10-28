@@ -712,6 +712,30 @@
         "boxes/generators/clock.py"
       ],
       "sha": "84e392b39191"
+    },
+    "agricolainsert": {
+      "files": [
+        "boxes/generators/agricolainsert.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "cardholder": {
+      "files": [
+        "boxes/generators/cardholder.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "slidingdrawer": {
+      "files": [
+        "boxes/generators/slidingdrawer.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "unevenheightbox": {
+      "files": [
+        "boxes/generators/unevenheightbox.py"
+      ],
+      "sha": "84e392b39191"
     }
   }
 }

@@ -18,6 +18,7 @@ import { StackableSettings } from './edges/stackable';
 import { DoveTailSettings } from './edges/dovetail';
 import { WedgedTenonSettings, drawWedge, tenonHoles } from './edges/wedgedtenon';
 import { GripSettings } from './edges/grip';
+import { GroovedSettings } from './edges/grooved';
 import { RoundedTriangleEdgeSettings } from './edges/roundedtriangle';
 import { HandleEdgeSettings } from './edges/handle';
 import { FlexEdge, FlexSettings } from './edges/flex';
@@ -201,6 +202,7 @@ export abstract class Boxes {
     this.addPart(new OutSetEdge(this, null));
 
     new GripSettings(t, true, this.settingsFor('Grip')).edgeObjects(this);
+    new GroovedSettings(t, true, this.settingsFor('Grooved')).edgeObjects(this);
 
     const fj = new FingerJointSettings(t, true, this.settingsFor('FingerJoint'));
     fj.edgeObjects(this);

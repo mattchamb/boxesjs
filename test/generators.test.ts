@@ -30,13 +30,25 @@ function bboxesMeet(a: DrawingPart, b: DrawingPart): boolean {
 }
 
 /**
+ * Pairs boxes.py lays out on one shared cut line. UnevenHeightBox's lid walls
+ * are the complement of its walls — together they make the box's full
+ * height — so each sits on its wall's sloped top edge, and a `z` there nests
+ * into the lid's `Z`. Each outline is kerf-compensated on its own, so the two
+ * lines cross by the kerf; at `burn` 0 they coincide.
+ */
+const SHARED_SEAMS: Record<string, string[]> = {
+  unevenheightbox: ['front ∩ lid front', 'right ∩ lid right', 'back ∩ lid back', 'left ∩ lid left'],
+};
+
+/**
  * Parts that overlap cannot be cut. Bounding boxes are only a prefilter — the
  * finger tabs of two neighbouring parts routinely interleave, so boxes.py packs
  * layouts whose boxes touch at a corner while the outlines stay well apart.
  * What matters is whether the outlines themselves meet.
  */
-function overlappingPairs(parts: DrawingPart[]) {
+function overlappingPairs(parts: DrawingPart[], id: string) {
   const bad: string[] = [];
+  const shared = SHARED_SEAMS[id] ?? [];
   const rings = parts.map(outline);
   for (let i = 0; i < parts.length; i++) {
     for (let j = i + 1; j < parts.length; j++) {
@@ -48,7 +60,8 @@ function overlappingPairs(parts: DrawingPart[]) {
       if (!collides && a.length && b.length) {
         collides = insideRing(a[0]![0]!, b[0]!) || insideRing(b[0]![0]!, a[0]!);
       }
-      if (collides) bad.push(`${parts[i]!.name} ∩ ${parts[j]!.name}`);
+      const pair = `${parts[i]!.name} ∩ ${parts[j]!.name}`;
+      if (collides && !shared.includes(pair)) bad.push(pair);
     }
   }
   return bad;
@@ -66,7 +79,7 @@ describe.each(generators.map((g) => g.meta))('$id', (meta) => {
   });
 
   it('lays out parts without overlapping them', () => {
-    expect(overlappingPairs(buildDrawing(meta.id, defaults).parts)).toEqual([]);
+    expect(overlappingPairs(buildDrawing(meta.id, defaults).parts, meta.id)).toEqual([]);
   });
 
   it('names every part it produces', () => {
@@ -121,7 +134,7 @@ describe.each(VARIANTS)('$id with $name', ({ id, values }) => {
   const v = { ...defaultsFor(id), ...values };
 
   it('lays out parts without overlapping them', () => {
-    expect(overlappingPairs(buildDrawing(id, v).parts)).toEqual([]);
+    expect(overlappingPairs(buildDrawing(id, v).parts, id)).toEqual([]);
   });
 
   it('names every part it produces', () => {
