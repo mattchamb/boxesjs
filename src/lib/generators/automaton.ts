@@ -68,7 +68,7 @@ const MAX_STATIONS = 12;
  *
  *   phase <degrees>              lag behind the first cam
  *   output lift                  the rod carries a figure (the default)
- *   output rocker [arm] [out]    the rod tips a lever pivoted `arm` along
+ *   output rocker [arm] [out]    the rod lifts a lever pivoted `arm` behind it
  *   output pair [span]           with the cam before, carries a tilting plate
  *   output spin <drive> <driven> a peg wheel turning a vertical shaft
  */
@@ -244,8 +244,12 @@ export interface RockerLayout {
   tipRadius: number;
   pivotY: number;
   pivotZ: number;
-  /** Where along the lever, from the pivot, its straight underside starts on the rod side. */
-  near: number;
+  /**
+   * The figure end, along the lever from the pivot: past the rod, so negative.
+   * The pivot is at the other end, so the figure's weight holds the lever down
+   * on the rod rather than lifting it off.
+   */
+  end: number;
   cheekWidth: number;
   /** Lever angle at each whole degree of crank, degrees. */
   tilt: number[];
@@ -511,15 +515,19 @@ export function automatonLayout(o: AutomatonOptions): AutomatonLayout {
       const pivotZ = o.pivotHeight > 0 ? deckTop + o.pivotHeight : tipZ(mid) + q;
       const tilts = L.lift.map((s) => rockerAngle(arm, tipZ(s) - pivotZ, q));
       const contacts = L.lift.map((s, k) => rockerContact(arm, tipZ(s) - pivotZ, tilts[k]!));
-      const near = Math.min(...contacts) - 1;
+      // The tip slides along the lever as it tilts; the lever runs on past
+      // its furthest reach, so the tip never rides onto the rounded end.
+      const outMin = -Math.min(...contacts) + 1 - arm;
+      const reach = Math.max(out.out, outMin);
+      if (reach > out.out + 1e-9) warn(`${name}: the lever must reach past the rod; it is lengthened to ${+(arm + reach).toFixed(1)} mm.`, 'cams');
       const cheekWidth = o.pivotPin + 8;
-      L.rocker = { arm, out: out.out, width, tipRadius, pivotY: L.rodY + arm, pivotZ, near, cheekWidth, tilt: tilts.map((a) => a / DEG) };
+      L.rocker = { arm, out: reach, width, tipRadius, pivotY: L.rodY + arm, pivotZ, end: -(arm + reach), cheekWidth, tilt: tilts.map((a) => a / DEG) };
 
       const maxTilt = Math.max(...tilts.map(Math.abs)) / DEG;
       if (maxTilt > 45) warn(`${name}: the lever tilts ${maxTilt.toFixed(0)}°; past about 45° it can slip off the rod. Use a longer arm or less lift.`, 'cams');
-      // The far end swings down as the rod end rises.
-      const lowest = Math.min(...tilts.map((a) => pivotZ - out.out * Math.sin(a) - width / 2));
-      if (lowest < deckTop + 1) warn(`${name}: the lever's far end reaches the deck. Raise the pivot or shorten the lever.`, 'pivot_height');
+      // The figure end rises and falls with the rod, and further.
+      const lowest = Math.min(...tilts.map((a) => pivotZ + (arm + reach) * Math.sin(a) - width / 2));
+      if (lowest < deckTop + 1) warn(`${name}: the lever's figure end reaches the deck. Raise the pivot or shorten the lever.`, 'pivot_height');
       if (pivotZ - deckTop < cheekWidth / 2 + 1) warn(`${name}: the pivot is too low for its bracket.`, 'pivot_height');
       const clear = (o.guides === 'above' ? guideY / 2 : (o.rodWidth + o.rodPlay) / 2) + 1;
       if (arm - cheekWidth / 2 < clear) warn(`${name}: the lever's bracket meets the rod's guide; use a longer arm.`, 'cams');
@@ -1016,9 +1024,9 @@ class Automaton extends CamPlates {
         const r = L.rocker;
         const fig = o.figureHole > 0 && o.figureHole <= r.width - 3 ? o.figureHole : 0;
         rods.push(
-          this.stadium(r.out - r.near, r.width / 2, [
-            { at: -r.near, d: o.pivotPin + o.bearingPlay },
-            { at: r.out - r.near, d: fig },
+          this.stadium(-r.end, r.width / 2, [
+            { at: 0, d: fig },
+            { at: -r.end, d: o.pivotPin + o.bearingPlay },
           ], [], `Lever ${k}`),
         );
         small.push(this.cheek(L, `Bracket ${k}`), this.cheek(L, `Bracket ${k}`));
@@ -1106,7 +1114,8 @@ export const automaton: GeneratorDef = {
       'Describe one cam per block in Cams, separated by a blank line or `---`, using the Cam generator\'s motion ' +
         'lines. An output line says what it drives:',
       '- `output lift` (the default): a figure on the rod moves up and down.',
-      '- `output rocker 25`: the rod tips a lever pivoted 25 mm along, which falls back under its own weight.',
+      '- `output rocker 25`: the rod lifts a lever pivoted 25 mm behind it, with a figure 25 mm beyond the ' +
+        'rod that moves twice as far. The figure\'s weight keeps the lever on the rod.',
       '- `output pair 30`: this cam\'s rod and the one before, 30 mm apart front to back, carry a plate that ' +
         'lifts and tilts.',
       '- `output spin 12 8`: a peg wheel of 12 pegs, in place of a cam, turns one of 8 on an upright shaft: ' +

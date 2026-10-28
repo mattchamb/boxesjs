@@ -166,9 +166,19 @@ describe('automatonLayout', () => {
       const cx = -r.arm;
       const dist = cx * nx + cy * ny + r.width / 2;
       expect(dist, `${a}°`).toBeCloseTo(-r.tipRadius, 6);
-      // The tip touches the straight part of the underside.
-      expect(cx * ex + cy * ey).toBeGreaterThan(r.near);
+      // The tip touches the straight part of the underside, between the
+      // pivot and the figure end.
+      const along = cx * ex + cy * ey;
+      expect(along).toBeGreaterThan(r.end);
+      expect(along).toBeLessThan(0);
     });
+    // Pivoted at the end, so the figure end goes up with the rod, and further.
+    const lo = L.lift.indexOf(Math.min(...L.lift));
+    const hi = L.lift.indexOf(Math.max(...L.lift));
+    const figZ = (a: number) => r.pivotZ + -r.end * Math.sin(r.tilt[a]! * DEG);
+    const rodRise = L.lift[hi]! - L.lift[lo]!;
+    expect(figZ(hi) - figZ(lo)).toBeGreaterThan(1.8 * rodRise);
+    expect(figZ(hi) - figZ(lo)).toBeLessThan(2.2 * rodRise);
     // Levelled at mid-lift: it tilts as far up as down.
     expect(Math.max(...r.tilt) + Math.min(...r.tilt)).toBeLessThan(2);
     expect(Math.max(...r.tilt)).toBeGreaterThan(5);
