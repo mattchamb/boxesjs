@@ -311,6 +311,73 @@ export class Nester {
     g.bottom = Math.max(g.bottom, cy * res + s.fp.height);
   }
 
+  /** Place the piece on the sheet, turned whichever of `shapes` sits highest; false if none fits. */
+  private fit(g: Grid, piece: number, shapes: Shape[]): boolean {
+    let best: { s: Shape; at: [number, number] } | null = null;
+    for (const s of shapes) {
+      const b = this.bounds(s)!;
+      // Nothing lower than the best so far can win.
+      const at = g.find(s, b[0], b[1], b[2], best ? Math.min(b[3], best.at[1]) : b[3]);
+      if (at && (!best || at[1] < best.at[1] || (at[1] === best.at[1] && at[0] < best.at[0]))) best = { s, at };
+    }
+    if (!best) return false;
+    this.place(g, piece, best.s, best.at[0], best.at[1]);
+    return true;
+  }
+
+  /**
+   * Move what it can off later sheets into gaps on earlier ones.
+   *
+   * Placing first fit already does this for the search's own arrangements,
+   * but not for MaxRects', which packs boxes and so cannot use the ground
+   * round a part that is not one. The cost cannot see the difference while the
+   * last sheet's deepest row stays put, and MaxRects' rows sit a little higher
+   * than the grid's, so it often wins with small parts left on the last sheet
+   * that would fit in an earlier sheet's gaps. Every move empties a little of
+   * a later sheet and adds nothing to it, so the result never needs more
+   * sheets nor reaches deeper.
+   */
+  settle(a: Arrangement): Arrangement {
+    const n = this.once.length;
+    const closed = new Set(a.oversize);
+    const sheets = a.sheets.map((s) => s.slice());
+    const grids: (Grid | null)[] = [];
+    for (let i = 0; i < sheets.length; i++) {
+      if (i > 0) {
+        sheets[i] = sheets[i]!.filter((pl) => {
+          if (closed.has(pl.piece)) return true;
+          const d = pl.piece % n;
+          const shapes = [...new Set([pl.angle, ...this.auto[d]!])].map((t) => this.shape(d, t)).filter((s) => this.fitsEmpty(s));
+          const g = grids.find((g) => g !== null && this.fit(g, pl.piece, shapes));
+          if (!g) return true;
+          sheets[grids.indexOf(g)]!.push(g.placed.pop()!);
+          return false;
+        });
+      }
+      grids.push(sheets[i]!.some((pl) => closed.has(pl.piece)) ? null : this.gridOf(i, sheets[i]!));
+    }
+    return { sheets: sheets.filter((s) => s.length > 0), oversize: a.oversize };
+  }
+
+  /**
+   * A grid holding placements made anywhere, not only on its cells. Each is
+   * stamped at the cells either side of where it sits, which covers it
+   * wherever it falls between them.
+   */
+  private gridOf(i: number, placed: Placement[]): Grid {
+    const g = this.grid(i);
+    const n = this.once.length;
+    for (const pl of placed) {
+      const s = this.shape(pl.piece % n, pl.angle);
+      const fx = (pl.x + s.fp.x0) / this.res;
+      const fy = (pl.y + s.fp.y0) / this.res;
+      for (const cx of new Set([Math.floor(fx + 1e-9), Math.ceil(fx - 1e-9)])) {
+        for (const cy of new Set([Math.floor(fy + 1e-9), Math.ceil(fy - 1e-9)])) g.cover(s.stamp, cx - s.k, cy - s.k);
+      }
+    }
+    return g;
+  }
+
   /**
    * Place the pieces in `order`, each turned by its entry in `angles`, or by
    * whichever of its usual turns sits highest where that is -1.
@@ -344,25 +411,12 @@ export class Nester {
         continue;
       }
 
-      const tryGrid = (g: Grid): boolean => {
-        let best: { s: Shape; at: [number, number] } | null = null;
-        for (const s of shapes) {
-          const b = this.bounds(s)!;
-          // Nothing lower than the best so far can win.
-          const at = g.find(s, b[0], b[1], b[2], best ? Math.min(b[3], best.at[1]) : b[3]);
-          if (at && (!best || at[1] < best.at[1] || (at[1] === best.at[1] && at[0] < best.at[0]))) best = { s, at };
-        }
-        if (!best) return false;
-        this.place(g, piece, best.s, best.at[0], best.at[1]);
-        return true;
-      };
-
       // First fit across sheets, so the early sheets fill up and whatever space
       // is left over ends up on the last one.
-      if (grids.some((g) => !g.closed && tryGrid(g))) continue;
+      if (grids.some((g) => !g.closed && this.fit(g, piece, shapes))) continue;
       const g = this.grid(grids.length);
       grids.push(g);
-      tryGrid(g);
+      this.fit(g, piece, shapes);
     }
 
     return { sheets: grids.map((g) => g.placed), oversize };
@@ -421,8 +475,13 @@ export function nest(drawing: Drawing, o: PackOptions, opts: NestOptions = {}): 
     if (c < cur.cost) cur = { order, angles: auto, cost: c, a };
   }
   let best = cur;
-  const rectsCost = n.cost(rects);
-  const better = () => (best.cost < rectsCost ? best.a : rects);
+  // Both settled before they are compared: MaxRects' gains most from it.
+  const settledRects = n.settle(rects);
+  const rectsCost = n.cost(settledRects);
+  const better = () => {
+    const a = n.settle(best.a);
+    return n.cost(a) < rectsCost ? a : settledRects;
+  };
 
   const iterations = opts.iterations ?? Infinity;
   const budget = opts.budgetMs ?? (opts.iterations === undefined ? 5000 : Infinity);

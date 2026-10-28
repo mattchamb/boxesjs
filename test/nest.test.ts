@@ -2,8 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { Affine } from '~/lib/geom/affine';
 import { insideRing, segmentsCross, type Pt } from '~/lib/geom/crossings';
 import { dilate, flatten, footprint, materialArea } from '~/lib/layout/footprint';
-import { layoutKey, nest } from '~/lib/layout/nest';
-import { packDrawing, piecesOf, realise, type PackOptions } from '~/lib/layout/pack';
+import { layoutKey, nest, Nester } from '~/lib/layout/nest';
+import { packDrawing, piecesOf, planRects, realise, type PackOptions } from '~/lib/layout/pack';
 import { buildDrawing, optimiseLayout } from '~/lib/preview';
 import { defaultsFor, getGenerator, listGenerators } from '~/lib/generators/registry';
 import { toBoxesConfig } from '~/lib/params/common';
@@ -247,6 +247,19 @@ describe('nest', () => {
     const turns = r.arrangement.sheets.flat();
     expect(turns.filter((p) => p.piece % 2 === 1).every((p) => p.angle % 90 === 0)).toBe(true);
     expect(clashes(d, realise(d, opts({ angleStep: 15, copies: 3 }), r.arrangement), 2)).toEqual([]);
+  });
+
+  it('settles parts MaxRects left on a later sheet into an earlier sheet’s gaps', () => {
+    // The L's box fills the sheet, so MaxRects puts the square on a sheet of
+    // its own; it fits in the L's bay.
+    const l: [number, number][] = [[0, 0], [100, 0], [100, 30], [30, 30], [30, 100], [0, 100]];
+    const d = drawingOf([partOf('l', l), partOf('sq', rect(200, 0, 20, 20))]);
+    const o = opts({ sheetWidth: 110, sheetHeight: 110 });
+    const rects = planRects(d, o);
+    expect(rects.sheets).toHaveLength(2);
+    const settled = new Nester(d, o).settle(rects);
+    expect(settled.sheets).toHaveLength(1);
+    expect(clashes(d, realise(d, o, settled), o.gap)).toEqual([]);
   });
 
   it('gives a part larger than the sheet a sheet of its own', () => {
