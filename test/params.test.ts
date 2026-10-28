@@ -86,6 +86,10 @@ describe('warnings land on fields the panel shows', () => {
     ['automaton', { cams: 'output spin 3 3', peg_spacing: 4, front: 'window', window_margin: 100 }],
     ['automaton', { assembly: 'bolts' }],
     ['automaton', { assembly: 'wedges', thickness: 6, wt_wedge_length: 12 }],
+    ['automaton', { guides: 'below' }],
+    ['automaton', { cams: 'output spin 3 12', peg_pin: 1, peg_spacing: 12, pitch: 80 }],
+    ['automaton', { cams: 'output spin 12 3', peg_length: 3, peg_spacing: 12, pitch: 80 }],
+    ['automaton', { cams: 'output rocker 25\nrise 40 120\nreturn 120', base_radius: 40 }],
   ];
   for (const [id, values] of cases) {
     it(`${id} ${JSON.stringify(values)}`, () => {

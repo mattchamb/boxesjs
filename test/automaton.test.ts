@@ -8,6 +8,7 @@ import { describe, expect, it } from 'vitest';
 import {
   automatonLayout,
   parseCams,
+  pegMesh,
   rockerAngle,
   rockerContact,
   type AutomatonOptions,
@@ -39,7 +40,7 @@ function opts(cams: string, over: Partial<AutomatonOptions> = {}): AutomatonOpti
     rodAbove: 25,
     figureHole: 2,
     footHeight: 6,
-    guides: 'below',
+    guides: 'plate',
     guideLength: 20,
     guideWall: 3,
     indexPin: 3,
@@ -129,7 +130,7 @@ describe('automatonLayout', () => {
   });
 
   it('keeps every rod on its cam at every crank angle, its foot clear of the guides', () => {
-    const guideBottom = lay.H - lay.guideBlocks * 3;
+    const guideBottom = lay.lowerGuide!.z;
     lay.stations.forEach((L, i) => {
       const e = L.rodY - lay.yAxis;
       const phased = L.profile.outline.map((p) => turn(p, -L.station.phase * DEG));
@@ -224,9 +225,47 @@ describe('automatonLayout', () => {
     const x = l.stations[0]!.x;
     expect(sp.axisX - sp.r2).toBeGreaterThan(x + 1.5);
     expect(sp.axisX - sp.r2).toBeLessThan(x + 1.5 + 8);
-    // The bearing stack and the wheel fit under the deck.
-    expect(sp.wheelZ + 3 + l.guideBlocks * 3).toBeLessThanOrEqual(l.H);
+    // The stop collar sits between the wheel and the lower plate, a
+    // millimetre under it, so the shaft cannot ride up off the mesh.
+    expect(sp.stopZ).toBeGreaterThanOrEqual(sp.wheelZ + 3 - 1e-9);
+    expect(sp.stopZ + 3 + 1).toBeCloseTo(l.lowerGuide!.z, 9);
+    // Each peg is still engaged when the next one arrives, on both wheels.
+    const mesh = pegMesh(sp, 1.5, 8);
+    expect(mesh.drive).toBeGreaterThan(1);
+    expect(mesh.driven).toBeGreaterThan(1);
     expect(l.warnings).toEqual([]);
+    // With blocks under the deck, the stop collar sits under the stack.
+    const b = automatonLayout(opts('output spin 12 8', { guides: 'below' }));
+    expect(b.stations[0]!.spin!.stopZ + 3 + 1).toBeCloseTo(b.H - b.guideBlocks * 3, 9);
+  });
+
+  it('warns when peg wheels would let go between pegs', () => {
+    // Short drive pegs and few driven pegs: a driven peg swings clear first.
+    expect(automatonLayout(opts('output spin 12 3', { pegLength: 3, pegSpacing: 12, pitch: 80 })).warnings.map((w) => w.param)).toContain('peg_length');
+    // Thin pegs, far apart on a small drive wheel: each lets go before the next arrives.
+    expect(automatonLayout(opts('output spin 3 12', { pegPin: 1, pegSpacing: 12, pitch: 80 })).warnings.map((w) => w.param)).toContain('peg_pin');
+  });
+
+  it('spaces the lower plate from the deck so no rod binds', () => {
+    for (const L of lay.stations) expect(L.jam, `rod ${lay.stations.indexOf(L) + 1}`).toBeLessThanOrEqual(0.5 + 1e-9);
+    // The pair's rods are pushed furthest off their axis, and set the span.
+    // No more than the whole millimetre the height is rounded up to.
+    const want = Math.max(20, 1.6 * Math.max(...lay.stations.map((L) => (L.jam * lay.guideSpan) / 0.8)));
+    expect(lay.guideSpan).toBeGreaterThanOrEqual(want - 1e-9);
+    expect(lay.guideSpan).toBeLessThan(want + 1);
+    expect(lay.lowerGuide!.z + 3).toBeLessThanOrEqual(lay.H);
+  });
+
+  it('warns that short guide blocks bind, on the guide length', () => {
+    const l = automatonLayout(opts(MIXED, { guides: 'below' }));
+    expect(l.warnings.map((w) => w.param)).toEqual(['guide_length']);
+    expect(l.warnings[0]!.message).toMatch(/rods 1, 3, 4/);
+    expect(l.lowerGuide).toBeNull();
+  });
+
+  it('warns past 30° of lever tilt, where it pushes the rod sideways', () => {
+    const l = automatonLayout(opts('output rocker 25\nrise 40 120\nreturn 120', { baseRadius: 40 }));
+    expect(l.warnings.some((w) => /pushes the rod sideways/.test(w.message))).toBe(true);
   });
 
   it('spaces stations further apart than asked when their parts would meet', () => {
@@ -240,7 +279,8 @@ describe('automatonLayout', () => {
     const l = automatonLayout(opts('rise 10 90', { h: 30, y: 30 }));
     expect(l.H).toBe(30);
     expect(l.D).toBe(30);
-    expect(l.warnings.map((w) => w.param).sort()).toEqual(['h', 'y']);
+    // Height also warns that the rods would bind in so short a box.
+    expect([...new Set(l.warnings.map((w) => w.param))].sort()).toEqual(['h', 'y']);
   });
 });
 
@@ -268,6 +308,29 @@ describe('the drawing', () => {
     guides.forEach((x, i) => expect(x - guides[0]!).toBeCloseTo(lay.stations[i]!.x - lay.stations[0]!.x, 6));
   });
 
+  it('cuts the lower plate with a guide hole under each deck hole', () => {
+    const d = buildDrawing('automaton', values);
+    const centres = (name: string) =>
+      d.parts
+        .find((p) => p.name === name)!
+        .paths.filter((p) => p.layer === 'inner')
+        .flatMap((p) => polylines(p.cmds))
+        .map((ring) => {
+          const xs = ring.map((q) => q[0]);
+          const ys = ring.map((q) => q[1]);
+          return { w: Math.max(...xs) - Math.min(...xs), h: Math.max(...ys) - Math.min(...ys), x: (Math.max(...xs) + Math.min(...xs)) / 2, y: (Math.max(...ys) + Math.min(...ys)) / 2 };
+        })
+        .filter((h) => Math.abs(h.w - 3.4) < 0.01 && Math.abs(h.h - 6.4) < 0.01)
+        .sort((a, b) => a.x - b.x);
+    const deck = centres('Deck');
+    const plate = centres('Lower guide');
+    expect(plate).toHaveLength(deck.length);
+    plate.forEach((h, i) => {
+      expect(h.x - plate[0]!.x).toBeCloseTo(deck[i]!.x - deck[0]!.x, 6);
+      expect(h.y - plate[0]!.y).toBeCloseTo(deck[i]!.y - deck[0]!.y, 6);
+    });
+  });
+
   it('cuts as many washers as the stack holds, and guides for every rod', () => {
     const d = buildDrawing('automaton', values);
     const lay = automatonLayout(opts(String(values['cams'])));
@@ -283,7 +346,15 @@ describe('the drawing', () => {
     const d = buildDrawing('automaton', { ...values, assembly: 'wedges' });
     const wedges = d.parts.filter((p) => p.name === 'wedge').length;
     const side = d.parts.find((p) => p.name === 'Left side')!;
-    const slots = side.paths.filter((p) => p.layer === 'inner').length - 1; // less the bearing
+    // The tenon holes, told from the lower plate's finger slots by length:
+    // a tenon is four thicknesses wide, a finger two.
+    const slots = side.paths
+      .filter((p) => p.layer === 'inner')
+      .flatMap((p) => polylines(p.cmds))
+      .filter((ring) => {
+        const xs = ring.map((q) => q[0]);
+        return Math.max(...xs) - Math.min(...xs) > 10;
+      }).length;
     expect(wedges).toBe(2 * slots);
     expect(d.warnings).toEqual([]);
   });

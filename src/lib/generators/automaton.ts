@@ -188,6 +188,27 @@ export function rockerContact(arm: number, h: number, tilt: number): number {
   return -arm * Math.cos(phi) + h * Math.sin(phi);
 }
 
+/**
+ * How well a pair of peg wheels hands over from one peg to the next, as the
+ * arc each peg stays engaged over divided by the arc between pegs: below 1
+ * there is a gap with nothing driving.
+ *
+ * A drive peg engages while it stands over the driven pegs' tips, which hang
+ * to a peg's radius below the top of its circle: within ±α of the top, where
+ * it still overlaps them by half a millimetre. A driven peg is engaged while it
+ * stays over the drive pegs' length, within ±β of the meshing point.
+ */
+export function pegMesh(sp: SpinLayout, pegR: number, pegLength: number): { drive: number; driven: number } {
+  const depth = 2 * pegR - 0.5;
+  const alpha = depth >= 2 * sp.r1 ? Math.PI : Math.acos(Math.max(-1, 1 - depth / sp.r1));
+  const reach = pegLength / 2 + pegR - 0.5;
+  const beta = reach >= 2 * sp.r2 ? Math.PI : Math.acos(Math.max(-1, 1 - reach / sp.r2));
+  return {
+    drive: (2 * alpha) / ((2 * Math.PI) / sp.drive),
+    driven: (2 * beta) / ((2 * Math.PI) / sp.driven),
+  };
+}
+
 export type Panel = 'open' | 'solid' | 'window';
 export type Assembly = 'glue' | 'wedges' | 'bolts';
 
@@ -211,7 +232,11 @@ export interface AutomatonOptions {
   rodAbove: number;
   figureHole: number;
   footHeight: number;
-  guides: 'below' | 'above';
+  /**
+   * How the rods are kept upright: a lower guide plate between the sides, or
+   * a stack of laminated blocks under or on the deck.
+   */
+  guides: 'plate' | 'below' | 'above';
   guideLength: number;
   guideWall: number;
   indexPin: number;
@@ -280,6 +305,8 @@ export interface SpinLayout {
   wheelZ: number;
   /** How far the driven pegs hang below their wheel. */
   pegDrop: number;
+  /** Underside of the collar that keeps the shaft from riding up. */
+  stopZ: number;
   shaftLength: number;
 }
 
@@ -298,6 +325,12 @@ export interface StationLayout {
   rodY: number;
   footMin: number;
   footMax: number;
+  /**
+   * The rod's friction factor in its guides: 2·μ·e / L, with e the furthest
+   * the cam pushes its foot off the rod's axis and L the guide's length. At
+   * 1 it jams; below that the lift takes 1 / (1 - jam) times the force.
+   */
+  jam: number;
   rodLength: number;
   /** Lift the rod's length is measured from, and its top's height there. */
   sRef: number;
@@ -328,6 +361,10 @@ export interface AutomatonLayout {
   deckTop: number;
   guideTop: number;
   guideBlocks: number;
+  /** The lower guide plate: its underside, and its depth about the shaft line. */
+  lowerGuide: { z: number; depth: number } | null;
+  /** Between the outer faces of the guides each rod slides through. */
+  guideSpan: number;
   guideX: number;
   guideY: number;
   dowels: { name: string; diameter: number; length: number; count: number }[];
@@ -345,7 +382,8 @@ export function automatonLayout(o: AutomatonOptions): AutomatonLayout {
   const stacked = o.washers !== false;
   const indexRadius = o.indexPin > 0 ? o.shaft / 2 + o.indexPin / 2 + 2 : 0;
   const washerDiameter = o.indexPin > 0 ? 2 * (indexRadius + o.indexPin / 2 + 2) : o.shaft + 8;
-  const guideBlocks = Math.max(0, Math.ceil((o.guideLength - t) / t - 1e-9));
+  const plate = o.guides === 'plate';
+  const guideBlocks = plate ? 0 : Math.max(0, Math.ceil((o.guideLength - t) / t - 1e-9));
   const guideX = t + o.rodPlay + 2 * o.guideWall;
   const guideY = o.rodWidth + o.rodPlay + 2 * o.guideWall;
   const cheekGap = o.rodPlay / 2;
@@ -361,7 +399,7 @@ export function automatonLayout(o: AutomatonOptions): AutomatonLayout {
       const r2 = (driven * o.pegSpacing) / (2 * Math.PI);
       const disc1 = r1 + pegR + 2;
       profile = camProfile({ segments: [{ span: 360, lift: 0, law: 'uniform' }], baseRadius: disc1, follower: 'flat', rollerRadius: 0, offset: 0, direction: o.direction, burn: 0 });
-      spin = { drive, driven, r1, r2, disc1, disc2: r2 + pegR + 2, axisX: 0, wheelZ: 0, pegDrop: 0, shaftLength: 0 };
+      spin = { drive, driven, r1, r2, disc1, disc2: r2 + pegR + 2, axisX: 0, wheelZ: 0, pegDrop: 0, stopZ: 0, shaftLength: 0 };
       if (o.pegSpacing < 2 * o.pegPin) warn(`Cam ${i + 1}: the pegs are closer than two diameters apart and will not mesh cleanly.`, 'peg_spacing');
       if (r1 - pegR - 1 < Math.max(stacked ? washerDiameter / 2 + 0.5 : 0, indexRadius + o.indexPin / 2 + 1, o.shaft / 2 + 2)) {
         warn(
@@ -399,11 +437,11 @@ export function automatonLayout(o: AutomatonOptions): AutomatonLayout {
 
   // Extents along the shaft, for spacing the stations.
   const ext = st.map((x) => {
-    let half = Math.max(t / 2, guideX / 2);
+    let half = Math.max(t / 2, plate ? (t + o.rodPlay) / 2 + 1 : guideX / 2);
     if (x.station.output.kind === 'rocker') half = Math.max(half, t / 2 + cheekGap + t);
     if (x.spin) {
       const axis = t / 2 + o.pegLength / 2 + x.spin.r2;
-      const block = (o.spinShaft + 2 * o.guideWall) / 2;
+      const block = plate ? o.spinShaft / 2 + 1 : (o.spinShaft + 2 * o.guideWall) / 2;
       return { lo: Math.min(-t / 2, axis - Math.max(x.spin.disc2, block)), hi: Math.max(t / 2 + o.pegLength + 1, axis + Math.max(x.spin.disc2, block)), axis };
     }
     return { lo: -half, hi: half, axis: 0 };
@@ -454,20 +492,36 @@ export function automatonLayout(o: AutomatonOptions): AutomatonLayout {
   const maxR = Math.max(o.baseRadius, ...st.map((x) => x.maxRadius));
   const zShaft = maxR + 3;
   const guidesBelow = o.guides === 'below' ? guideBlocks * t : 0;
-  let hNeeded = zShaft + maxR;
+  // How far the cam pushes each foot off its rod's axis. A flat foot is pushed
+  // where it touches, which slides across it as the cam turns.
+  const offAxis = st.map((x, i) => (x.spin ? 0 : Math.max(...x.profile.faceReach.map((p) => Math.abs(p - rodOffset[i]!)))));
+  // Assumed friction of a rod in its guide: bare plywood, on the safe side.
+  const MU = 0.4;
+  // The guide span that keeps every rod's friction factor to a half, so no
+  // lift takes more than twice the force it would in a perfect guide.
+  const spanForJam = (2 * MU * Math.max(0, ...offAxis)) / 0.5;
+  // Everything under the deck that the guides must clear: the feet at full
+  // lift, and each driven peg wheel (which needs the drive disc below it).
+  let clearTop = zShaft + maxR;
   for (const x of st) {
-    if (x.spin) {
-      const wheelZ = zShaft + x.spin.disc1 + 1.5;
-      hNeeded = Math.max(hNeeded, wheelZ + t + 1 + (o.guides === 'below' ? guideBlocks * t : 0));
-    } else {
-      hNeeded = Math.max(hNeeded, zShaft + o.baseRadius + x.sMax + o.footHeight + 2 + guidesBelow);
-    }
+    // The driven wheel, then its stop collar a millimetre under the guide.
+    if (x.spin) clearTop = Math.max(clearTop, zShaft + x.spin.disc1 + 1.5 + 2 * t + 1);
+    else clearTop = Math.max(clearTop, zShaft + o.baseRadius + x.sMax + o.footHeight + 2);
+  }
+  let hNeeded: number;
+  if (plate) {
+    // The lower plate sits just clear of all that; the deck as high above it as the rods need.
+    hNeeded = clearTop + Math.max(o.guideLength, spanForJam, 2 * t + 1) - t;
+  } else {
+    hNeeded = clearTop + guidesBelow;
   }
   hNeeded = Math.ceil(hNeeded);
   const H = o.h > 0 ? o.h : hNeeded;
   if (o.h > 0 && o.h < hNeeded) warn(`The mechanism needs at least ${hNeeded} mm of height inside.`, 'h');
   const deckTop = H + t;
   const guideTop = deckTop + (o.guides === 'above' ? guideBlocks * t : 0);
+  const lowerZ = plate ? Math.min(clearTop, H - 2 * t) : 0;
+  const guideSpan = plate ? deckTop - lowerZ : (guideBlocks + 1) * t;
 
   // Depth, about the shaft line.
   const half: number[] = [maxR + o.margin];
@@ -495,6 +549,7 @@ export function automatonLayout(o: AutomatonOptions): AutomatonLayout {
     rodY: yAxis + rodOffset[i]!,
     footMin: feet[i]!.footMin,
     footMax: feet[i]!.footMax,
+    jam: (2 * MU * offAxis[i]!) / guideSpan,
     rodLength: 0,
     sRef: x.sMin,
     top0: guideTop + o.rodAbove,
@@ -524,7 +579,15 @@ export function automatonLayout(o: AutomatonOptions): AutomatonLayout {
       L.rocker = { arm, out: reach, width, tipRadius, pivotY: L.rodY + arm, pivotZ, end: -(arm + reach), cheekWidth, tilt: tilts.map((a) => a / DEG) };
 
       const maxTilt = Math.max(...tilts.map(Math.abs)) / DEG;
-      if (maxTilt > 45) warn(`${name}: the lever tilts ${maxTilt.toFixed(0)}°; past about 45° it can slip off the rod. Use a longer arm or less lift.`, 'cams');
+      // The lever presses square to itself, so tilted it pushes the rod
+      // sideways by tan(tilt) of the load, which the guides take as friction.
+      if (maxTilt > 30) {
+        warn(
+          `${name}: the lever tilts ${maxTilt.toFixed(0)}°, which pushes the rod sideways by ${Math.tan(maxTilt * DEG).toFixed(1)}× its load ` +
+            'and makes it bind in its guides. Use a longer arm or less lift.',
+          'cams',
+        );
+      }
       // The figure end rises and falls with the rod, and further.
       const lowest = Math.min(...tilts.map((a) => pivotZ + (arm + reach) * Math.sin(a) - width / 2));
       if (lowest < deckTop + 1) warn(`${name}: the lever's figure end reaches the deck. Raise the pivot or shorten the lever.`, 'pivot_height');
@@ -547,15 +610,36 @@ export function automatonLayout(o: AutomatonOptions): AutomatonLayout {
       A.top0 = L.top0 = top0;
       L.pair = { partner: i - 1, span: out.span, reach, width, tilt: tilts.map((a) => a / DEG) };
       if (steep / DEG > 45) warn(`${name}: the plate tilts ${(steep / DEG).toFixed(0)}°; widen the span or reduce the difference in lift.`, 'cams');
-      if (out.span < guideY + 1) warn(`${name}: the two rods' guides meet; use a wider span.`, 'cams');
+      const across = plate ? o.rodWidth + o.rodPlay + 3 : guideY + 1;
+      if (out.span < across) warn(`${name}: the two rods' guides meet; use a wider span.`, 'cams');
       if (o.pivotPin > o.rodWidth - 2) warn('The pins leave less than a millimetre of rod either side; use wider rods or thinner pins.', 'rod_width');
     }
     if (L.spin) {
       const sp = L.spin;
       sp.axisX = L.x + ext[i]!.axis;
       sp.wheelZ = zShaft + sp.disc1 + 1.5;
+      // A drive peg coming over the top pushes the driven pegs partly upward.
+      // A collar just under the plate (or the bearing stack) stops the shaft
+      // rising off the mesh; the one on top of the deck carries its weight.
+      const under = plate ? lowerZ : o.guides === 'below' ? H - guideBlocks * t : H;
+      sp.stopZ = under - 1 - t;
       sp.pegDrop = sp.wheelZ - (zShaft + sp.r1) + pegR;
       sp.shaftLength = Math.ceil(guideTop + t + o.rodAbove - sp.wheelZ);
+      const mesh = pegMesh(sp, pegR, o.pegLength);
+      if (mesh.drive < 1) {
+        warn(
+          `${name}: each drive peg lets go before the next one arrives, so the driven wheel stops and starts. ` +
+            'Use thicker pegs or more of them.',
+          'peg_pin',
+        );
+      }
+      if (mesh.driven < 1) {
+        warn(
+          `${name}: the driven pegs swing off the end of the drive pegs before the next one is caught. ` +
+            'Use longer drive pegs or more driven pegs.',
+          'peg_length',
+        );
+      }
     }
   });
   layouts.forEach((L, i) => {
@@ -572,6 +656,28 @@ export function automatonLayout(o: AutomatonOptions): AutomatonLayout {
       warn('The index pin does not fit inside the cams; use a thinner pin or a larger base circle.', 'index_pin');
     }
   }
+
+  // Rods the cam pushes so far off their axis that they bind in their guides.
+  const binding = layouts.filter((L) => !L.spin && L.jam > 0.5);
+  if (binding.length) {
+    const names = binding.map((L) => layouts.indexOf(L) + 1).join(', ');
+    const worst = Math.max(...binding.map((L) => L.jam));
+    warn(
+      `The cams push rod${binding.length > 1 ? 's' : ''} ${names} so far off ${binding.length > 1 ? 'their' : 'its'} axis that ` +
+        `${binding.length > 1 ? 'they' : 'it'} ${worst >= 1 ? 'will jam' : `take up to ${(1 / (1 - worst)).toFixed(1)}× the force to lift`} ` +
+        `in ${plate ? 'the guides' : 'a guide this short'}. ` +
+        (plate ? 'Give the box more height, or ' : 'Use a longer guide or the lower guide plate, or ') +
+        'rise more slowly' + (layouts.some((L) => L.pair) ? ', or bring a pair\'s rods closer' : '') + '.',
+      plate ? 'h' : 'guide_length',
+    );
+  }
+
+  // The lower plate: deep enough for every hole through it, with a margin.
+  const lowerHalf = Math.max(
+    10,
+    ...layouts.map((L) => (L.spin ? o.spinShaft / 2 + 6 : Math.abs(L.rodY - yAxis) + (o.rodWidth + o.rodPlay) / 2 + 6)),
+  );
+  const lowerGuide = plate ? { z: lowerZ, depth: Math.min(2 * lowerHalf, D) } : null;
 
   const dowels: AutomatonLayout['dowels'] = [
     // Through both walls and the crank, and a collar when there are no washers.
@@ -609,6 +715,8 @@ export function automatonLayout(o: AutomatonOptions): AutomatonLayout {
     deckTop,
     guideTop,
     guideBlocks,
+    lowerGuide,
+    guideSpan,
     guideX,
     guideY,
     dowels,
@@ -793,18 +901,22 @@ class Automaton extends CamPlates {
 
   private layout!: AutomatonLayout;
 
-  /** The deck: a guide hole per rod, bracket slots, bearing holes for spin shafts. */
-  private deckHoles(): void {
+  /**
+   * A guide hole per rod and a bearing hole per spin shaft, `y0` being where
+   * the panel's front edge sits along the depth. The deck also takes the
+   * levers' bracket slots.
+   */
+  private guideHoles(y0: number, deck: boolean): void {
     const o = this.o;
     const t = this.thickness;
     const lay = this.layout;
     for (const L of lay.stations) {
       if (L.spin) {
-        this.hole(L.spin.axisX, lay.yAxis, (o.spinShaft + o.bearingPlay) / 2);
+        this.hole(L.spin.axisX, lay.yAxis - y0, (o.spinShaft + o.bearingPlay) / 2);
         continue;
       }
-      this.rectangularHole(L.x, L.rodY, t + o.rodPlay, o.rodWidth + o.rodPlay);
-      if (L.rocker) {
+      this.rectangularHole(L.x, L.rodY - y0, t + o.rodPlay, o.rodWidth + o.rodPlay);
+      if (deck && L.rocker) {
         for (const side of [-1, 1]) {
           this.rectangularHole(L.x + side * (t + o.rodPlay / 2), L.rocker.pivotY, t, L.rocker.cheekWidth - 4);
         }
@@ -864,6 +976,11 @@ class Automaton extends CamPlates {
     const t = this.thickness;
     const bottom = s.holeInset() + t / 2;
     const tenons = [...tenonFootprints(s, 0, -t / 2, lay.D, 0), ...tenonFootprints(s, 0, lay.H + t / 2, lay.D, 0)];
+    // The lower plate's finger slots, as one rectangle where the deck's wedges must not reach.
+    const lower = lay.lowerGuide;
+    if (lower && lay.H + t / 2 - s.wedge_length / 2 < lower.z + t + 1) {
+      this.warn("The deck's wedges reach the lower guide plate's slots. Shorten the wedges or give the box more height.", 'wt_wedge_length');
+    }
     const { clash, overhang } = wedgeClearance(tenons, [
       [0, -bottom],
       [lay.D, -bottom],
@@ -925,7 +1042,12 @@ class Automaton extends CamPlates {
       const bk = back ? 'f' : 'e';
       return `${joint}${frontOnLeft ? bk : f}${joint}${frontOnLeft ? f : bk}`;
     };
-    const bearing = () => this.hole(D / 2, lay.zShaft, (o.shaft + o.bearingPlay) / 2);
+    const lower = lay.lowerGuide;
+    const bearing = () => {
+      this.hole(D / 2, lay.zShaft, (o.shaft + o.bearingPlay) / 2);
+      // The lower guide plate's fingers, centred on the shaft line.
+      if (lower) this.fingerHolesAt((D - lower.depth) / 2, lower.z + t / 2, lower.depth, 0);
+    };
     const sideBolts = [baseBolts, null, deckBolts, null];
     const pe = wedged ? 'w' : 'f';
     const panelEdges = `${front ? 'f' : 'e'}${pe}${back ? 'f' : 'e'}${pe}`;
@@ -951,8 +1073,11 @@ class Automaton extends CamPlates {
     };
     frame.push(
       this.wall(W, D, panelEdges, 'Base', [etch], [null, baseBolts, null, baseBolts]),
-      this.wall(W, D, panelEdges, 'Deck', [() => this.deckHoles()], [null, deckBolts, null, deckBolts]),
+      this.wall(W, D, panelEdges, 'Deck', [() => this.guideHoles(0, true)], [null, deckBolts, null, deckBolts]),
     );
+    // Fitted between the sides on fingers. Under a wedged or bolted frame it
+    // goes in dry: the sides trap it once the base and deck are drawn tight.
+    if (lower) frame.push(this.wall(W, lower.depth, 'efef', 'Lower guide', [() => this.guideHoles(lay.yAxis - lower.depth / 2, false)]));
 
     // Cams, peg wheels and their rods. Every cam is turned by its phase about
     // a reference line straight down from the shaft: line those up along the
@@ -1003,6 +1128,8 @@ class Automaton extends CamPlates {
         }
         small.push(this.disc(2 * sp.disc2, o.spinShaft - o.shaftFit, pegs, `Driven wheel ${k}`));
         small.push(this.disc(o.spinShaft + 8, o.spinShaft - o.shaftFit, [], `Collar ${k}`));
+        small.push(this.disc(o.spinShaft + 8, o.spinShaft - o.shaftFit, [], `Stop collar ${k}`));
+        // With a lower plate, it and the deck carry the shaft; otherwise a stack does.
         const bs = o.spinShaft + 2 * o.guideWall;
         for (let j = 0; j < lay.guideBlocks; j++) {
           small.push(this.wall(bs, bs, 'eeee', `Bearing ${k}`, [() => this.hole(bs / 2, bs / 2, (o.spinShaft + o.bearingPlay) / 2)]));
@@ -1182,14 +1309,15 @@ export const automaton: GeneratorDef = {
       kind: 'enum',
       label: 'Rod guides',
       group: 'dimensions',
-      default: 'below',
-      help: 'Where the laminated guide blocks go.',
+      default: 'plate',
+      help: 'What keeps the rods upright, and stops them tipping as the cams push their feet off centre.',
       choices: [
-        { value: 'below', label: 'Under the deck' },
-        { value: 'above', label: 'On the deck' },
+        { value: 'plate', label: 'Lower plate', help: 'A second plate between the sides, just above the feet. The rods slide through it and the deck, as far apart as the box allows.' },
+        { value: 'below', label: 'Blocks under the deck', help: 'A stack of laminated blocks round each rod, glued under the deck.' },
+        { value: 'above', label: 'Blocks on the deck', help: 'A stack of laminated blocks round each rod, glued on the deck.' },
       ],
     },
-    { key: 'guide_length', kind: 'length', label: 'Guide length', unit: 'mm', default: 20, min: 0, max: 100, step: 0.5, group: 'dimensions', help: 'Bearing length each rod slides through, deck included. Longer stops the rods tipping and binding.' },
+    { key: 'guide_length', kind: 'length', label: 'Guide length', unit: 'mm', default: 20, min: 0, max: 100, step: 0.5, group: 'dimensions', help: 'With the lower plate, the least distance from it to the top of the deck; the box grows taller than this if the cams push the rods far off centre. With blocks, the length of the stack, deck included.' },
     {
       key: 'washers',
       kind: 'bool',
@@ -1209,7 +1337,7 @@ export const automaton: GeneratorDef = {
     { key: 'bearing_play', kind: 'length', label: 'Bearing play', unit: 'mm', default: 0.4, min: 0, max: 3, step: 0.05, group: 'advanced', help: 'Extra in the holes a dowel turns in.' },
     { key: 'shaft_play', kind: 'length', label: 'End float', unit: 'mm', default: 0.5, min: 0, max: 5, step: 0.1, group: 'advanced', help: 'Room left along the shaft between the walls.' },
     { key: 'rod_play', kind: 'length', label: 'Rod play', unit: 'mm', default: 0.4, min: 0, max: 3, step: 0.05, group: 'advanced', help: 'Extra in the guide holes.' },
-    { key: 'guide_wall', kind: 'length', label: 'Guide block rim', unit: 'mm', default: 3, min: 1, max: 20, step: 0.5, group: 'advanced' },
+    { key: 'guide_wall', kind: 'length', label: 'Guide block rim', unit: 'mm', default: 3, min: 1, max: 20, step: 0.5, group: 'advanced', showIf: (v) => v.guides === 'below' || v.guides === 'above' },
     { key: 'foot_height', kind: 'length', label: 'Rod foot height', unit: 'mm', default: 6, min: 2, max: 40, step: 0.5, group: 'advanced' },
     { key: 'index_pin', kind: 'length', label: 'Index pin', unit: 'mm', default: 3, min: 0, max: 10, step: 0.1, group: 'advanced', help: 'A skewer through every cam and washer that sets the phases. 0 for none.' },
     { key: 'margin', kind: 'length', label: 'Cam clearance', unit: 'mm', default: 5, min: 0, max: 50, step: 0.5, group: 'advanced', help: 'Between the cams and the front and back.' },
@@ -1252,7 +1380,7 @@ export const automaton: GeneratorDef = {
         rodAbove: n(v, 'rod_above', 25),
         figureHole: n(v, 'figure_hole', 2),
         footHeight: n(v, 'foot_height', 6),
-        guides: s(v, 'guides', 'below') === 'above' ? 'above' : 'below',
+        guides: (['plate', 'below', 'above'] as const).find((g) => g === s(v, 'guides', 'plate')) ?? 'plate',
         guideLength: n(v, 'guide_length', 20),
         guideWall: n(v, 'guide_wall', 3),
         indexPin: n(v, 'index_pin', 3),

@@ -759,9 +759,18 @@ deck. Cam's plate drawing and checks are shared through `CamPlates` and
   With `washers` off the cams sit exactly at `pitch` and are glued by eye; a
   collar outside the right wall and the crank on the left hold the shaft.
 - **Height and depth default to as small as the mechanism allows.** The shaft
-  sits so the largest cam clears the base by 3 mm. The deck sits so every
-  foot clears the guide stack at full lift, and every driven peg wheel clears
-  its bearing stack.
+  sits so the largest cam clears the base by 3 mm. Everything under the deck
+  clears the guides: every foot at full lift, and every driven peg wheel with
+  its stop collar.
+- **A flat foot is pushed off centre, so the rods are guided twice.** It is
+  pushed where it touches the cam, which slides across it by s' (and a
+  pair's rods stand off the shaft line as well), so the cam tries to tip the
+  rod in its guides. The friction factor 2·μ·e / L, with μ taken as 0.4 for
+  bare plywood, jams at 1. By default (`guides: plate`) a lower plate between
+  the sides, just above the feet, guides the rods with the deck, and the box
+  is made tall enough that L keeps every rod to 0.5 or less. Guide blocks
+  under or on the deck are still offered; they warn on `guide_length` past
+  0.5 instead.
 - **Phases come from a common reference.** Each cam is turned by its phase
   about an etched line straight down from the shaft, which is where the
   optional index pin goes through every cam and washer.
@@ -773,12 +782,17 @@ drawing to:
 - each lever's underside is tangent to its rod's round tip at the reported
   tilt, which comes in closed form (`rockerAngle`);
 - a plate's pins stay inside its slot and above the guides;
-- the peg wheels share a pitch and mesh;
+- every rod's friction factor stays at 0.5 or under with the lower plate,
+  and the plate's holes fall under the deck's;
+- the peg wheels share a pitch and mesh, each peg still engaged when the
+  next arrives on both wheels (`pegMesh`), and the stop collar sits a
+  millimetre under whatever guides the upright shaft;
 - the deck's guide holes fall where the layout puts the cams.
 
 Wedges and bolts hold the base and deck to the sides only; the front and back
-fit dry. Five variants cover the panels, guides on the deck, peg wheels,
-wedges and bolts.
+fit dry, and so does the lower plate, which the sides trap. Six variants
+cover the panels, guide blocks on the deck, peg wheels, wedges, bolts and
+no washers.
 
 ### Adding wedges or bolts to a generator
 
