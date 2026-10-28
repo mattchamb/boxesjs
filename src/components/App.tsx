@@ -393,7 +393,7 @@ export default function App({ generator, name, summary, description, initial }: 
         <div class="panel-head">
           <h2>{name}</h2>
           <p>{summary}</p>
-          {description && <p class="panel-desc">{description}</p>}
+          {description && <Prose class="panel-desc" text={description} />}
         </div>
 
         <div class="panel-search">
@@ -621,6 +621,41 @@ export default function App({ generator, name, summary, description, initial }: 
 }
 
 /** Marks a collapsed heading whose fields carry a warning. */
+/**
+ * A generator's description. Plain text with just enough structure for the
+ * longer ones: a blank line starts a paragraph, lines starting "- " make a
+ * list, and `backticks` mark what to type.
+ */
+function Prose({ text, class: cls }: { text: string; class: string }) {
+  const code = (line: string) =>
+    line.split('`').map((part, i) => (i % 2 ? <code key={i}>{part}</code> : <Fragment key={i}>{part}</Fragment>));
+  const blocks: preact.JSX.Element[] = [];
+  for (const [k, para] of text.split(/\n\s*\n/).entries()) {
+    // Runs of list lines become a list; the lines between them, a paragraph.
+    let prose: string[] = [];
+    let items: string[] = [];
+    const flush = () => {
+      if (prose.length) blocks.push(<p key={`${k}p${blocks.length}`}>{code(prose.join(' '))}</p>);
+      if (items.length) blocks.push(<ul key={`${k}u${blocks.length}`}>{items.map((it, i) => <li key={i}>{code(it)}</li>)}</ul>);
+      prose = [];
+      items = [];
+    };
+    for (const raw of para.split('\n')) {
+      const line = raw.trim();
+      if (!line) continue;
+      if (line.startsWith('- ')) {
+        if (prose.length) flush();
+        items.push(line.slice(2));
+      } else {
+        if (items.length) flush();
+        prose.push(line);
+      }
+    }
+    flush();
+  }
+  return <div class={cls}>{blocks}</div>;
+}
+
 function WarnMark() {
   return (
     <span class="warn-mark" title="A setting in here has a warning" aria-label="has a warning">

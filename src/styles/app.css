@@ -171,6 +171,11 @@ button, input, select, textarea {
 }
 
 .panel-head .panel-desc { margin-top: 6px; font-size: 12px; color: var(--fg-faint); }
+.panel-head .panel-desc p, .panel-desc ul { margin: 0 0 6px; color: inherit; font-size: inherit; }
+.panel-desc > :last-child { margin-bottom: 0; }
+.panel-desc ul { padding-left: 16px; }
+.panel-desc li { margin-bottom: 2px; }
+.panel-desc code { font-family: var(--mono); font-size: 11px; color: var(--fg-muted); white-space: nowrap; }
 
 .panel-search {
   position: sticky;

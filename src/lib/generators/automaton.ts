@@ -1100,18 +1100,23 @@ export const automaton: GeneratorDef = {
     name: 'Automaton',
     group: 'Misc',
     summary: 'Hand-cranked cam box that drives figures on its deck',
-    description:
-      'A box with a crankshaft through its sides, carrying a row of cams that push rods up through the deck. ' +
-      'Describe each cam as in the Cam generator, one block per cam separated by a blank line or "---", and say ' +
-      'what it drives: "output lift" (the default) moves a figure on the rod up and down; "output rocker 25" ' +
-      'tips a lever pivoted 25 mm along, which falls back under its own weight; "output pair 30" joins a cam ' +
-      'to the one before, their rods 30 mm apart front to back carrying a plate that tilts and lifts; ' +
-      '"output spin 12 8" makes a peg wheel of 12 pegs instead of a cam, driving one of 8 on a vertical ' +
-      'shaft through the deck, which turns 12/8 times for each turn of the crank. ' +
-      'Add "phase 90" to have a cam lag 90° behind the first. The shaft, handle and pins are dowel; their ' +
-      'lengths are etched inside the base. Spacer washers set where the cams sit on the shaft; without them, ' +
-      'glue each cam under its rod. Line up the marks on the cams along a pencil line on the shaft, ' +
-      'or push the index pin through them, and the phases are right.',
+    description: [
+      'A box with a crankshaft through its sides and a row of cams that push rods up through the deck to figures.',
+      '',
+      'Describe one cam per block in Cams, separated by a blank line or `---`, using the Cam generator\'s motion ' +
+        'lines. An output line says what it drives:',
+      '- `output lift` (the default): a figure on the rod moves up and down.',
+      '- `output rocker 25`: the rod tips a lever pivoted 25 mm along, which falls back under its own weight.',
+      '- `output pair 30`: this cam\'s rod and the one before, 30 mm apart front to back, carry a plate that ' +
+        'lifts and tilts.',
+      '- `output spin 12 8`: a peg wheel of 12 pegs, in place of a cam, turns one of 8 on an upright shaft: ' +
+        '12/8 turns for each turn of the crank.',
+      '',
+      '`phase 90` makes a cam lag 90° behind the first. Line up the etched marks on the cams along a pencil ' +
+        'line on the shaft, or push the index pin through them, and the phases are right.',
+      '',
+      'The shaft, handle and pins are dowel; their lengths are etched inside the base.',
+    ].join('\n'),
   },
   params: [
     {
