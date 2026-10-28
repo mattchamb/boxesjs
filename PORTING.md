@@ -794,6 +794,40 @@ fit dry, and so does the lower plate, which the sides trap. Six variants
 cover the panels, guide blocks on the deck, peg wheels, wedges, bolts and
 no washers.
 
+**Vent Baffle Box** (`generators/bafflebox.ts`) is a third: a box screwed
+over a wall vent, an exhaust hose into its front, baffles inside so the air
+has to snake round them, and an optional blast gate. The back plate stands
+the walls in finger holes as BasedBox's base does, with a flange for the wall
+screws; the walls and front join as ClosedBox's do. The baffles are all one
+part, hung from the top and stood on the bottom in turn. The gate is a U
+spacer, a slider and a cover plate bolted over the port; the bolt pattern is
+symmetric about the port, so the front panel goes on either way up. It warns
+wherever a gap or chamber has less area than the duct. `baffleBoxLayout` is
+pure, and `test/bafflebox.test.ts` holds it to equal chambers, a slider that
+covers the port shut and clears it open, and bolts clear of the channel and
+the walls.
+
+**Light Trap Vent** (`lighttrap`) is the same class with no gate, a round,
+rectangular or fan front opening, and one more check: seen from the side,
+every opening and baffle gap is a window, and `sightWindow` finds the widest
+band of straight lines through all of them. Its width is concave and
+piecewise linear in the slope, so the peak is where two window edges' lines
+cross, and trying every crossing is exact; a test holds it to a brute-force
+sweep. The baffles must block every line by `LIGHT_MARGIN`, and the warning
+names the largest gap that does, found by halving, since the band only
+widens as the gap opens.
+
+Both offer wedges and bolts. Either needs room on the far side of the panel
+a joint passes through, which on the flanged back is against the wall, so
+knocked down the back sits inside the walls with no flange, is screwed up
+first through its corners, and the box is built round it; the seams are
+caulked, which is what lets dry joints stand. Bolted, it is ClosedBox's
+bolted box with baffles, every head on a wall. Wedged, the back, front, top,
+bottom and baffles tenon through the walls round them, so the back and front
+are recessed by the hole inset and the sides stand past the top and bottom.
+With a gate the front's top edge is plain, since the slider runs up through a
+slot in the top wall's rim where that edge's wedges would be.
+
 ### Adding wedges or bolts to a generator
 
 Everything above as a checklist. Do it in a commit of its own, after the

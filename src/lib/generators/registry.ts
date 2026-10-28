@@ -127,6 +127,7 @@ import { wallStackableBin } from './wallstackablebin';
 import { wallCaliper } from './wallcaliperholder';
 import { wallHook } from './wallhook';
 import { wallRollHolder } from './wallrollholder';
+import { baffleBox, lightTrapVent } from './bafflebox';
 
 const DEFS: GeneratorDef[] = [
   aBox,
@@ -166,6 +167,7 @@ const DEFS: GeneratorDef[] = [
   wallHook,
   wallRollHolder,
   wallDrillBox,
+  baffleBox,
   twoPiece,
   basedBox,
   angledBox,
@@ -220,6 +222,7 @@ const DEFS: GeneratorDef[] = [
   bookHolder,
   laserClamp,
   laserHoldfast,
+  lightTrapVent,
   linkage,
   cam,
   automaton,

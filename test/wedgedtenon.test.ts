@@ -394,6 +394,9 @@ describe('every wedged generator', () => {
     ['paintstorage', { assembly: 'wedges', canheight: 100, additional_bottom: true, additional_top: true }],
     ['wallhopper', { assembly: 'wedges' }],
     ['wallhopper', { assembly: 'wedges', sx: '60*3', label: false, walltype: 'skadis' }],
+    ['bafflebox', { assembly: 'wedges', y: 200, h: 280 }],
+    ['bafflebox', { assembly: 'wedges', y: 200, h: 280, gate: false }],
+    ['lighttrap', { assembly: 'wedges', y: 240 }],
   ];
   for (const [id, values] of cases) {
     it(`${id} ${JSON.stringify(values)}: a hole and a wedge for every tenon`, () => {

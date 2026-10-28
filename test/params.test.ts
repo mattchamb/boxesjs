@@ -78,6 +78,10 @@ describe('warnings land on fields the panel shows', () => {
     ['rectangularwall', { bolts: 2 }],
     // M4 by default here, which is too fat for the shared 3 mm default.
     ['typetray', { assembly: 'bolts' }],
+    ['bafflebox', { assembly: 'wedges' }],
+    ['bafflebox', { assembly: 'bolts', thickness: 6, vent_shape: 'rect', vent_w: 180, vent_h: 230 }],
+    ['lighttrap', { baffles: 1 }],
+    ['lighttrap', { port_shape: 'fan', fan_size: '140', x: 120 }],
     // The bottom's one bolt on a 108 mm edge lands on the middle divider.
     ['typetray', { assembly: 'bolts', thickness: 6, sx: '40*5', sy: '30*4', h: 70 }],
     ['typetray', { assembly: 'bolts', thickness: 6, h: 60, bottom_edge: 's' }],
@@ -176,6 +180,9 @@ describe('bolts', () => {
     ['typetray', { hi: 60, bottom_edge: 'F', fj_finger: 1, fj_space: 1 }],
     ['typetray', { bottom_edge: 's' }],
     ['typetray', { sx: '200', sy: '200', top_edge: 'f' }],
+    ['bafflebox', {}],
+    ['bafflebox', { baffles: 0, gate: false }],
+    ['lighttrap', {}],
   ] as const)('on %s %o, put a hole opposite every T-slot, clear of the other cuts', (id, extra) => {
     const v = { ...defaultsFor(id), assembly: 'bolts', thickness: 6, ...extra };
     expect(renderPreview(id, v).warnings).toEqual([]);
