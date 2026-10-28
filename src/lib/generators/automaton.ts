@@ -228,6 +228,12 @@ export interface AutomatonOptions {
    * captive nut's slot into the deck, when bolted.
    */
   wallClear?: number;
+  /**
+   * Spacer washers between the cams. Without them the cams are glued where
+   * the layout puts them, and a collar outside the right wall keeps the
+   * shaft from sliding.
+   */
+  washers?: boolean;
 }
 
 export interface RockerLayout {
@@ -304,6 +310,8 @@ export interface AutomatonLayout {
   /** Washers between the wall and the first cam, between each pair of stations, and after the last. */
   washersLeft: number;
   washersBetween: number[];
+  /** Centre to centre, between neighbouring cams. */
+  gaps: number[];
   washersRight: number;
   washerDiameter: number;
   indexRadius: number;
@@ -330,6 +338,7 @@ export function automatonLayout(o: AutomatonOptions): AutomatonLayout {
     if (!warnings.some((w) => w.message === message)) warnings.push({ message, param });
   };
 
+  const stacked = o.washers !== false;
   const indexRadius = o.indexPin > 0 ? o.shaft / 2 + o.indexPin / 2 + 2 : 0;
   const washerDiameter = o.indexPin > 0 ? 2 * (indexRadius + o.indexPin / 2 + 2) : o.shaft + 8;
   const guideBlocks = Math.max(0, Math.ceil((o.guideLength - t) / t - 1e-9));
@@ -350,8 +359,11 @@ export function automatonLayout(o: AutomatonOptions): AutomatonLayout {
       profile = camProfile({ segments: [{ span: 360, lift: 0, law: 'uniform' }], baseRadius: disc1, follower: 'flat', rollerRadius: 0, offset: 0, direction: o.direction, burn: 0 });
       spin = { drive, driven, r1, r2, disc1, disc2: r2 + pegR + 2, axisX: 0, wheelZ: 0, pegDrop: 0, shaftLength: 0 };
       if (o.pegSpacing < 2 * o.pegPin) warn(`Cam ${i + 1}: the pegs are closer than two diameters apart and will not mesh cleanly.`, 'peg_spacing');
-      if (r1 - pegR - 1 < Math.max(washerDiameter / 2 + 0.5, indexRadius + o.indexPin / 2 + 1, o.shaft / 2 + 2)) {
-        warn(`Cam ${i + 1}: the drive wheel's pegs sit too near the shaft; they would meet the washers. Use more pegs or a wider spacing.`, 'peg_spacing');
+      if (r1 - pegR - 1 < Math.max(stacked ? washerDiameter / 2 + 0.5 : 0, indexRadius + o.indexPin / 2 + 1, o.shaft / 2 + 2)) {
+        warn(
+          `Cam ${i + 1}: the drive wheel's pegs sit too near the shaft${stacked ? '; they would meet the washers' : ''}. Use more pegs or a wider spacing.`,
+          'peg_spacing',
+        );
       }
       if (r2 - pegR - 1 < o.spinShaft / 2 + 1) warn(`Cam ${i + 1}: the driven wheel's pegs meet its shaft. Use more pegs or a wider spacing.`, 'peg_spacing');
     } else {
@@ -393,35 +405,46 @@ export function automatonLayout(o: AutomatonOptions): AutomatonLayout {
     return { lo: -half, hi: half, axis: 0 };
   });
 
-  // The stack along the shaft: washers between, a whole number of sheets.
+  // The stack along the shaft. With washers it is a whole number of sheets
+  // between cams; without, the cams are glued where they are asked to be.
   const washersBetween: number[] = [];
+  const gaps: number[] = [];
   for (let i = 1; i < st.length; i++) {
     if (st[i]!.station.output.kind === 'pair') {
       // Rod, the plate between them, rod: three sheets' pitch leaves half a
       // sheet's clearance either side of the plate.
-      washersBetween.push(2);
+      washersBetween.push(stacked ? 2 : 0);
+      gaps.push(3 * t);
       continue;
     }
     const need = ext[i - 1]!.hi - ext[i]!.lo + 1;
-    const want = Math.max(0, Math.round((o.pitch - t) / t));
-    const min = Math.max(0, Math.ceil((need - t) / t - 1e-9));
-    if (min > want) {
-      warn(`Cams ${i} and ${i + 1} need ${+((min + 1) * t).toFixed(1)} mm between them, so they are spaced that far apart.`, 'pitch');
+    const want = stacked ? Math.max(0, Math.round((o.pitch - t) / t)) : o.pitch;
+    const min = stacked ? Math.max(0, Math.ceil((need - t) / t - 1e-9)) : need;
+    const gap = (k: number) => (stacked ? (k + 1) * t : k);
+    if (min > want + 1e-9) {
+      warn(`Cams ${i} and ${i + 1} need ${+gap(min).toFixed(1)} mm between them, so they are spaced that far apart.`, 'pitch');
     }
-    washersBetween.push(Math.max(want, min));
+    washersBetween.push(stacked ? Math.max(want, min) : 0);
+    gaps.push(gap(Math.max(want, min)));
   }
   const clear = Math.max(1, o.wallClear ?? 0);
-  const endWashers = (reach: number) => Math.max(1, Math.ceil((reach + clear - t / 2 - o.shaftPlay / 2) / t - 1e-9));
-  const washersLeft = st.length ? endWashers(-ext[0]!.lo) : 0;
-  const washersRight = st.length ? endWashers(ext[ext.length - 1]!.hi) : 0;
+  // From each wall's inner face to the nearest cam plane, less half the end float.
+  const end = (reach: number) => {
+    const k = Math.max(1, Math.ceil((reach + clear - t / 2 - o.shaftPlay / 2) / t - 1e-9));
+    return stacked ? { washers: k, gap: k * t + t / 2 } : { washers: 0, gap: Math.max(reach + clear, t / 2 + 1) };
+  };
+  const left = st.length ? end(-ext[0]!.lo) : { washers: 0, gap: 0 };
+  const right = st.length ? end(ext[ext.length - 1]!.hi) : { washers: 0, gap: 0 };
+  const washersLeft = left.washers;
+  const washersRight = right.washers;
 
   const xs: number[] = [];
-  let x = o.shaftPlay / 2 + washersLeft * t + t / 2;
+  let x = o.shaftPlay / 2 + left.gap;
   st.forEach((_, i) => {
-    if (i > 0) x += (washersBetween[i - 1]! + 1) * t;
+    if (i > 0) x += gaps[i - 1]!;
     xs.push(x);
   });
-  const W = st.length ? x + t / 2 + washersRight * t + o.shaftPlay / 2 : 40;
+  const W = st.length ? x + right.gap + o.shaftPlay / 2 : 40;
 
   // Heights.
   const maxR = Math.max(o.baseRadius, ...st.map((x) => x.maxRadius));
@@ -543,7 +566,8 @@ export function automatonLayout(o: AutomatonOptions): AutomatonLayout {
   }
 
   const dowels: AutomatonLayout['dowels'] = [
-    { name: 'Shaft', diameter: o.shaft, length: Math.ceil(W + 3 * t + 5), count: 1 },
+    // Through both walls and the crank, and a collar when there are no washers.
+    { name: 'Shaft', diameter: o.shaft, length: Math.ceil(W + (stacked ? 3 : 4) * t + 5), count: 1 },
     { name: 'Handle', diameter: o.handleDiameter, length: Math.ceil(t + 30), count: 1 },
   ];
   if (o.indexPin > 0) dowels.push({ name: 'Index pin', diameter: o.indexPin, length: Math.floor(W - o.shaftPlay), count: 1 });
@@ -565,6 +589,7 @@ export function automatonLayout(o: AutomatonOptions): AutomatonLayout {
     stations: layouts,
     washersLeft,
     washersBetween,
+    gaps,
     washersRight,
     washerDiameter,
     indexRadius,
@@ -598,6 +623,7 @@ interface GenOptions extends AutomatonOptions {
   back: Panel;
   windowMargin: number;
   marks: boolean;
+  washers: boolean;
   assembly: Assembly;
 }
 
@@ -1006,6 +1032,8 @@ class Automaton extends CamPlates {
 
     const washers = lay.washersLeft + lay.washersRight + lay.washersBetween.reduce((a, x) => a + x, 0);
     for (let j = 0; j < washers; j++) small.push(this.disc(lay.washerDiameter, o.shaft + o.bearingPlay, ref, 'Washer'));
+    // With no washers wall to wall, the crank holds the shaft one way and this the other.
+    if (!o.washers) small.push(this.disc(o.shaft + 10, o.shaft - o.shaftFit, [], 'Shaft collar'));
     const cr = Math.max(o.shaft, o.handleDiameter) / 2 + 5;
     small.push(
       this.stadium(o.crankLength, cr, [
@@ -1081,7 +1109,8 @@ export const automaton: GeneratorDef = {
       '"output spin 12 8" makes a peg wheel of 12 pegs instead of a cam, driving one of 8 on a vertical ' +
       'shaft through the deck, which turns 12/8 times for each turn of the crank. ' +
       'Add "phase 90" to have a cam lag 90° behind the first. The shaft, handle and pins are dowel; their ' +
-      'lengths are etched inside the base. Line up the marks on the cams along a pencil line on the shaft, ' +
+      'lengths are etched inside the base. Spacer washers set where the cams sit on the shaft; without them, ' +
+      'glue each cam under its rod. Line up the marks on the cams along a pencil line on the shaft, ' +
       'or push the index pin through them, and the phases are right.',
   },
   params: [
@@ -1122,7 +1151,7 @@ export const automaton: GeneratorDef = {
         { value: 'cw', label: 'Clockwise' },
       ],
     },
-    { key: 'pitch', kind: 'length', label: 'Cam spacing', unit: 'mm', default: 30, min: 3, max: 200, step: 0.5, group: 'dimensions', help: 'Between neighbouring cams, rounded to whole washers.' },
+    { key: 'pitch', kind: 'length', label: 'Cam spacing', unit: 'mm', default: 30, min: 3, max: 200, step: 0.5, group: 'dimensions', help: 'Between neighbouring cams; rounded to whole washers when there are washers.' },
     { key: 'h', kind: 'length', label: 'Height', unit: 'mm', default: 0, min: 0, max: 600, step: 1, group: 'dimensions', help: 'Inside, base to deck. 0 for as low as the cams allow.' },
     { key: 'y', kind: 'length', label: 'Depth', unit: 'mm', default: 0, min: 0, max: 600, step: 1, group: 'dimensions', help: 'Inside, front to back. 0 for as shallow as the cams allow.' },
     { key: 'front', kind: 'enum', label: 'Front', group: 'dimensions', default: 'open', choices: PANEL_CHOICES },
@@ -1147,6 +1176,14 @@ export const automaton: GeneratorDef = {
       ],
     },
     { key: 'guide_length', kind: 'length', label: 'Guide length', unit: 'mm', default: 20, min: 0, max: 100, step: 0.5, group: 'dimensions', help: 'Bearing length each rod slides through, deck included. Longer stops the rods tipping and binding.' },
+    {
+      key: 'washers',
+      kind: 'bool',
+      label: 'Spacer washers',
+      default: true,
+      group: 'dimensions',
+      help: 'Washers between the cams set where they sit on the shaft. Off: place each cam under its rod by eye and glue it, and a collar outside the right wall stops the shaft sliding.',
+    },
     { key: 'marks', kind: 'bool', label: 'Etch cam marks and dowel list', default: true, group: 'dimensions' },
     assemblyParam(['wedges', 'bolts'], {
       wedges: 'The base and the deck pass through the sides, which stand proud of them to take the wedges. The front and back fit dry.',
@@ -1213,6 +1250,7 @@ export const automaton: GeneratorDef = {
         pegLength: n(v, 'peg_length', 8),
         spinShaft: n(v, 'spin_shaft', 5),
         marks: b(v, 'marks', true),
+        washers: b(v, 'washers', true),
         assembly: assembly === 'wedges' || assembly === 'bolts' ? assembly : 'glue',
       },
       config,

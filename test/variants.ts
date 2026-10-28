@@ -37,5 +37,6 @@ export const VARIANTS: { id: string; name: string; values: ParamValues }[] = [
   { id: 'automaton', name: 'lifts only, labelled', values: { cams: 'rise 15 120\nreturn 120\n---\nphase 180\nrise 10 90 uniform\nreturn 90', labels: true, back: 'open' } },
   { id: 'automaton', name: 'peg wheel', values: { cams: 'output spin 12 8\n---\nrise 10 180\nreturn 180', pitch: 40 } },
   { id: 'automaton', name: 'wedged', values: { assembly: 'wedges' } },
+  { id: 'automaton', name: 'no washers', values: { washers: false, pitch: 25 } },
   { id: 'automaton', name: 'bolted', values: { assembly: 'bolts', thickness: 6 } },
 ];

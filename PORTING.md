@@ -756,6 +756,8 @@ deck. Cam's plate drawing and checks are shared through `CamPlates` and
   puts either side of its plane (`lo`/`hi`); spacing grows past `pitch` where
   neighbours would meet, with a warning. Bolted, the end washers also keep the
   stations clear of the captive nuts' slots in the deck (`wallClear`).
+  With `washers` off the cams sit exactly at `pitch` and are glued by eye; a
+  collar outside the right wall and the crank on the left hold the shaft.
 - **Height and depth default to as small as the mechanism allows.** The shaft
   sits so the largest cam clears the base by 3 mm. The deck sits so every
   foot clears the guide stack at full lift, and every driven peg wheel clears

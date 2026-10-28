@@ -115,6 +115,19 @@ describe('automatonLayout', () => {
     expect(lay.warnings).toEqual([]);
   });
 
+  it('without washers, puts the cams exactly where asked', () => {
+    const l = automatonLayout(opts(MIXED, { washers: false, pitch: 31.3 }));
+    expect(l.washersLeft + l.washersRight + l.washersBetween.reduce((a, b) => a + b, 0)).toBe(0);
+    // A pair still needs its three sheets for the plate; the rest are as asked.
+    expect(l.gaps).toEqual([31.3, 31.3, 9]);
+    l.stations.forEach((L, i) => {
+      if (i) expect(L.x - l.stations[i - 1]!.x).toBeCloseTo(l.gaps[i - 1]!, 9);
+      expect(L.x + L.lo).toBeGreaterThanOrEqual(1 - 1e-9);
+      expect(L.x + L.hi).toBeLessThanOrEqual(l.W - 1 + 1e-9);
+    });
+    expect(l.warnings).toEqual([]);
+  });
+
   it('keeps every rod on its cam at every crank angle, its foot clear of the guides', () => {
     const guideBottom = lay.H - lay.guideBlocks * 3;
     lay.stations.forEach((L, i) => {
@@ -267,6 +280,13 @@ describe('the drawing', () => {
 
   it('bolts the base and deck to the sides clear of the deck holes', () => {
     expect(warnings({ assembly: 'bolts', thickness: 6 })).toEqual([]);
+  });
+
+  it('cuts a shaft collar in place of the washers when they are off', () => {
+    const d = buildDrawing('automaton', { ...values, washers: false });
+    expect(d.parts.filter((p) => p.name === 'Washer')).toHaveLength(0);
+    expect(d.parts.filter((p) => p.name === 'Shaft collar')).toHaveLength(1);
+    expect(d.warnings).toEqual([]);
   });
 
   it('only draws the panels asked for', () => {
