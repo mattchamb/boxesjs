@@ -851,6 +851,11 @@ it, is a note under its field: `Boxes.note`, carried as `Drawing.notes` and
 shown plainly by the panel, since it is not a warning. Tests hold each auto
 size to working, and, but for bolted boxes, to failing a millimetre less.
 
+The Light Trap Vent defaults to all four at 0. With some sizes given, a
+free width is chosen first from those at which the box works, light
+included (probing leaves the light warning out, so the sight is asked
+after), and only then by volume.
+
 Every opening keeps `opening_margin` (two thicknesses by default) between
 anything it cuts, a fan's screw holes included, and the joints round its
 panel, so no thin strip is left between it and the finger slots; in the

@@ -62,6 +62,10 @@ describe('the panel shows a joint’s tuning only with that joint', () => {
   });
 });
 
+// The light trap sizes itself by default, which leaves little to warn about:
+// these cases are at the sizes it once defaulted to.
+const LIGHT_TRAP_SIZED = { x: 200, h: 200, y: 200, baffle_gap: 50 };
+
 describe('warnings land on fields the panel shows', () => {
   const cases: Array<[string, ParamValues]> = [
     ['storageshelf', { assembly: 'wedges', x: 35 }],
@@ -80,16 +84,16 @@ describe('warnings land on fields the panel shows', () => {
     ['typetray', { assembly: 'bolts' }],
     ['bafflebox', { assembly: 'wedges' }],
     ['bafflebox', { assembly: 'bolts', thickness: 6, vent_shape: 'rect', vent_w: 180, vent_h: 230 }],
-    ['lighttrap', { baffles: 1 }],
-    ['lighttrap', { port_shape: 'fan', fan_size: '140', x: 120 }],
-    ['lighttrap', { port_side: 'bottom' }],
-    ['lighttrap', { vent_dz: 300 }],
-    ['lighttrap', { port_dz: 300 }],
-    ['lighttrap', { port_side: 'bottom', port_dx: -300 }],
+    ['lighttrap', { ...LIGHT_TRAP_SIZED, baffles: 1 }],
+    ['lighttrap', { ...LIGHT_TRAP_SIZED, port_shape: 'fan', fan_size: '140', x: 120 }],
+    ['lighttrap', { ...LIGHT_TRAP_SIZED, port_side: 'bottom' }],
+    ['lighttrap', { ...LIGHT_TRAP_SIZED, vent_dz: 300 }],
+    ['lighttrap', { ...LIGHT_TRAP_SIZED, port_dz: 300 }],
+    ['lighttrap', { ...LIGHT_TRAP_SIZED, port_side: 'bottom', port_dx: -300 }],
     ['bafflebox', { port_dz: 60 }],
     ['bafflebox', { port_dx: 30 }],
-    ['lighttrap', { baffles: 1, vent_dz: -40 }],
-    ['lighttrap', { port_side: 'bottom', port_shape: 'rect', port_h: 300 }],
+    ['lighttrap', { ...LIGHT_TRAP_SIZED, baffles: 1, vent_dz: -40 }],
+    ['lighttrap', { ...LIGHT_TRAP_SIZED, port_side: 'bottom', port_shape: 'rect', port_h: 300 }],
     // The bottom's one bolt on a 108 mm edge lands on the middle divider.
     ['typetray', { assembly: 'bolts', thickness: 6, sx: '40*5', sy: '30*4', h: 70 }],
     ['typetray', { assembly: 'bolts', thickness: 6, h: 60, bottom_edge: 's' }],

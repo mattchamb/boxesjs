@@ -474,7 +474,7 @@ describe('sizes left at 0', () => {
   });
 
   it('leaves alone what was given, and notes only what was not', () => {
-    const d = draw('lighttrap', { x: 250, h: 0, y: 0 });
+    const d = draw('lighttrap', { x: 250, h: 0, y: 0, baffle_gap: 40 });
     expect(d.notes!.map((n) => n.param).sort()).toEqual(['h', 'y']);
   });
 
@@ -529,5 +529,22 @@ describe('the opening margin', () => {
     expect(near({ opening_margin: 0.5 })).toEqual([]);
     const lay = baffleBoxLayout(opts({ x: 110, gate: false }));
     expect(lay.portShape).toEqual({ shape: 'round', d: 100 });
+  });
+});
+
+describe('the light trap by default', () => {
+  const draw = (values: ParamValues = {}) => buildDrawing('lighttrap', { ...defaultsFor('lighttrap'), ...values });
+
+  it('sizes itself, says what to, and has nothing to warn about', () => {
+    const d = draw();
+    expect(d.warnings).toEqual([]);
+    expect(d.notes!.map((n) => n.param).sort()).toEqual(['baffle_gap', 'h', 'x', 'y']);
+  });
+
+  it('with one size set, picks the others so the box still works', () => {
+    const cases: ParamValues[] = [{ y: 150 }, { y: 240, assembly: 'wedges' }, { h: 130 }, { x: 140 }, { y: 120, baffles: 2 }];
+    for (const fixed of cases) {
+      expect(draw(fixed).warnings, JSON.stringify(fixed)).toEqual([]);
+    }
   });
 });

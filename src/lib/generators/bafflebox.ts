@@ -322,6 +322,17 @@ function sizeToFit(o: BaffleBoxOptions, given: number[], shell: number[]): Baffl
   if (given[0]! > 0) best = fitAt(o, given, shell, given[0]!, xWhy);
   else {
     const volume = (f: Fit) => (f.xi + shell[0]!) * (f.hi + shell[1]!) * (f.yi + shell[2]!);
+    // With a height or depth given, a width can leave the rest unable to
+    // work in it: those lose to any that works, then the smaller wins.
+    // Probing leaves out the light warning, so light getting through is asked after itself.
+    const works = (f: Fit) => {
+      const l = layoutAt({ ...o, gap: f.gap }, [f.xi, f.hi, f.yi], true);
+      return l.warnings.length === 0 && !(o.lightTrap && o.baffles > 0 && l.sight > -LIGHT_MARGIN);
+    };
+    const better = (f: Fit, g: Fit) => {
+      const [wf, wg] = [works(f), works(g)];
+      return wf !== wg ? wf : volume(f) < volume(g) - 1e-6;
+    };
     const lo = roundUp(xNeed, shell[0]!);
     // Past twice the larger opening the gaps and chambers have long stopped
     // shrinking: a coarse pass, then every millimetre round the best of it.
@@ -331,14 +342,19 @@ function sizeToFit(o: BaffleBoxOptions, given: number[], shell: number[]): Baffl
     best = at(lo);
     for (let x = lo + step; x <= hiX; x += step) {
       const f = at(x);
-      if (volume(f) < volume(best) - 1e-6) best = f;
+      if (better(f, best)) best = f;
     }
     const near = best.xi;
     for (let x = Math.max(lo, near - step + 1); x < near + step; x++) {
       const f = at(x);
-      if (volume(f) < volume(best) - 1e-6) best = f;
+      if (better(f, best)) best = f;
     }
-    if (best.xi > lo) best.why[0] = 'making the box smallest overall: narrower, it would need taller gaps and deeper chambers';
+    if (best.xi > lo) {
+      best.why[0] =
+        given[1]! > 0 || given[2]! > 0
+          ? 'the smallest box that works at the size you set'
+          : 'making the box smallest overall: narrower, it would need taller gaps and deeper chambers';
+    }
   }
 
   const lay = layoutAt({ ...o, gap: best.gap }, [best.xi, best.hi, best.yi]);
@@ -448,17 +464,17 @@ function layoutAt(o: BaffleBoxOptions, [xi, hi, yIn]: [number, number, number], 
   const roomW = Math.max(1, xi - 2);
   const roomH = Math.max(1, bottom ? yIn - o.frontClear - margin : hi - 2);
   const pfit = Math.min(roomW, roomH);
-  const grow = bottom ? 'wide and deep' : 'wide and tall';
+  const grow = bottom ? 'wider and deeper' : 'wider and taller';
   let portShape = o.port;
   if (portShape.shape === 'round' && portShape.d > pfit) {
-    warn(`The opening is wider than the ${panel}'s inside allows, so it is cut at ${mm(pfit)}. Make the box ${grow}er.`, 'duct_d');
+    warn(`The opening is wider than the ${panel}'s inside allows, so it is cut at ${mm(pfit)}. Make the box ${grow}.`, 'duct_d');
     portShape = { shape: 'round', d: pfit };
   } else if (portShape.shape === 'rect' && (portShape.w > roomW || portShape.h > roomH)) {
     warn(`The opening is larger than the ${panel}'s inside allows, so it is cut to fit.`, portShape.w > roomW ? 'port_w' : 'port_h');
     portShape = { shape: 'rect', w: Math.min(portShape.w, roomW), h: Math.min(portShape.h, roomH) };
   } else if (portShape.shape === 'fan' && portShape.size > Math.min(roomW, roomH) + 2) {
     const d = Math.min(FANS[portShape.size]!.hole, pfit);
-    warn(`A ${portShape.size} mm fan does not fit inside the ${panel}, so only a ${mm(d)} hole is cut. Make the box ${grow}er.`, 'fan_size');
+    warn(`A ${portShape.size} mm fan does not fit inside the ${panel}, so only a ${mm(d)} hole is cut. Make the box ${grow}.`, 'fan_size');
     portShape = { shape: 'round', d };
   }
 
@@ -1320,6 +1336,10 @@ export const lightTrapVent: GeneratorDef = {
       'Screws to a laser cutter\'s case over an air intake. Baffles inside make the air go round them, and are ' +
         'checked so that no straight line of light gets from the opening in the case out through the front.',
       '',
+      'Its width, height, depth and baffle gap start at 0, which sizes the box to fit its openings: the smallest ' +
+        'that lets the air through and stops the light. The note under each says what it came to and why. Set ' +
+        'any of them to fix it, and the rest are sized round it.',
+      '',
       '- The back plate goes against the case, its opening cut to match the hole there, with a flange round the ' +
         'box for the screws.',
       '- The room-side opening can be round, rectangular, or cut for a standard case fan to blow air in, in the ' +
@@ -1335,7 +1355,9 @@ export const lightTrapVent: GeneratorDef = {
     ].join('\n'),
   },
   params: [
-    ...adapt(SIZE_PARAMS, { h: { default: 200 }, y: { default: 200, help: `Out from the case. ${SMALLEST}` } }),
+    // Sized to fit by default: balancing the openings, airflow and light by
+    // hand is the hard part, and the notes say what each size came to.
+    ...adapt(SIZE_PARAMS, { x: { default: 0 }, h: { default: 0 }, y: { default: 0, help: `Out from the case. ${SMALLEST}` } }),
     ...ventParams('Case opening'),
     {
       key: 'port_side',
@@ -1365,7 +1387,7 @@ export const lightTrapVent: GeneratorDef = {
     { key: 'port_h', kind: 'length', label: 'Opening height', help: 'In the bottom, its depth front to back.', unit: 'mm', default: 60, min: 20, max: 1000, step: 0.5, group: 'dimensions', showIf: (v) => v.port_shape === 'rect' },
     { key: 'fan_size', kind: 'enum', label: 'Fan size', default: '120', group: 'dimensions', choices: FAN_CHOICES, showIf: (v) => v.port_shape === 'fan' },
     ...portOffsetParams('Opening'),
-    ...adapt(BAFFLE_PARAMS, { baffles: { default: 3 }, baffle_gap: { default: 50 } }),
+    ...adapt(BAFFLE_PARAMS, { baffles: { default: 3 }, baffle_gap: { default: 0 } }),
     ...MOUNT_PARAMS,
     MARGIN_PARAM,
     ...ASSEMBLY_PARAMS,
