@@ -874,6 +874,26 @@ are recessed by the hole inset and the sides stand past the top and bottom.
 With a gate the front's top edge is plain, since the slider runs up through a
 slot in the top wall's rim where that edge's wedges would be.
 
+**Slim Light Trap Vent** (`generators/slimlighttrap.ts`) lays the baffles
+flat, so it sticks out from the case about half as far. The chambers stack up
+the box: the case opening in the back of the top one, the room-side opening
+low on the front or in the bottom, and shelves fixed to the back and front in
+turn between them, so the air runs in an S. A straight line moves only one
+way front to back, so with two baffles it cannot pass a front gap and then a
+back one unless they overlap: depth stops light where height did before. The
+sight check is the same `sightWindow` with y and z swapped (lines y = a + b·z):
+the gaps lie flat, and the openings in the back and front stand up, each the
+two one-sided cases the floor opening was. With no baffle the openings face
+each other level, which that form cannot express, so the sight is `Infinity`.
+The end chambers are sized for their openings and the rest share the height
+(`share`); a hole in the bottom goes to the end away from the last gap, and
+etches `↑ front` when that leaves it off centre. Sizing to fit searches the
+depth for light, not the height. It shares the openings', sizes' and
+assembly's parameters, the opening helpers and `PanelBox` (row layout,
+`wall`, `cutOpening`) with `bafflebox.ts`. `test/slimlighttrap.test.ts` traces
+rays through its parts against the sight check and holds its auto sizes to
+the least that works.
+
 ### Adding wedges or bolts to a generator
 
 Everything above as a checklist. Do it in a commit of its own, after the

@@ -128,6 +128,7 @@ import { wallCaliper } from './wallcaliperholder';
 import { wallHook } from './wallhook';
 import { wallRollHolder } from './wallrollholder';
 import { baffleBox, lightTrapVent } from './bafflebox';
+import { slimLightTrapVent } from './slimlighttrap';
 
 const DEFS: GeneratorDef[] = [
   aBox,
@@ -223,6 +224,7 @@ const DEFS: GeneratorDef[] = [
   laserClamp,
   laserHoldfast,
   lightTrapVent,
+  slimLightTrapVent,
   linkage,
   cam,
   automaton,

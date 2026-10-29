@@ -59,4 +59,9 @@ export const VARIANTS: { id: string; name: string; values: ParamValues }[] = [
   { id: 'lighttrap', name: 'case opening off centre', values: { vent_dx: -30, vent_dz: 35, labels: true } },
   { id: 'bafflebox', name: 'wall vent off centre, wedged', values: { vent_shape: 'rect', vent_dx: 20, vent_dz: -60, assembly: 'wedges', y: 200, h: 280 } },
   { id: 'lighttrap', name: 'opening in the bottom, bolted', values: { port_side: 'bottom', baffles: 2, assembly: 'bolts', thickness: 6, y: 260 } },
+  { id: 'slimlighttrap', name: 'fan, labelled', values: { port_shape: 'fan', labels: true } },
+  { id: 'slimlighttrap', name: 'three baffles, 80 deep', values: { baffles: 3, y: 80 } },
+  { id: 'slimlighttrap', name: 'wedged', values: { assembly: 'wedges' } },
+  { id: 'slimlighttrap', name: 'bolted', values: { assembly: 'bolts', thickness: 6 } },
+  { id: 'slimlighttrap', name: 'opening in the bottom, off centre', values: { port_side: 'bottom', port_dx: 20, vent_dx: -15 } },
 ];

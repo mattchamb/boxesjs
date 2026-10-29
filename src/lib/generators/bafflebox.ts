@@ -58,22 +58,22 @@ export const FANS: Record<number, { hole: number; pitch: number }> = {
   120: { hole: 116, pitch: 105 },
   140: { hole: 136, pitch: 124.5 },
 };
-const FAN_SCREW = 4.4;
+export const FAN_SCREW = 4.4;
 
 /** Width and height of the hole an opening cuts. */
-function span(o: Opening): [number, number] {
+export function span(o: Opening): [number, number] {
   if (o.shape === 'round') return [o.d, o.d];
   if (o.shape === 'rect') return [o.w, o.h];
   const d = FANS[o.size]!.hole;
   return [d, d];
 }
 
-function openArea(o: Opening): number {
+export function openArea(o: Opening): number {
   const [w, h] = span(o);
   return o.shape === 'rect' ? w * h : (Math.PI * w * h) / 4;
 }
 
-function perimeter(o: Opening): number {
+export function perimeter(o: Opening): number {
   const [w, h] = span(o);
   return o.shape === 'rect' ? 2 * (w + h) : Math.PI * w;
 }
@@ -207,7 +207,7 @@ export interface BaffleBoxLayout {
   warnings: { message: string; param: string }[];
 }
 
-const mm = (v: number) => `${Math.ceil(v)} mm`;
+export const mm = (v: number) => `${Math.ceil(v)} mm`;
 
 /** Where a ray seen from the side must pass: between `lo` and `hi` at depth `y`. */
 export interface Window {
@@ -257,12 +257,12 @@ export function baffleBoxLayout(o: BaffleBoxOptions): BaffleBoxLayout {
 }
 
 /** Whole millimetres outside, so the sizes in the notes are the ones made. */
-function roundUp(inner: number, shell: number): number {
+export function roundUp(inner: number, shell: number): number {
   return Math.ceil(inner + shell - 1e-9) - shell;
 }
 
 /** Half of what an opening cuts, across and along its panel: a fan's screw holes stand past its blade hole. */
-function cutHalf(op: Opening): [number, number] {
+export function cutHalf(op: Opening): [number, number] {
   if (op.shape === 'fan') {
     const f = FANS[op.size]!;
     const h = Math.max(f.hole, f.pitch + FAN_SCREW) / 2;
@@ -277,7 +277,7 @@ function cutHalf(op: Opening): [number, number] {
  * cuts the margin in from the walls' joints, or bolted a T-slot's reach if
  * that is more, and a fan's frame inside the walls.
  */
-function openingNeeds(op: Opening, margin: number, reach: number): [number, number] {
+export function openingNeeds(op: Opening, margin: number, reach: number): [number, number] {
   const m = Math.max(margin, reach);
   const [hx, hy] = cutHalf(op);
   const frame = op.shape === 'fan' ? op.size : 0;
@@ -742,22 +742,16 @@ function layoutAt(o: BaffleBoxOptions, [xi, hi, yIn]: [number, number, number], 
   };
 }
 
-interface Item {
+export interface Item {
   w: number;
   h: number;
   draw: (move: string) => void;
 }
 
-class BaffleBox extends Boxes {
-  constructor(
-    private o: BaffleBoxOptions,
-    config: Partial<BoxesConfig>,
-  ) {
-    super(config);
-  }
-
+/** Panels laid out in rows, for the boxes here whose parts are all rectangles. */
+export abstract class PanelBox extends Boxes {
   /** Lays parts out left to right in rows, each row as tall as its tallest part. */
-  private rows(items: Item[], maxWidth: number): void {
+  protected rows(items: Item[], maxWidth: number): void {
     let row: Item[] = [];
     let used = 0;
     const flush = () => {
@@ -779,13 +773,38 @@ class BaffleBox extends Boxes {
     flush();
   }
 
-  private wall(x: number, y: number, edges: string, label: string, callback?: (() => void)[], bedBolts?: (BoltPolicy | null)[]): Item {
+  /** Rows about as wide as a square of the parts would be, so the sheet is not one long strip. */
+  protected layOut(items: Item[]): void {
+    const area = items.reduce((a, it) => a + (it.w + this.spacing) * (it.h + this.spacing), 0);
+    this.rows(items, Math.max(...items.map((it) => it.w + this.spacing), 1.2 * Math.sqrt(area)));
+  }
+
+  protected wall(x: number, y: number, edges: string, label: string, callback?: (() => void)[], bedBolts?: (BoltPolicy | null)[]): Item {
     const e = Array.from(edges).map((c) => this.getEdge(c));
     return {
       w: x + e[3]!.spacing() + e[1]!.spacing(),
       h: y + e[0]!.spacing() + e[2]!.spacing(),
       draw: (move) => this.rectangularWall(x, y, edges, { callback, bedBolts: bedBolts ?? null, move, label }),
     };
+  }
+
+  /** An opening's cut centred at (x, y): a fan's with its screw holes. */
+  protected cutOpening(op: Opening, x: number, y: number): void {
+    if (op.shape === 'rect') this.rectangularHole(x, y, op.w, op.h);
+    else this.hole(x, y, span(op)[0] / 2);
+    if (op.shape === 'fan') {
+      const q = FANS[op.size]!.pitch / 2;
+      for (const [dx, dy] of [[-q, -q], [q, -q], [q, q], [-q, q]] as const) this.hole(x + dx, y + dy, FAN_SCREW / 2);
+    }
+  }
+}
+
+class BaffleBox extends PanelBox {
+  constructor(
+    private o: BaffleBoxOptions,
+    config: Partial<BoxesConfig>,
+  ) {
+    super(config);
   }
 
   private boltHoles(at: [number, number][], dx = 0, dy = 0): void {
@@ -871,15 +890,7 @@ class BaffleBox extends Boxes {
     const screws = (dx = 0, dy = 0) => {
       for (const [x, y] of lay.plate.screws) this.hole(x + dx, y + dy, o.screw / 2);
     };
-    const opening = (px: number, pz: number) => {
-      const ps = lay.portShape;
-      if (ps.shape === 'rect') this.rectangularHole(px, pz, ps.w, ps.h);
-      else this.hole(px, pz, span(ps)[0] / 2);
-      if (ps.shape === 'fan') {
-        const q = FANS[ps.size]!.pitch / 2;
-        for (const [dx, dz] of [[-q, -q], [q, -q], [q, q], [-q, q]] as const) this.hole(px + dx, pz + dz, FAN_SCREW / 2);
-      }
-    };
+    const opening = (px: number, pz: number) => this.cutOpening(lay.portShape, px, pz);
     const inFloor = o.portSide === 'bottom';
     const front = () => {
       if (!inFloor) opening(lay.port[0], lay.port[1]);
@@ -955,10 +966,7 @@ class BaffleBox extends Boxes {
       );
     }
 
-    // Rows about as wide as a square of the parts would be, so the sheet is
-    // not one long strip.
-    const area = items.reduce((a, it) => a + (it.w + this.spacing) * (it.h + this.spacing), 0);
-    this.rows(items, Math.max(...items.map((it) => it.w + this.spacing), 1.2 * Math.sqrt(area)));
+    this.layOut(items);
     if (wedged) this.wedges(this.wedgeCount, 'up');
   }
 
@@ -1080,8 +1088,8 @@ class BaffleBox extends Boxes {
   }
 }
 
-const SMALLEST = '0 for the smallest that works.';
-const SIZE_PARAMS: ParamSpec[] = [
+export const SMALLEST = '0 for the smallest that works.';
+export const SIZE_PARAMS: ParamSpec[] = [
   { key: 'x', kind: 'length', label: 'Width', unit: 'mm', default: 200, min: 0, max: 1000, step: 1, group: 'dimensions', help: SMALLEST },
   { key: 'h', kind: 'length', label: 'Height', unit: 'mm', default: 250, min: 0, max: 1000, step: 1, group: 'dimensions', help: SMALLEST },
   { key: 'y', kind: 'length', label: 'Depth', unit: 'mm', default: 150, min: 0, max: 600, step: 1, group: 'dimensions', help: SMALLEST },
@@ -1096,7 +1104,7 @@ const SIZE_PARAMS: ParamSpec[] = [
 ];
 
 /** The opening in the wall or case behind the box. */
-const ventParams = (what: string): ParamSpec[] => [
+export const ventParams = (what: string): ParamSpec[] => [
   {
     key: 'vent_shape',
     kind: 'enum',
@@ -1126,7 +1134,7 @@ const ventParams = (what: string): ParamSpec[] => [
   { key: 'vent_dz', kind: 'length', label: `${what} off centre, up`, unit: 'mm', default: 0, min: -500, max: 500, step: 0.5, group: 'dimensions', help: 'From the box\'s centre; negative is down.' },
 ];
 
-const BAFFLE_PARAMS: ParamSpec[] = [
+export const BAFFLE_PARAMS: ParamSpec[] = [
   { key: 'baffles', kind: 'number', label: 'Baffles', default: 2, min: 0, max: 8, step: 1, integer: true, group: 'dimensions' },
   {
     key: 'baffle_gap',
@@ -1143,7 +1151,7 @@ const BAFFLE_PARAMS: ParamSpec[] = [
   },
 ];
 
-const MARGIN_PARAM: ParamSpec = {
+export const MARGIN_PARAM: ParamSpec = {
   key: 'opening_margin',
   kind: 'number',
   label: 'Opening margin',
@@ -1156,7 +1164,7 @@ const MARGIN_PARAM: ParamSpec = {
   help: 'The least material between an opening and the joints round its panel. Sizes left at 0 keep to it; a size you set warns when an opening comes nearer.',
 };
 
-const MOUNT_PARAMS: ParamSpec[] = [
+export const MOUNT_PARAMS: ParamSpec[] = [
   {
     key: 'flange',
     kind: 'length',
@@ -1175,7 +1183,7 @@ const MOUNT_PARAMS: ParamSpec[] = [
 ];
 
 /** A shared parameter with this generator's own default or help. */
-function adapt(specs: ParamSpec[], changes: Record<string, Partial<ParamSpec>>): ParamSpec[] {
+export function adapt(specs: ParamSpec[], changes: Record<string, Partial<ParamSpec>>): ParamSpec[] {
   return specs.map((p) => (changes[p.key] ? ({ ...p, ...changes[p.key] } as ParamSpec) : p));
 }
 
@@ -1184,7 +1192,7 @@ function adapt(specs: ParamSpec[], changes: Record<string, Partial<ParamSpec>>):
  * through, which on a flanged back would be against the wall. So knocked
  * down, the back sits inside the walls like the front, and goes up first.
  */
-const ASSEMBLY_PARAMS: ParamSpec[] = [
+export const ASSEMBLY_PARAMS: ParamSpec[] = [
   assemblyParam(['wedges', 'bolts'], {
     wedges:
       'The back, front, top, bottom and baffles are wedged through the walls round them. The back has no flange: ' +
@@ -1201,7 +1209,7 @@ const ASSEMBLY_PARAMS: ParamSpec[] = [
  * Where the room-side opening sits, from the middle of its panel. In the
  * bottom there is no "up": the front chamber is sized round it.
  */
-function portOffsetParams(what: string, note = ''): ParamSpec[] {
+export function portOffsetParams(what: string, note = ''): ParamSpec[] {
   const specs: ParamSpec[] = [
     {
       key: 'port_dx',
@@ -1232,12 +1240,12 @@ function portOffsetParams(what: string, note = ''): ParamSpec[] {
   return specs.map((p) => ({ ...p, help: [p.help, note].filter(Boolean).join(' ') }) as ParamSpec);
 }
 
-function readAssembly(v: ParamValues): Assembly {
+export function readAssembly(v: ParamValues): Assembly {
   const a = s(v, 'assembly', 'glue');
   return a === 'wedges' || a === 'bolts' ? a : 'glue';
 }
 
-function readVent(v: ParamValues): VentShape {
+export function readVent(v: ParamValues): VentShape {
   return s(v, 'vent_shape', 'round') === 'rect'
     ? { shape: 'rect', w: n(v, 'vent_w', 150), h: n(v, 'vent_h', 75) }
     : { shape: 'round', d: n(v, 'vent_d', 100) };
@@ -1326,6 +1334,50 @@ export const baffleBox: GeneratorDef = {
 
 const FAN_CHOICES = Object.keys(FANS).map((k) => ({ value: k, label: `${k} mm` }));
 
+/** The light traps' room-side opening: its panel, shape and size. */
+export const ROOM_OPENING_PARAMS: ParamSpec[] = [
+  {
+    key: 'port_side',
+    kind: 'enum',
+    label: 'Room-side opening in',
+    default: 'front',
+    group: 'dimensions',
+    choices: [
+      { value: 'front', label: 'Front' },
+      { value: 'bottom', label: 'Bottom', help: 'Faces the floor, so light that does get out goes down. The front chamber is made deep enough for it.' },
+    ],
+  },
+  {
+    key: 'port_shape',
+    kind: 'enum',
+    label: 'Room-side opening',
+    default: 'round',
+    group: 'dimensions',
+    choices: [
+      { value: 'round', label: 'Round' },
+      { value: 'rect', label: 'Rectangular' },
+      { value: 'fan', label: 'Fan', help: 'A hole for the blades and the four screw holes of a standard case fan.' },
+    ],
+  },
+  { key: 'duct_d', kind: 'length', label: 'Opening diameter', unit: 'mm', default: 100, min: 20, max: 400, step: 0.5, group: 'dimensions', showIf: (v) => (v.port_shape ?? 'round') === 'round' },
+  { key: 'port_w', kind: 'length', label: 'Opening width', unit: 'mm', default: 150, min: 20, max: 1000, step: 0.5, group: 'dimensions', showIf: (v) => v.port_shape === 'rect' },
+  { key: 'port_h', kind: 'length', label: 'Opening height', help: 'In the bottom, its depth front to back.', unit: 'mm', default: 60, min: 20, max: 1000, step: 0.5, group: 'dimensions', showIf: (v) => v.port_shape === 'rect' },
+  { key: 'fan_size', kind: 'enum', label: 'Fan size', default: '120', group: 'dimensions', choices: FAN_CHOICES, showIf: (v) => v.port_shape === 'fan' },
+];
+
+export function readPort(v: ParamValues): Opening {
+  const shape = s(v, 'port_shape', 'round');
+  return shape === 'rect'
+    ? { shape: 'rect', w: n(v, 'port_w', 150), h: n(v, 'port_h', 60) }
+    : shape === 'fan' && FANS[Number(s(v, 'fan_size', '120'))]
+      ? { shape: 'fan', size: Number(s(v, 'fan_size', '120')) }
+      : { shape: 'round', d: n(v, 'duct_d', 100) };
+}
+
+export function readPortSide(v: ParamValues): 'front' | 'bottom' {
+  return s(v, 'port_side', 'front') === 'bottom' ? 'bottom' : 'front';
+}
+
 export const lightTrapVent: GeneratorDef = {
   meta: {
     id: 'lighttrap',
@@ -1359,33 +1411,7 @@ export const lightTrapVent: GeneratorDef = {
     // hand is the hard part, and the notes say what each size came to.
     ...adapt(SIZE_PARAMS, { x: { default: 0 }, h: { default: 0 }, y: { default: 0, help: `Out from the case. ${SMALLEST}` } }),
     ...ventParams('Case opening'),
-    {
-      key: 'port_side',
-      kind: 'enum',
-      label: 'Room-side opening in',
-      default: 'front',
-      group: 'dimensions',
-      choices: [
-        { value: 'front', label: 'Front' },
-        { value: 'bottom', label: 'Bottom', help: 'Faces the floor, so light that does get out goes down. The front chamber is made deep enough for it.' },
-      ],
-    },
-    {
-      key: 'port_shape',
-      kind: 'enum',
-      label: 'Room-side opening',
-      default: 'round',
-      group: 'dimensions',
-      choices: [
-        { value: 'round', label: 'Round' },
-        { value: 'rect', label: 'Rectangular' },
-        { value: 'fan', label: 'Fan', help: 'A hole for the blades and the four screw holes of a standard case fan.' },
-      ],
-    },
-    { key: 'duct_d', kind: 'length', label: 'Opening diameter', unit: 'mm', default: 100, min: 20, max: 400, step: 0.5, group: 'dimensions', showIf: (v) => (v.port_shape ?? 'round') === 'round' },
-    { key: 'port_w', kind: 'length', label: 'Opening width', unit: 'mm', default: 150, min: 20, max: 1000, step: 0.5, group: 'dimensions', showIf: (v) => v.port_shape === 'rect' },
-    { key: 'port_h', kind: 'length', label: 'Opening height', help: 'In the bottom, its depth front to back.', unit: 'mm', default: 60, min: 20, max: 1000, step: 0.5, group: 'dimensions', showIf: (v) => v.port_shape === 'rect' },
-    { key: 'fan_size', kind: 'enum', label: 'Fan size', default: '120', group: 'dimensions', choices: FAN_CHOICES, showIf: (v) => v.port_shape === 'fan' },
+    ...ROOM_OPENING_PARAMS,
     ...portOffsetParams('Opening'),
     ...adapt(BAFFLE_PARAMS, { baffles: { default: 3 }, baffle_gap: { default: 0 } }),
     ...MOUNT_PARAMS,
@@ -1393,15 +1419,8 @@ export const lightTrapVent: GeneratorDef = {
     ...ASSEMBLY_PARAMS,
   ],
   create: (v: ParamValues, config: BoxesConfig) => {
-    const shape = s(v, 'port_shape', 'round');
-    const port: Opening =
-      shape === 'rect'
-        ? { shape: 'rect', w: n(v, 'port_w', 150), h: n(v, 'port_h', 60) }
-        : shape === 'fan' && FANS[Number(s(v, 'fan_size', '120'))]
-          ? { shape: 'fan', size: Number(s(v, 'fan_size', '120')) }
-          : { shape: 'round', d: n(v, 'duct_d', 100) };
     return new BaffleBox(
-      { ...common(v), port, portSide: s(v, 'port_side', 'front') === 'bottom' ? 'bottom' : 'front', gate: false, rail: 15, play: 0.5, bolt: 4, lightTrap: true },
+      { ...common(v), port: readPort(v), portSide: readPortSide(v), gate: false, rail: 15, play: 0.5, bolt: 4, lightTrap: true },
       config,
     );
   },

@@ -398,6 +398,8 @@ describe('every wedged generator', () => {
     ['bafflebox', { assembly: 'wedges', y: 200, h: 280, gate: false }],
     ['lighttrap', { assembly: 'wedges', y: 240 }],
     ['lighttrap', { assembly: 'wedges', y: 260, port_side: 'bottom', port_shape: 'fan', baffles: 1 }],
+    ['slimlighttrap', { assembly: 'wedges' }],
+    ['slimlighttrap', { assembly: 'wedges', baffles: 3, port_side: 'bottom' }],
   ];
   for (const [id, values] of cases) {
     it(`${id} ${JSON.stringify(values)}: a hole and a wedge for every tenon`, () => {
