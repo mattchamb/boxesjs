@@ -385,6 +385,15 @@ button, input, select, textarea {
   .field:focus-within > .field-help { display: block; }
 }
 
+/* What the generator chose for the field. Plain, unlike a warning, and not
+   hidden with the help: it changes as the other settings do. */
+.field-note {
+  margin: 5px 0 0;
+  font-size: 11.5px;
+  color: var(--fg-muted);
+  font-variant-numeric: tabular-nums;
+}
+
 .field-warning {
   margin: 5px 0 0;
   font-size: 11.5px;

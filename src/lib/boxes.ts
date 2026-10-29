@@ -114,6 +114,8 @@ export abstract class Boxes {
 
   /** Collected non-fatal problems, surfaced next to the offending field. */
   warnings: { param?: string; message: string }[] = [];
+  /** What a generator worked out for a field, such as a size left to it: not a problem, so not a warning. */
+  notes: { param: string; message: string }[] = [];
   /** Diagrams for the panel; never drawn on the sheet. */
   charts: ChartData[] = [];
 
@@ -144,6 +146,12 @@ export abstract class Boxes {
   warn(message: string, param?: string): void {
     if (!this.warnings.some((w) => w.message === message && w.param === param)) {
       this.warnings.push({ message, param });
+    }
+  }
+
+  note(message: string, param: string): void {
+    if (!this.notes.some((w) => w.message === message && w.param === param)) {
+      this.notes.push({ message, param });
     }
   }
 

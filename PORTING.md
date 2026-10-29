@@ -841,6 +841,16 @@ with `↑ front` beside the opening, where the offset leaves room, since the
 first baffle's slots are right behind it. The ray tracer is checked against
 the sight check over a grid of opening and vent heights.
 
+Width, height and depth can be 0, for the smallest that works, and the gap
+0, for the least the airflow allows: the openings, the gate, the chambers'
+airflow, the light check, the back's screws and, bolted, the T-slots' reach
+and the shortest bolted edge set them. Width trades against the rest, since
+a narrow box needs taller gaps and deeper chambers, so a free width is
+searched for the smallest outside volume. What each came to, and what set
+it, is a note under its field: `Boxes.note`, carried as `Drawing.notes` and
+shown plainly by the panel, since it is not a warning. Tests hold each auto
+size to working, and, but for bolted boxes, to failing a millimetre less.
+
 Both offer wedges and bolts. Either needs room on the far side of the panel
 a joint passes through, which on the flanged back is against the wall, so
 knocked down the back sits inside the walls with no flange, is screwed up

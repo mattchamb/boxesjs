@@ -26,7 +26,7 @@
  */
 import { Boxes, type BoxesConfig } from '../boxes';
 import type { BoltPolicy } from '../edges/base';
-import { checkBolts, shelfBolts } from '../edges/bolts';
+import { boltPositions, checkBolts, shelfBolts } from '../edges/bolts';
 import type { FingerJointSettings } from '../edges/fingerjoint';
 import { tenonFootprints, wedgeClearance } from '../edges/wedgedtenon';
 import { ETCHING } from '../geom/colors';
@@ -127,6 +127,17 @@ export interface BaffleBoxOptions {
   recess: number;
   /** Knocked down, how far the back's screws sit in from its corners, clear of any T-slots. */
   mountInset: number;
+  /**
+   * The shallowest chamber worth sizing to: wedged, neighbouring baffles'
+   * wedges must not meet across one.
+   */
+  minPitch: number;
+  /**
+   * Bolted, how far the T-slots reach in from a panel's edges, which sizing
+   * keeps the openings clear of, and the shortest edge that takes a bolt.
+   */
+  boltReach: number;
+  minBolted: number;
 }
 
 export type Assembly = 'glue' | 'wedges' | 'bolts';
@@ -185,6 +196,8 @@ export interface BaffleBoxLayout {
   /** Wedged, the back's and front's recess, and the walls' depth front to back. */
   recess: number;
   depth: number;
+  /** What was worked out for each size left at 0, for a note under its field. */
+  sized: { param: string; message: string }[];
   gate: GateLayout | null;
   warnings: { message: string; param: string }[];
 }
@@ -224,7 +237,184 @@ export function sightWindow(ws: Window[]): number {
   return best;
 }
 
+/**
+ * The layout. A width, height or depth of 0 is the smallest that works, and
+ * a gap of 0 the least the airflow allows; each comes back with a note of
+ * what it came to and what set it.
+ */
 export function baffleBoxLayout(o: BaffleBoxOptions): BaffleBoxLayout {
+  const t = o.thickness;
+  const e = o.assembly === 'wedges' ? o.recess : 0;
+  const shell = o.outside ? [2 * t, 2 * t + 2 * e, 2 * t + 2 * e] : [0, 0, 0];
+  const given = [o.x, o.h, o.y].map((v, k) => (v > 0 ? v - shell[k]! : 0));
+  if (given.every((v) => v > 0) && o.gap > 0) return layoutAt(o, given as [number, number, number]);
+  return sizeToFit(o, given, shell);
+}
+
+/** Whole millimetres outside, so the sizes in the notes are the ones made. */
+function roundUp(inner: number, shell: number): number {
+  return Math.ceil(inner + shell - 1e-9) - shell;
+}
+
+/**
+ * What an opening needs across and up its panel, before any offset: a
+ * millimetre each side and a fan's frame inside the walls; bolted, its cuts
+ * a T-slot's reach in from the edges as well.
+ */
+function openingNeeds(op: Opening, reach: number): [number, number] {
+  const m = Math.max(1, reach);
+  if (op.shape === 'fan') {
+    const f = FANS[op.size]!;
+    const cuts = Math.max(f.hole, f.pitch + FAN_SCREW) + 2 * reach;
+    return [Math.max(op.size, cuts), Math.max(op.size, cuts)];
+  }
+  return [span(op)[0] + 2 * m, span(op)[1] + 2 * m];
+}
+
+interface Fit {
+  xi: number;
+  hi: number;
+  yi: number;
+  gap: number;
+  why: [string, string, string];
+}
+
+/**
+ * Sizes left at 0, smallest first. Width trades against the rest: a narrow
+ * box needs taller gaps and deeper chambers to pass the same air. So a free
+ * width is the one, from the least the openings allow upwards, that makes
+ * the box smallest outside; the height and depth then follow from it.
+ */
+function sizeToFit(o: BaffleBoxOptions, given: number[], shell: number[]): BaffleBoxLayout {
+  const t = o.thickness;
+  const bottom = o.portSide === 'bottom';
+  const port = o.port;
+  const extent = (op: Opening) => openingNeeds(op, o.boltReach);
+  const [pw] = extent(port);
+  const [vw] = extent(o.vent);
+  const pdx = Math.abs(o.portOffset[0]);
+  const vdx = Math.abs(o.ventOffset[0]);
+  const gated = o.gate && !bottom;
+  const bx = span(port)[0] / 2 + OVERLAP + o.rail / 2;
+  // The largest of several needs, and which it was.
+  const most = (needs: [number, string][]): [number, string] => needs.reduce((m, n) => (n[0] > m[0] ? n : m));
+  const [xNeed, xWhy] = most([
+    [Math.max(20, o.minBolted), o.minBolted > 20 ? 'the bolts' : 'the walls'],
+    [pw + 2 * pdx, 'the opening'],
+    [vw + 2 * vdx, o.lightTrap ? 'the case opening' : 'the vent'],
+    ...(gated ? [[2 * (bx + o.bolt) + 2 * pdx, 'the blast gate'] as [number, string]] : []),
+  ]);
+
+  let best: Fit;
+  if (given[0]! > 0) best = fitAt(o, given, shell, given[0]!, xWhy);
+  else {
+    const volume = (f: Fit) => (f.xi + shell[0]!) * (f.hi + shell[1]!) * (f.yi + shell[2]!);
+    const lo = roundUp(xNeed, shell[0]!);
+    // Past twice the larger opening the gaps and chambers have long stopped
+    // shrinking: a coarse pass, then every millimetre round the best of it.
+    const hiX = lo + 2 * Math.max(pw, vw) + 100;
+    const step = Math.max(1, Math.ceil((hiX - lo) / 40));
+    const at = (x: number) => fitAt(o, given, shell, x, xWhy);
+    best = at(lo);
+    for (let x = lo + step; x <= hiX; x += step) {
+      const f = at(x);
+      if (volume(f) < volume(best) - 1e-6) best = f;
+    }
+    const near = best.xi;
+    for (let x = Math.max(lo, near - step + 1); x < near + step; x++) {
+      const f = at(x);
+      if (volume(f) < volume(best) - 1e-6) best = f;
+    }
+    if (best.xi > lo) best.why[0] = 'making the box smallest overall: narrower, it would need taller gaps and deeper chambers';
+  }
+
+  const lay = layoutAt({ ...o, gap: best.gap }, [best.xi, best.hi, best.yi]);
+  const where = o.outside ? 'outside' : 'inside';
+  const say = (k: number, inner: number) => `Smallest that works: ${Math.round((inner + shell[k]!) * 10) / 10} mm ${where}, set by ${best.why[k]}.`;
+  if (given[0]! <= 0) lay.sized.push({ param: 'x', message: say(0, best.xi) });
+  if (given[1]! <= 0) lay.sized.push({ param: 'h', message: say(1, best.hi) });
+  if (given[2]! <= 0) lay.sized.push({ param: 'y', message: say(2, best.yi) });
+  if (o.gap <= 0 && o.baffles > 0) lay.sized.push({ param: 'baffle_gap', message: `The least the airflow allows: ${best.gap} mm.` });
+  return lay;
+}
+
+/** The gap, height and depth that work at inside width `xi`, each as given where it was. */
+function fitAt(o: BaffleBoxOptions, given: number[], shell: number[], xi: number, xWhy: string): Fit {
+  const t = o.thickness;
+  const bottom = o.portSide === 'bottom';
+  const port = o.port;
+  const count = o.baffles;
+  const extent = (op: Opening) => openingNeeds(op, o.boltReach);
+  const [, ph] = extent(port);
+  const [, vh] = extent(o.vent);
+  const pdz = bottom ? 0 : Math.abs(o.portOffset[1]);
+  const vdz = Math.abs(o.ventOffset[1]);
+  const gated = o.gate && !bottom;
+  const duct = span(port)[0];
+  const a = duct / 2 + OVERLAP + o.rail / 2;
+  const lift = o.assembly === 'wedges' ? 0 : t;
+  const most = (needs: [number, string][]): [number, string] => needs.reduce((m, n) => (n[0] > m[0] ? n : m));
+
+  const area = Math.min(openArea(port), openArea(o.vent));
+  const gap = o.gap > 0 ? o.gap : Math.max(1, Math.ceil(area / xi));
+
+  const pitch = Math.max(area / xi, area / perimeter(port), area / perimeter(o.vent), o.minPitch, t);
+  const portDepth = bottom ? (port.shape === 'fan' ? port.size : span(port)[1]) + o.frontClear + t : 0;
+  const [yNeed, yWhy] = most([
+    [o.minBolted, 'the bolts'],
+    [count * t + Math.max(pitch, portDepth) + count * pitch, count ? 'the airflow between the baffles' : 'the airflow'],
+    ...(bottom && portDepth > pitch ? [[count * (t + pitch) + portDepth, 'the opening in the bottom'] as [number, string]] : []),
+  ]);
+  const yi = given[2]! > 0 ? given[2]! : roundUp(yNeed, shell[2]!);
+
+  const [hNeed, hWhy] = most([
+    [20, 'the walls'],
+    ...(bottom ? [] : [[ph + 2 * pdz, 'the opening'] as [number, string]]),
+    [vh + 2 * vdz, o.lightTrap ? 'the case opening' : 'the vent'],
+    // A baffle two thicknesses tall at the least, as the layout allows; the
+    // light check asks for more where it needs it.
+    ...(count ? [[gap + 2 * t, 'the baffle gap'] as [number, string]] : []),
+    [o.minBolted, 'the bolts'],
+    ...(count && o.minBolted ? [[gap + o.minBolted, 'the bolts in the baffles'] as [number, string]] : []),
+    ...(gated
+      ? [[Math.max(2 * (a + o.bolt) + 2 * pdz, duct + 2 * (MIN_HOLD - lift) + 2 * o.portOffset[1]), 'the blast gate'] as [number, string]]
+      : []),
+  ]);
+  let hi = given[1]! > 0 ? given[1]! : roundUp(hNeed, shell[1]!);
+  let hReason = hWhy;
+
+  const probe = (h: number) => layoutAt({ ...o, gap }, [xi, h, yi], true);
+  // Taller moves the openings away from the gaps at the walls, so the first
+  // height that stops light is found by halving, if any height does.
+  if (o.lightTrap && given[1]! <= 0 && count > 0 && probe(hi).sight > -LIGHT_MARGIN) {
+    const far = hi + 3000;
+    if (probe(far).sight <= -LIGHT_MARGIN) {
+      let [lo, up] = [hi, far];
+      while (up - lo > 1) {
+        const mid = Math.floor((lo + up) / 2);
+        if (probe(mid).sight <= -LIGHT_MARGIN) up = mid;
+        else lo = mid;
+      }
+      hi = roundUp(up, shell[1]!);
+      if (probe(hi).sight > -LIGHT_MARGIN) hi += 1;
+      hReason = 'stopping light';
+    }
+  }
+
+  // Knocked down, the back's corner screws must miss the vent; grow the
+  // height, if it was left to us, until they do.
+  const crowded = (l: BaffleBoxLayout) => l.warnings.some((w) => /screws in the back/.test(w.message));
+  for (let i = 0; i < 1000 && given[1]! <= 0 && crowded(probe(hi)); i++) [hi, hReason] = [hi + 1, 'the screws round the vent'];
+
+  return { xi, hi, yi, gap, why: [xWhy, hReason, yWhy] };
+}
+
+/**
+ * The layout at given inside sizes. Probing, it skips working out what gap
+ * would stop light, which only the warning needs and which costs forty
+ * sight checks.
+ */
+function layoutAt(o: BaffleBoxOptions, [xi, hi, yIn]: [number, number, number], probe = false): BaffleBoxLayout {
   const t = o.thickness;
   const warnings: { message: string; param: string }[] = [];
   const warn = (message: string, param: string) => warnings.push({ message, param });
@@ -234,7 +424,6 @@ export function baffleBoxLayout(o: BaffleBoxOptions): BaffleBoxLayout {
   // Wedged, the recesses add to the depth, and the sides stand past the top
   // and bottom by as much to carry their wedges.
   const e = o.assembly === 'wedges' ? o.recess : 0;
-  const [xi, hi, yIn] = o.outside ? [o.x - 2 * t, o.h - 2 * t - 2 * e, o.y - 2 * t - 2 * e] : [o.x, o.h, o.y];
   const fit = Math.max(1, Math.min(xi, hi) - 2);
 
   // The room-side opening's room across the panel and along it: up the
@@ -369,7 +558,7 @@ export function baffleBoxLayout(o: BaffleBoxOptions): BaffleBoxLayout {
   const sightAt = (g: number) => Math.max(...windowSets(g).map(sightWindow));
   const sight = sightAt(count > 0 ? gap : 0);
 
-  if (o.lightTrap) {
+  if (o.lightTrap && !probe) {
     const gapMax = hi - minBaffle;
     // The window only widens as the gap opens, so halve towards the widest tight one.
     let tight = -1;
@@ -494,6 +683,7 @@ export function baffleBoxLayout(o: BaffleBoxOptions): BaffleBoxLayout {
     plate: { w: pw, h: ph, screws },
     recess: e,
     depth: yIn + 2 * t + 2 * e,
+    sized: [],
     gate,
     warnings,
   };
@@ -576,8 +766,19 @@ class BaffleBox extends Boxes {
     // An opening in the bottom keeps a thickness from the front panel, or,
     // wedged, clears the front's wedges lying across the bottom's underside.
     const frontClear = wedged ? Math.max(t, ws.wedge_length / 2 - t / 2 + 1) : t;
-    const lay = baffleBoxLayout({ ...o, thickness: t, recess: ws.holeInset(), mountInset: Math.max(slotReach, o.screw + 6), frontClear });
+    // Wedged, two baffles' wedges across the chamber between them must not meet.
+    const minPitch = wedged ? ws.wedge_length - t + 1 : t;
+    // Bolted, sizing keeps the openings past the T-slots' reach, and every
+    // edge it sizes long enough for a bolt at these fingers.
+    const boltReach = bolted ? this.bedBoltSettings[3]! + 1 : 0;
+    let minBolted = 0;
+    if (bolted) {
+      const fj = this.getEdge('f').settings as FingerJointSettings;
+      for (minBolted = 2 * t; minBolted < 2000 && !boltPositions(fj, minBolted, shelfBolts(this, minBolted)).length; minBolted++);
+    }
+    const lay = baffleBoxLayout({ ...o, thickness: t, recess: ws.holeInset(), mountInset: Math.max(slotReach, o.screw + 6), frontClear, minPitch, boltReach, minBolted });
     for (const w of lay.warnings) this.warn(w.message, w.param);
+    for (const n of lay.sized) this.note(n.message, n.param);
     const { xi, hi, yi, gate } = lay;
     const bh = lay.baffleHeight;
 
@@ -826,10 +1027,11 @@ class BaffleBox extends Boxes {
   }
 }
 
+const SMALLEST = '0 for the smallest that works.';
 const SIZE_PARAMS: ParamSpec[] = [
-  { key: 'x', kind: 'length', label: 'Width', unit: 'mm', default: 200, min: 60, max: 1000, step: 1, group: 'dimensions' },
-  { key: 'h', kind: 'length', label: 'Height', unit: 'mm', default: 250, min: 60, max: 1000, step: 1, group: 'dimensions' },
-  { key: 'y', kind: 'length', label: 'Depth', unit: 'mm', default: 150, min: 30, max: 600, step: 1, group: 'dimensions' },
+  { key: 'x', kind: 'length', label: 'Width', unit: 'mm', default: 200, min: 0, max: 1000, step: 1, group: 'dimensions', help: SMALLEST },
+  { key: 'h', kind: 'length', label: 'Height', unit: 'mm', default: 250, min: 0, max: 1000, step: 1, group: 'dimensions', help: SMALLEST },
+  { key: 'y', kind: 'length', label: 'Depth', unit: 'mm', default: 150, min: 0, max: 600, step: 1, group: 'dimensions', help: SMALLEST },
   {
     key: 'outside',
     kind: 'bool',
@@ -879,11 +1081,11 @@ const BAFFLE_PARAMS: ParamSpec[] = [
     label: 'Baffle gap',
     unit: 'mm',
     default: 60,
-    min: 10,
+    min: 0,
     max: 500,
     step: 1,
     group: 'dimensions',
-    help: 'Between each baffle\'s free edge and the wall it faces.',
+    help: 'Between each baffle\'s free edge and the wall it faces. 0 for the least the airflow allows.',
     showIf: (v) => Number(v.baffles) > 0,
   },
 ];
@@ -996,6 +1198,9 @@ function common(v: ParamValues) {
     recess: 0,
     mountInset: 0,
     frontClear: 0,
+    minPitch: 0,
+    boltReach: 0,
+    minBolted: 0,
   };
 }
 
@@ -1024,7 +1229,7 @@ export const baffleBox: GeneratorDef = {
     ].join('\n'),
   },
   params: [
-    ...adapt(SIZE_PARAMS, { y: { help: 'Out from the wall, not counting the blast gate.' } }),
+    ...adapt(SIZE_PARAMS, { y: { help: `Out from the wall, not counting the blast gate. ${SMALLEST}` } }),
     { key: 'duct_d', kind: 'length', label: 'Duct diameter', unit: 'mm', default: 100, min: 30, max: 400, step: 0.5, group: 'dimensions', help: 'Outside diameter of the hose or collar; the front port is cut to it.' },
     ...portOffsetParams('Duct', 'A blast gate moves with it.'),
     ...ventParams('Wall vent'),
@@ -1078,7 +1283,7 @@ export const lightTrapVent: GeneratorDef = {
     ].join('\n'),
   },
   params: [
-    ...adapt(SIZE_PARAMS, { h: { default: 200 }, y: { default: 200, help: 'Out from the case.' } }),
+    ...adapt(SIZE_PARAMS, { h: { default: 200 }, y: { default: 200, help: `Out from the case. ${SMALLEST}` } }),
     ...ventParams('Case opening'),
     {
       key: 'port_side',

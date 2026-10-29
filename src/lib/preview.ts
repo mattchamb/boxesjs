@@ -38,6 +38,7 @@ export interface PreviewData {
   bbox: BBox;
   stats: DrawingStats;
   warnings: { param?: string; message: string }[];
+  notes?: { param: string; message: string }[];
   charts?: ChartData[];
   sheets?: Sheet[];
   /** The sheets are laid out by an optimised layout, not MaxRects. */
@@ -126,6 +127,7 @@ export function toPreview(drawing: Drawing): PreviewData {
     bbox: drawing.bbox,
     stats: drawing.stats,
     warnings: drawing.warnings,
+    ...(drawing.notes ? { notes: drawing.notes } : {}),
     ...(drawing.charts ? { charts: drawing.charts } : {}),
     ...(drawing.sheets ? { sheets: drawing.sheets } : {}),
     ...(drawing.optimised ? { optimised: true } : {}),

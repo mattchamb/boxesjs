@@ -28,6 +28,9 @@ function opts(over: Partial<BaffleBoxOptions> = {}): BaffleBoxOptions {
     assembly: 'glue',
     recess: 12,
     mountInset: 11,
+    minPitch: 3,
+    boltReach: 0,
+    minBolted: 0,
     flange: 25,
     screw: 5,
     baffles: 2,
@@ -416,5 +419,67 @@ describe('an off-centre front opening', () => {
     expect(count(svg('bafflebox', { port_dx: 20 }), 'top, seen from the front')).toBe(1);
     expect(count(svg('lighttrap', { port_side: 'bottom', baffles: 1, port_dx: 40 }), '↑ front')).toBe(1);
     expect(count(svg('lighttrap', { port_side: 'bottom', baffles: 1 }), '↑ front')).toBe(0);
+  });
+});
+
+describe('sizes left at 0', () => {
+  const AUTO = { x: 0, h: 0, y: 0, baffle_gap: 0 };
+  const cases: [string, ParamValues][] = [
+    ['bafflebox', {}],
+    ['bafflebox', { gate: false, baffles: 3 }],
+    ['bafflebox', { assembly: 'wedges' }],
+    ['bafflebox', { assembly: 'bolts', thickness: 6 }],
+    ['bafflebox', { port_dx: 20, port_dz: -25, vent_shape: 'rect', vent_dz: 30 }],
+    ['lighttrap', {}],
+    ['lighttrap', { baffles: 1 }],
+    ['lighttrap', { baffles: 2, assembly: 'wedges' }],
+    ['lighttrap', { port_side: 'bottom', baffles: 1 }],
+    ['lighttrap', { port_side: 'bottom', baffles: 2, port_shape: 'fan', assembly: 'bolts', thickness: 6 }],
+    ['lighttrap', { port_shape: 'rect', vent_shape: 'rect', vent_w: 300, vent_h: 50 }],
+    ['lighttrap', { vent_dz: 40, port_dz: -30, outside: false }],
+  ];
+  const draw = (id: string, values: ParamValues) => buildDrawing(id, { ...defaultsFor(id), ...values });
+  const size = (d: ReturnType<typeof draw>, key: string) => Number(/: ([\d.]+) mm/.exec(d.notes!.find((n) => n.param === key)!.message)![1]);
+
+  for (const [id, extra] of cases) {
+    it(`${id} ${JSON.stringify(extra)}: work, say what they came to, and are the least that works`, () => {
+      const d = draw(id, { ...AUTO, ...extra });
+      expect(d.warnings).toEqual([]);
+      expect(d.notes!.map((n) => n.param).sort()).toEqual(['baffle_gap', 'h', 'x', 'y']);
+      const [x, h, y] = ['x', 'h', 'y'].map((k) => size(d, k));
+      const gap = size(d, 'baffle_gap');
+      // Given back as fixed sizes, the same box, with nothing to say.
+      const fixed = { ...extra, x, h, y, baffle_gap: gap };
+      expect(draw(id, fixed).warnings).toEqual([]);
+      expect(draw(id, fixed).notes ?? []).toEqual([]);
+      // A millimetre less height or depth, or gap, and something gives. Bolted,
+      // the openings are kept a whole T-slot's reach from the edges, which is
+      // more than the slots strictly need, so there it is not quite the least.
+      if (extra.assembly === 'bolts') return;
+      expect(draw(id, { ...fixed, h: h - 1 }).warnings).not.toEqual([]);
+      expect(draw(id, { ...fixed, y: y - 1 }).warnings).not.toEqual([]);
+      expect(draw(id, { ...fixed, baffle_gap: gap - 1 }).warnings).not.toEqual([]);
+    });
+  }
+
+  it('picks the width that makes the box smallest overall, not the narrowest', () => {
+    const volume = (values: ParamValues) => {
+      const d = draw('lighttrap', { ...AUTO, ...values });
+      return ['x', 'h', 'y'].map((k) => (values[k] ? Number(values[k]) : size(d, k))).reduce((a, b) => a * b, 1);
+    };
+    const best = volume({});
+    const chosen = size(draw('lighttrap', AUTO), 'x');
+    for (const x of [108, 130, chosen - 20, chosen + 20, 260]) expect(volume({ x })).toBeGreaterThanOrEqual(best - 1e-6);
+  });
+
+  it('leaves alone what was given, and notes only what was not', () => {
+    const d = draw('lighttrap', { x: 250, h: 0, y: 0 });
+    expect(d.notes!.map((n) => n.param).sort()).toEqual(['h', 'y']);
+  });
+
+  it('cannot stop light without a baffle, and says so rather than growing for ever', () => {
+    const d = draw('lighttrap', { ...AUTO, baffles: 0 });
+    expect(d.warnings.map((w) => w.param)).toEqual(['baffles']);
+    expect(size(d, 'h')).toBeLessThan(200);
   });
 });

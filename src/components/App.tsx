@@ -332,6 +332,7 @@ export default function App({ generator, name, summary, description, initial }: 
   const anyChanged = visible.some(isChanged);
   const shown = useMemo(() => new Set(visible.map((s) => s.key)), [visible]);
   const warningFor = (key: string) => data?.warnings.find((w) => w.param === key)?.message;
+  const noteFor = (key: string) => data?.notes?.find((w) => w.param === key)?.message;
   // A warning on a hidden field would otherwise go unseen.
   const generalWarnings = data?.warnings.filter((w) => !w.param || !shown.has(w.param)) ?? [];
   const warned = (items: ParamSpec[]) => items.some((s) => warningFor(s.key));
@@ -349,6 +350,7 @@ export default function App({ generator, name, summary, description, initial }: 
         value={values[spec.key] ?? spec.default}
         onChange={(v) => setValue(spec.key, v)}
         warning={warningFor(spec.key)}
+        note={noteFor(spec.key)}
         reset={isChanged(spec) ? { to: baseline[spec.key]!, apply: () => resetKeys([spec.key]) } : undefined}
       />
     );

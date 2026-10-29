@@ -54,6 +54,8 @@ export const VARIANTS: { id: string; name: string; values: ParamValues }[] = [
   { id: 'bafflebox', name: 'duct off centre with its gate', values: { port_dx: -20, port_dz: 40 } },
   { id: 'bafflebox', name: 'duct off centre, wedged', values: { port_dx: 15, port_dz: -30, assembly: 'wedges', y: 200, h: 300 } },
   { id: 'lighttrap', name: 'fan off centre in the bottom', values: { port_side: 'bottom', port_shape: 'fan', port_dx: 30, baffles: 1, x: 260 } },
+  { id: 'lighttrap', name: 'smallest that works', values: { x: 0, h: 0, y: 0, baffle_gap: 0 } },
+  { id: 'bafflebox', name: 'smallest that works, wedged', values: { x: 0, h: 0, y: 0, baffle_gap: 0, assembly: 'wedges' } },
   { id: 'lighttrap', name: 'case opening off centre', values: { vent_dx: -30, vent_dz: 35, labels: true } },
   { id: 'bafflebox', name: 'wall vent off centre, wedged', values: { vent_shape: 'rect', vent_dx: 20, vent_dz: -60, assembly: 'wedges', y: 200, h: 280 } },
   { id: 'lighttrap', name: 'opening in the bottom, bolted', values: { port_side: 'bottom', baffles: 2, assembly: 'bolts', thickness: 6, y: 260 } },

@@ -67,6 +67,8 @@ export interface Drawing {
   bbox: BBox;
   stats: DrawingStats;
   warnings: { param?: string; message: string }[];
+  /** Shown under their fields, plainly: what the generator chose, not what is wrong. */
+  notes?: { param: string; message: string }[];
   charts?: ChartData[];
   /**
    * Present only when the parts have been packed onto stock sheets: the sheets,
@@ -265,6 +267,7 @@ export function renderBox(box: Boxes): Drawing {
       lengthByLayer,
     },
     warnings: box.warnings,
+    ...(box.notes.length ? { notes: box.notes } : {}),
     ...(box.charts.length ? { charts: box.charts } : {}),
   };
 }

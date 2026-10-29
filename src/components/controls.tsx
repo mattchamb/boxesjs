@@ -15,11 +15,13 @@ interface ControlProps {
   value: ParamValue;
   onChange: (v: ParamValue) => void;
   warning?: string;
+  /** What the generator chose for this field, e.g. a size left at 0. */
+  note?: string;
   /** Present when the value differs from where it started: what it started as. */
   reset?: { to: ParamValue; apply: () => void };
 }
 
-export function Control({ spec, value, onChange, warning, reset }: ControlProps) {
+export function Control({ spec, value, onChange, warning, note, reset }: ControlProps) {
   const numeric = spec.kind === 'length' || spec.kind === 'number';
   return (
     <div class="field">
@@ -73,6 +75,7 @@ export function Control({ spec, value, onChange, warning, reset }: ControlProps)
 
       {spec.help && <p class="field-help">{spec.help}</p>}
       {spec.kind === 'enum' && <ChoiceHelp spec={spec} value={String(value)} />}
+      {note && <p class="field-note">{note}</p>}
       {warning && <p class="field-warning">{warning}</p>}
     </div>
   );
