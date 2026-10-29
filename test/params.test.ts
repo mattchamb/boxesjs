@@ -84,6 +84,10 @@ describe('warnings land on fields the panel shows', () => {
     ['lighttrap', { port_shape: 'fan', fan_size: '140', x: 120 }],
     ['lighttrap', { port_side: 'bottom' }],
     ['lighttrap', { vent_dz: 300 }],
+    ['lighttrap', { port_dz: 300 }],
+    ['lighttrap', { port_side: 'bottom', port_dx: -300 }],
+    ['bafflebox', { port_dz: 60 }],
+    ['bafflebox', { port_dx: 30 }],
     ['lighttrap', { baffles: 1, vent_dz: -40 }],
     ['lighttrap', { port_side: 'bottom', port_shape: 'rect', port_h: 300 }],
     // The bottom's one bolt on a 108 mm edge lands on the middle divider.

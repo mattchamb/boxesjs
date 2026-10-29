@@ -833,6 +833,14 @@ longer show which way round it goes, and fitted upside down it would put the
 opening where the check did not look, so the back is etched with which way
 is up, reading right from the front.
 
+The room-side opening can be off centre too: right and up on the front, or
+across only in the bottom, where the front chamber sets its depth. A gate
+moves with it, and its checks grow the box it asks for by twice the offset.
+The front panel is etched the same way when it is off centre, and the bottom
+with `↑ front` beside the opening, where the offset leaves room, since the
+first baffle's slots are right behind it. The ray tracer is checked against
+the sight check over a grid of opening and vent heights.
+
 Both offer wedges and bolts. Either needs room on the far side of the panel
 a joint passes through, which on the flanged back is against the wall, so
 knocked down the back sits inside the walls with no flange, is screwed up

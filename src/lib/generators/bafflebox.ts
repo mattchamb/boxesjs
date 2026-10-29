@@ -103,6 +103,12 @@ export interface BaffleBoxOptions {
    * the front's wedges when wedged.
    */
   frontClear: number;
+  /**
+   * The room-side opening's centre from the panel's centre, right and up as
+   * seen from the front. In the bottom only the first applies: the front
+   * chamber sets where it is front to back.
+   */
+  portOffset: [number, number];
   flange: number;
   screw: number;
   baffles: number;
@@ -321,7 +327,19 @@ export function baffleBoxLayout(o: BaffleBoxOptions): BaffleBoxLayout {
     baffles.push({ y: yIn - (frontChamber + i * (pitch + t) + t / 2), top: (i % 2 === 0) !== bottom });
   }
 
-  const port: [number, number] = bottom ? [xi / 2, yIn - o.frontClear - span(portShape)[1] / 2] : [xi / 2, hi / 2];
+  // Off centre, it stays a millimetre inside the walls; a fan's frame does too.
+  const [pw0, ph0] = portShape.shape === 'fan' ? [portShape.size - 2, portShape.size - 2] : span(portShape);
+  const shift = (k: 0 | 1, room: number, extent: number) => {
+    const want = k === 1 && bottom ? 0 : o.portOffset[k];
+    const most = Math.max(0, (room - extent) / 2 - 1);
+    const got = Math.max(-most, Math.min(most, want));
+    if (Math.abs(got - want) > 1e-9) {
+      warn(`The opening cannot sit that far off centre and stay inside the ${panel}: it is moved ${mm(Math.abs(got))} ${k ? (want > 0 ? 'up' : 'down') : want > 0 ? 'right' : 'left'} instead.`, k ? 'port_dz' : 'port_dx');
+    }
+    return got;
+  };
+  const px = xi / 2 + shift(0, xi, pw0);
+  const port: [number, number] = bottom ? [px, yIn - o.frontClear - span(portShape)[1] / 2] : [px, hi / 2 + shift(1, hi, ph0)];
 
   // Seen from the side, every opening and gap is a window a straight ray has
   // to pass; the baffles span the width, so nothing gets round them sideways.
@@ -336,13 +354,12 @@ export function baffleBoxLayout(o: BaffleBoxOptions): BaffleBoxLayout {
       { y: y1, lo, hi: up },
     ];
     const around = (o: Opening) => span(o)[1] / 2;
-    const zc = hi / 2;
     const zv = ventAt[1];
     const inside = [
       ...at(-t, 0, zv - around(vent), zv + around(vent)),
       ...baffles.flatMap((bf) => at(bf.y - t / 2, bf.y + t / 2, bf.top ? 0 : hi - g, bf.top ? g : hi)),
     ];
-    if (!bottom) return [[...inside, ...at(yIn, yIn + t, zc - around(portShape), zc + around(portShape))]];
+    if (!bottom) return [[...inside, ...at(yIn, yIn + t, port[1] - around(portShape), port[1] + around(portShape))]];
     const [y0, y1] = [port[1] - around(portShape), port[1] + around(portShape)];
     return [
       [...inside, { y: y0, lo: 0, hi: Infinity }, { y: y1, lo: -Infinity, hi: -t }],
@@ -446,15 +463,17 @@ export function baffleBoxLayout(o: BaffleBoxOptions): BaffleBoxLayout {
       bolts,
     };
 
-    // A nut needs about a bolt's diameter of panel round the hole, clear of the walls.
-    const needX = 2 * (bx + o.bolt);
-    if (xi < needX) {
-      warn(`The blast gate's bolts land in the side walls: make the box at least ${mm(needX + (o.outside ? 2 * t : 0))} wide, or the rails narrower.`, 'gate_rail');
+    // A nut needs about a bolt's diameter of panel round the hole, clear of
+    // the walls. Off centre, the box grows by twice the offset to give it that.
+    const [dx, dz] = [port[0] - xi / 2, port[1] - hi / 2];
+    const needX = 2 * (bx + o.bolt) + 2 * Math.abs(dx);
+    if (xi < needX - 1e-9) {
+      warn(`The blast gate's bolts land in the side walls: make the box at least ${mm(needX + (o.outside ? 2 * t : 0))} wide, or the rails narrower${dx ? ', or the duct nearer the middle' : ''}.`, 'gate_rail');
     }
     const hold = top - (port[1] + duct / 2);
-    const needZ = Math.max(2 * (a + o.bolt), duct + 2 * (MIN_HOLD - lift));
-    if (hi < needZ || hold < MIN_HOLD) {
-      warn(`The blast gate needs a taller box, for its bolts to clear the top and bottom and its slider to stay in when open: make it at least ${mm(needZ + (o.outside ? 2 * t + 2 * e : 0))} tall.`, 'h');
+    const needZ = Math.max(2 * (a + o.bolt) + 2 * Math.abs(dz), duct + 2 * (MIN_HOLD - lift) + 2 * dz);
+    if (hi < needZ - 1e-9 || hold < MIN_HOLD) {
+      warn(`The blast gate needs a taller box, for its bolts to clear the top and bottom and its slider to stay in when open: make it at least ${mm(needZ + (o.outside ? 2 * t + 2 * e : 0))} tall${dz ? ', or the duct nearer the middle' : ''}.`, 'h');
     }
   }
 
@@ -562,6 +581,28 @@ class BaffleBox extends Boxes {
     const { xi, hi, yi, gate } = lay;
     const bh = lay.baffleHeight;
 
+    // An off-centre opening leaves a panel's outline symmetric and its holes
+    // not: an etched arrow says which way round it goes. Above what is taken
+    // up between `lo` and `up` or below it, whichever has more room; it reads
+    // the right way up from the side it names either way.
+    const mark = (dx: number, dy: number, w: number, h: number, lo: number, up: number, text: string) => {
+      const fs = 6;
+      const above = h - up;
+      const below = lo;
+      if (Math.max(above, below) < fs + 4) return;
+      const z = above >= below ? h - Math.max(t, (above - fs) / 2) - fs / 2 : Math.max(t, (below - fs) / 2) + fs / 2;
+      this.text(`\u2191 ${text}`, dx + w / 2, dy + z, 0, 'middle center', fs, ETCHING);
+    };
+    const portMoved = o.portOffset[0] !== 0 || (o.portSide === 'front' && o.portOffset[1] !== 0);
+    // The opening's extent up its panel, a fan's frame and a gate's plates with it.
+    const portExtent = (): [number, number] => {
+      const ps = lay.portShape;
+      const half = ps.shape === 'fan' ? ps.size / 2 : span(ps)[1] / 2;
+      const lo = gate ? gate.z0 : lay.port[1] - half;
+      const up = gate ? gate.z0 + gate.h : lay.port[1] + half;
+      return [lo, up];
+    };
+
     // The vent and, off centre, the mark for which way round the back goes,
     // from the back's inner corner at (dx, dy) in the frame being drawn.
     const vent = (dx: number, dy: number) => {
@@ -570,15 +611,8 @@ class BaffleBox extends Boxes {
       if (v.shape === 'round') this.hole(cx, cy, v.d / 2);
       else this.rectangularHole(cx, cy, v.w, v.h);
       if (o.ventOffset[0] === 0 && o.ventOffset[1] === 0) return;
-      // Above the vent or below it, whichever has more room; it reads the
-      // right way up from the front either way.
-      const fs = 6;
       const vh = span(v)[1];
-      const above = hi - (lay.ventAt[1] + vh / 2);
-      const below = lay.ventAt[1] - vh / 2;
-      if (Math.max(above, below) < fs + 4) return;
-      const z = above >= below ? hi - Math.max(t, (above - fs) / 2) - fs / 2 : Math.max(t, (below - fs) / 2) + fs / 2;
-      this.text('\u2191 top, seen from the front', dx + xi / 2, dy + z, 0, 'middle center', fs, ETCHING);
+      mark(dx, dy, xi, hi, lay.ventAt[1] - vh / 2, lay.ventAt[1] + vh / 2, 'top, seen from the front');
     };
     const screws = (dx = 0, dy = 0) => {
       for (const [x, y] of lay.plate.screws) this.hole(x + dx, y + dy, o.screw / 2);
@@ -596,10 +630,26 @@ class BaffleBox extends Boxes {
     const front = () => {
       if (!inFloor) opening(lay.port[0], lay.port[1]);
       if (gate) this.boltHoles(gate.bolts, gate.x0, gate.z0);
+      if (!inFloor && portMoved) mark(0, 0, xi, hi, ...portExtent(), 'top, seen from the front');
     };
-    // The bottom's opening, at `dy` from the frame its holes are drawn in to the back's inner face.
+    // The bottom's opening, at `dy` from the frame its holes are drawn in to
+    // the back's inner face. Its mark points to the front, read from inside.
     this.floorOpening = (dy) => {
-      if (inFloor) opening(lay.port[0], lay.port[1] + dy);
+      if (!inFloor) return;
+      opening(lay.port[0], lay.port[1] + dy);
+      if (portMoved) {
+        // Behind it are the first baffle's slots, so the mark goes beside
+        // it, on the side the offset leaves room.
+        const ps = lay.portShape;
+        const half = ps.shape === 'fan' ? ps.size / 2 : span(ps)[0] / 2;
+        const left = lay.port[0] - half;
+        const right = xi - (lay.port[0] + half);
+        const fs = 6;
+        if (Math.max(left, right) >= 4 * fs) {
+          const x = left >= right ? left / 2 : xi - right / 2;
+          this.text('\u2191 front', x, lay.port[1] + dy, 0, 'middle center', fs, ETCHING);
+        }
+      }
     };
     const baffleLabel = (i: number) => `baffle ${i + 1}`;
 
@@ -879,6 +929,41 @@ const ASSEMBLY_PARAMS: ParamSpec[] = [
   ...BOLT_PARAMS,
 ];
 
+/**
+ * Where the room-side opening sits, from the middle of its panel. In the
+ * bottom there is no "up": the front chamber is sized round it.
+ */
+function portOffsetParams(what: string, note = ''): ParamSpec[] {
+  const specs: ParamSpec[] = [
+    {
+      key: 'port_dx',
+      kind: 'length',
+      label: `${what} off centre, right`,
+      unit: 'mm',
+      default: 0,
+      min: -500,
+      max: 500,
+      step: 0.5,
+      group: 'dimensions',
+      help: 'From the middle of its panel, seen from the front; negative is left. Off centre, the panel is etched with which way round it goes.',
+    },
+    {
+      key: 'port_dz',
+      kind: 'length',
+      label: `${what} off centre, up`,
+      unit: 'mm',
+      default: 0,
+      min: -500,
+      max: 500,
+      step: 0.5,
+      group: 'dimensions',
+      help: 'Negative is down.',
+      showIf: (v) => v.port_side !== 'bottom',
+    },
+  ];
+  return specs.map((p) => ({ ...p, help: [p.help, note].filter(Boolean).join(' ') }) as ParamSpec);
+}
+
 function readAssembly(v: ParamValues): Assembly {
   const a = s(v, 'assembly', 'glue');
   return a === 'wedges' || a === 'bolts' ? a : 'glue';
@@ -906,6 +991,7 @@ function common(v: ParamValues) {
     gap: n(v, 'baffle_gap', 60),
     assembly: readAssembly(v),
     portSide: 'front' as const,
+    portOffset: [n(v, 'port_dx', 0), n(v, 'port_dz', 0)] as [number, number],
     // These are measured off the joints once the box is built.
     recess: 0,
     mountInset: 0,
@@ -940,6 +1026,7 @@ export const baffleBox: GeneratorDef = {
   params: [
     ...adapt(SIZE_PARAMS, { y: { help: 'Out from the wall, not counting the blast gate.' } }),
     { key: 'duct_d', kind: 'length', label: 'Duct diameter', unit: 'mm', default: 100, min: 30, max: 400, step: 0.5, group: 'dimensions', help: 'Outside diameter of the hose or collar; the front port is cut to it.' },
+    ...portOffsetParams('Duct', 'A blast gate moves with it.'),
     ...ventParams('Wall vent'),
     ...BAFFLE_PARAMS,
     ...adapt(MOUNT_PARAMS, { screw_d: { label: 'Wall screw holes' } }),
@@ -1020,6 +1107,7 @@ export const lightTrapVent: GeneratorDef = {
     { key: 'port_w', kind: 'length', label: 'Opening width', unit: 'mm', default: 150, min: 20, max: 1000, step: 0.5, group: 'dimensions', showIf: (v) => v.port_shape === 'rect' },
     { key: 'port_h', kind: 'length', label: 'Opening height', help: 'In the bottom, its depth front to back.', unit: 'mm', default: 60, min: 20, max: 1000, step: 0.5, group: 'dimensions', showIf: (v) => v.port_shape === 'rect' },
     { key: 'fan_size', kind: 'enum', label: 'Fan size', default: '120', group: 'dimensions', choices: FAN_CHOICES, showIf: (v) => v.port_shape === 'fan' },
+    ...portOffsetParams('Opening'),
     ...adapt(BAFFLE_PARAMS, { baffles: { default: 3 }, baffle_gap: { default: 50 } }),
     ...MOUNT_PARAMS,
     ...ASSEMBLY_PARAMS,

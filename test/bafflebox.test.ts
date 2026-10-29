@@ -22,6 +22,7 @@ function opts(over: Partial<BaffleBoxOptions> = {}): BaffleBoxOptions {
     ventOffset: [0, 0],
     port: { shape: 'round', d: 100 },
     portSide: 'front',
+    portOffset: [0, 0],
     frontClear: 3,
     lightTrap: false,
     assembly: 'glue',
@@ -358,5 +359,62 @@ describe('an off-centre vent', () => {
       toSVG(buildDrawing('lighttrap', { ...defaultsFor('lighttrap'), labels: false, ...values })).includes('top, seen from the front');
     expect(etched({})).toBe(false);
     expect(etched({ vent_dz: 30 })).toBe(true);
+  });
+});
+
+describe('an off-centre front opening', () => {
+  it('agrees with traced rays wherever the opening and the vent are', () => {
+    const verdicts: boolean[] = [];
+    for (const pz of [-40, 0, 40]) {
+      for (const vz of [-40, 0, 40]) {
+        const lay = baffleBoxLayout(
+          opts({ gate: false, lightTrap: true, h: 200, y: 200, baffles: 1, gap: 41, portOffset: [0, pz], ventOffset: [0, vz] }),
+        );
+        expect(lay.port[1]).toBeCloseTo(lay.hi / 2 + pz, 9);
+        const leaks = rayGetsThrough(lay);
+        // The traced rays and the windows say the same; the margin only ever adds to "leaks".
+        if (leaks) expect(lay.sight).toBeGreaterThan(0);
+        if (lay.sight <= -LIGHT_MARGIN) expect(leaks).toBe(false);
+        verdicts.push(leaks);
+      }
+    }
+    expect(verdicts).toContain(true);
+    expect(verdicts).toContain(false);
+  });
+
+  it('keeps the opening inside its panel, a fan by its frame', () => {
+    const far = baffleBoxLayout(opts({ gate: false, portOffset: [200, 0] }));
+    expect(far.port[0] + 50).toBeCloseTo(far.xi - 1, 9);
+    expect(far.warnings.map((w) => w.param)).toEqual(['port_dx']);
+    const fan = baffleBoxLayout(opts({ gate: false, port: { shape: 'fan', size: 120 }, portOffset: [0, 200] }));
+    expect(fan.port[1] + 60 - 1).toBeCloseTo(fan.hi - 1, 9);
+  });
+
+  it('in the bottom, moves across only', () => {
+    const lay = baffleBoxLayout(opts({ gate: false, portSide: 'bottom', y: 250, baffles: 1, portOffset: [30, 40] }));
+    expect(lay.port[0]).toBeCloseTo(lay.xi / 2 + 30, 9);
+    expect(lay.port[1]).toBeCloseTo(lay.yi - 3 - 50, 9);
+    expect(lay.warnings.map((w) => w.param)).not.toContain('port_dz');
+  });
+
+  it('takes the gate with it, and says when the gate then needs a bigger box', () => {
+    const lay = baffleBoxLayout(opts({ portOffset: [20, 50] }));
+    const g = lay.gate!;
+    expect(g.x0 + g.w / 2).toBeCloseTo(lay.port[0], 9);
+    const centre = g.bolts.reduce(([x, z], [bx, bz]) => [x + bx / 4, z + bz / 4], [0, 0]);
+    expect(centre[0] + g.x0).toBeCloseTo(lay.port[0], 9);
+    expect(centre[1] + g.z0).toBeCloseTo(lay.port[1], 9);
+    expect(lay.warnings).toEqual([]);
+    expect(baffleBoxLayout(opts({ portOffset: [0, 60] })).warnings.map((w) => w.param)).toEqual(['h']);
+    expect(baffleBoxLayout(opts({ portOffset: [30, 0] })).warnings.map((w) => w.param)).toEqual(['gate_rail']);
+  });
+
+  it('etches which way round its panel goes, only when off centre', () => {
+    const svg = (id: string, values: ParamValues) => toSVG(buildDrawing(id, { ...defaultsFor(id), labels: false, ...values }));
+    const count = (text: string, needle: string) => text.split(needle).length - 1;
+    expect(count(svg('bafflebox', {}), 'seen from the front')).toBe(0);
+    expect(count(svg('bafflebox', { port_dx: 20 }), 'top, seen from the front')).toBe(1);
+    expect(count(svg('lighttrap', { port_side: 'bottom', baffles: 1, port_dx: 40 }), '↑ front')).toBe(1);
+    expect(count(svg('lighttrap', { port_side: 'bottom', baffles: 1 }), '↑ front')).toBe(0);
   });
 });
