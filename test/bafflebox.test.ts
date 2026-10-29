@@ -31,6 +31,7 @@ function opts(over: Partial<BaffleBoxOptions> = {}): BaffleBoxOptions {
     minPitch: 3,
     boltReach: 0,
     minBolted: 0,
+    openingMargin: 2,
     flange: 25,
     screw: 5,
     baffles: 2,
@@ -292,10 +293,10 @@ describe('the light trap with its opening in the bottom', () => {
     const lay = floor({ baffles: 2 });
     expect(lay.baffles.map((b) => b.top)).toEqual([false, true]);
     const d = (lay.portShape as { d: number }).d;
-    expect(lay.frontChamber).toBeCloseTo(d + 3 + 3, 9);
-    // The opening's edge stays the clearance off the front, and a thickness off the first baffle.
+    // The front clearance (3 here) before it, the margin (two thicknesses) behind it.
+    expect(lay.frontChamber).toBeCloseTo(d + 3 + 6, 9);
     expect(lay.yi - (lay.port[1] + d / 2)).toBeCloseTo(3, 9);
-    expect(lay.port[1] - d / 2 - (lay.baffles[0]!.y + lay.t / 2)).toBeCloseTo(3, 9);
+    expect(lay.port[1] - d / 2 - (lay.baffles[0]!.y + lay.t / 2)).toBeCloseTo(6, 9);
     const faces = [lay.baffles[0]!.y - lay.t / 2, lay.baffles[1]!.y + lay.t / 2, lay.baffles[1]!.y - lay.t / 2, 0];
     expect(faces[0]! - faces[1]!).toBeCloseTo(lay.pitch, 9);
     expect(faces[2]! - faces[3]!).toBeCloseTo(lay.pitch, 9);
@@ -481,5 +482,52 @@ describe('sizes left at 0', () => {
     const d = draw('lighttrap', { ...AUTO, baffles: 0 });
     expect(d.warnings.map((w) => w.param)).toEqual(['baffles']);
     expect(size(d, 'h')).toBeLessThan(200);
+  });
+});
+
+describe('the opening margin', () => {
+  const draw = (id: string, values: ParamValues) => buildDrawing(id, { ...defaultsFor(id), ...values });
+
+  /** The least distance from anything each opening cuts to the joints round its panel. */
+  function clearances(lay: ReturnType<typeof baffleBoxLayout>, inFloor: boolean): number[] {
+    const half = (op: Opening): [number, number] =>
+      op.shape === 'fan' ? [(105 + 4.4) / 2, (105 + 4.4) / 2] : op.shape === 'round' ? [op.d / 2, op.d / 2] : [op.w / 2, op.h / 2];
+    const [px, pz] = lay.port;
+    const [phx, phz] = half(lay.portShape);
+    const [vx, vz] = lay.ventAt;
+    const [vhx, vhz] = half(lay.vent);
+    const port = [px - phx, lay.xi - px - phx];
+    if (inFloor) port.push(lay.yi - (pz + phz), pz - phz - (lay.baffles[0]!.y + lay.t / 2));
+    else port.push(pz - phz, lay.hi - pz - phz);
+    return [...port, vx - vhx, lay.xi - vx - vhx, vz - vhz, lay.hi - vz - vhz];
+  }
+
+  it('sized to fit, leaves at least the margin between every cut and the joints round it', () => {
+    const cases: Partial<BaffleBoxOptions>[] = [
+      { lightTrap: true },
+      { lightTrap: true, port: { shape: 'fan', size: 120 } },
+      { lightTrap: true, portSide: 'bottom', baffles: 1, port: { shape: 'fan', size: 120 }, frontClear: 12 },
+      { vent: { shape: 'rect', w: 150, h: 75 }, ventOffset: [0, 20] },
+      { gate: true, portOffset: [15, 0] },
+    ];
+    for (const c of cases) {
+      for (const m of [1, 2, 4]) {
+        const lay = baffleBoxLayout(opts({ gate: false, ...c, x: 0, h: 0, y: 0, gap: 0, openingMargin: m, frontClear: Math.max(c.frontClear ?? 0, 3 * m) }));
+        expect(lay.warnings).toEqual([]);
+        expect(Math.min(...clearances(lay, c.portSide === 'bottom'))).toBeGreaterThanOrEqual(3 * m - 1e-6);
+      }
+    }
+  });
+
+  it('warns, without shrinking it, when a set size brings an opening nearer than the margin', () => {
+    // 100 mm openings front and back in a 110 mm box: 2 mm either side, inside 3 mm walls.
+    const near = (values: ParamValues) => draw('lighttrap', { x: 110, h: 200, y: 200, ...values }).warnings.filter((w) => /too near the walls/.test(w.message));
+    expect(near({}).map((w) => [w.param, /less than 6 mm/.test(w.message)])).toEqual([
+      ['duct_d', true],
+      ['vent_d', true],
+    ]);
+    expect(near({ opening_margin: 0.5 })).toEqual([]);
+    const lay = baffleBoxLayout(opts({ x: 110, gate: false }));
+    expect(lay.portShape).toEqual({ shape: 'round', d: 100 });
   });
 });

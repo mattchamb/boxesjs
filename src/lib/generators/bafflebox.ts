@@ -138,6 +138,11 @@ export interface BaffleBoxOptions {
    */
   boltReach: number;
   minBolted: number;
+  /**
+   * The least material, in thicknesses, between anything an opening cuts and
+   * the walls' joints round its panel, so no thin strip is left there.
+   */
+  openingMargin: number;
 }
 
 export type Assembly = 'glue' | 'wedges' | 'bolts';
@@ -256,19 +261,27 @@ function roundUp(inner: number, shell: number): number {
   return Math.ceil(inner + shell - 1e-9) - shell;
 }
 
-/**
- * What an opening needs across and up its panel, before any offset: a
- * millimetre each side and a fan's frame inside the walls; bolted, its cuts
- * a T-slot's reach in from the edges as well.
- */
-function openingNeeds(op: Opening, reach: number): [number, number] {
-  const m = Math.max(1, reach);
+/** Half of what an opening cuts, across and along its panel: a fan's screw holes stand past its blade hole. */
+function cutHalf(op: Opening): [number, number] {
   if (op.shape === 'fan') {
     const f = FANS[op.size]!;
-    const cuts = Math.max(f.hole, f.pitch + FAN_SCREW) + 2 * reach;
-    return [Math.max(op.size, cuts), Math.max(op.size, cuts)];
+    const h = Math.max(f.hole, f.pitch + FAN_SCREW) / 2;
+    return [h, h];
   }
-  return [span(op)[0] + 2 * m, span(op)[1] + 2 * m];
+  const [w, h] = span(op);
+  return [w / 2, h / 2];
+}
+
+/**
+ * What an opening needs across and up its panel, before any offset: its
+ * cuts the margin in from the walls' joints, or bolted a T-slot's reach if
+ * that is more, and a fan's frame inside the walls.
+ */
+function openingNeeds(op: Opening, margin: number, reach: number): [number, number] {
+  const m = Math.max(margin, reach);
+  const [hx, hy] = cutHalf(op);
+  const frame = op.shape === 'fan' ? op.size : 0;
+  return [Math.max(frame, 2 * hx + 2 * m), Math.max(frame, 2 * hy + 2 * m)];
 }
 
 interface Fit {
@@ -289,7 +302,7 @@ function sizeToFit(o: BaffleBoxOptions, given: number[], shell: number[]): Baffl
   const t = o.thickness;
   const bottom = o.portSide === 'bottom';
   const port = o.port;
-  const extent = (op: Opening) => openingNeeds(op, o.boltReach);
+  const extent = (op: Opening) => openingNeeds(op, o.openingMargin * o.thickness, o.boltReach);
   const [pw] = extent(port);
   const [vw] = extent(o.vent);
   const pdx = Math.abs(o.portOffset[0]);
@@ -344,7 +357,7 @@ function fitAt(o: BaffleBoxOptions, given: number[], shell: number[], xi: number
   const bottom = o.portSide === 'bottom';
   const port = o.port;
   const count = o.baffles;
-  const extent = (op: Opening) => openingNeeds(op, o.boltReach);
+  const extent = (op: Opening) => openingNeeds(op, o.openingMargin * o.thickness, o.boltReach);
   const [, ph] = extent(port);
   const [, vh] = extent(o.vent);
   const pdz = bottom ? 0 : Math.abs(o.portOffset[1]);
@@ -359,7 +372,7 @@ function fitAt(o: BaffleBoxOptions, given: number[], shell: number[], xi: number
   const gap = o.gap > 0 ? o.gap : Math.max(1, Math.ceil(area / xi));
 
   const pitch = Math.max(area / xi, area / perimeter(port), area / perimeter(o.vent), o.minPitch, t);
-  const portDepth = bottom ? (port.shape === 'fan' ? port.size : span(port)[1]) + o.frontClear + t : 0;
+  const portDepth = bottom ? 2 * cutHalf(port)[1] + o.frontClear + o.openingMargin * t : 0;
   const [yNeed, yWhy] = most([
     [o.minBolted, 'the bolts'],
     [count * t + Math.max(pitch, portDepth) + count * pitch, count ? 'the airflow between the baffles' : 'the airflow'],
@@ -427,12 +440,13 @@ function layoutAt(o: BaffleBoxOptions, [xi, hi, yIn]: [number, number, number], 
   const fit = Math.max(1, Math.min(xi, hi) - 2);
 
   // The room-side opening's room across the panel and along it: up the
-  // front, or front to back in the bottom, short of the front and of a
-  // thickness for the first baffle to stand behind it.
+  // front, or front to back in the bottom, short of the front and of the
+  // margin to the first baffle's slots behind it.
+  const margin = o.openingMargin * t;
   const bottom = o.portSide === 'bottom';
   const panel = bottom ? 'bottom' : 'front panel';
   const roomW = Math.max(1, xi - 2);
-  const roomH = Math.max(1, bottom ? yIn - o.frontClear - t : hi - 2);
+  const roomH = Math.max(1, bottom ? yIn - o.frontClear - margin : hi - 2);
   const pfit = Math.min(roomW, roomH);
   const grow = bottom ? 'wide and deep' : 'wide and tall';
   let portShape = o.port;
@@ -459,10 +473,12 @@ function layoutAt(o: BaffleBoxOptions, [xi, hi, yIn]: [number, number, number], 
   // Off centre, the vent stays a millimetre inside the walls.
   const [vw, vh] = span(vent);
   const reach = [Math.max(0, (xi - vw) / 2 - 1), Math.max(0, (hi - vh) / 2 - 1)];
+  let ventMoved = false;
   const ventAt: [number, number] = [0, 1].map((k) => {
     const want = o.ventOffset[k]!;
     const got = Math.max(-reach[k]!, Math.min(reach[k]!, want));
     if (Math.abs(got - want) > 1e-9) {
+      ventMoved = true;
       warn(`The vent cannot sit that far off centre and stay inside the box: it is moved ${mm(Math.abs(got))} ${k ? (want > 0 ? 'up' : 'down') : want > 0 ? 'right' : 'left'} instead.`, k ? 'vent_dz' : 'vent_dx');
     }
     return (k ? hi : xi) / 2 + got;
@@ -472,7 +488,7 @@ function layoutAt(o: BaffleBoxOptions, [xi, hi, yIn]: [number, number, number], 
 
   // An opening in the bottom needs the front chamber at least as deep as it,
   // with its clearances; the other chambers share what is left.
-  const portDepth = bottom ? span(portShape)[1] + o.frontClear + t : 0;
+  const portDepth = bottom ? 2 * cutHalf(portShape)[1] + o.frontClear + margin : 0;
   // Every chamber at least a thickness deep, or the walls' holes for
   // neighbouring baffles run into each other.
   const maxBaffles = Math.max(0, Math.floor((yIn - Math.max(t, portDepth)) / (2 * t)));
@@ -518,17 +534,38 @@ function layoutAt(o: BaffleBoxOptions, [xi, hi, yIn]: [number, number, number], 
 
   // Off centre, it stays a millimetre inside the walls; a fan's frame does too.
   const [pw0, ph0] = portShape.shape === 'fan' ? [portShape.size - 2, portShape.size - 2] : span(portShape);
+  let portMoved = false;
   const shift = (k: 0 | 1, room: number, extent: number) => {
     const want = k === 1 && bottom ? 0 : o.portOffset[k];
     const most = Math.max(0, (room - extent) / 2 - 1);
     const got = Math.max(-most, Math.min(most, want));
     if (Math.abs(got - want) > 1e-9) {
+      portMoved = true;
       warn(`The opening cannot sit that far off centre and stay inside the ${panel}: it is moved ${mm(Math.abs(got))} ${k ? (want > 0 ? 'up' : 'down') : want > 0 ? 'right' : 'left'} instead.`, k ? 'port_dz' : 'port_dx');
     }
     return got;
   };
   const px = xi / 2 + shift(0, xi, pw0);
-  const port: [number, number] = bottom ? [px, yIn - o.frontClear - span(portShape)[1] / 2] : [px, hi / 2 + shift(1, hi, ph0)];
+  const port: [number, number] = bottom ? [px, yIn - o.frontClear - cutHalf(portShape)[1]] : [px, hi / 2 + shift(1, hi, ph0)];
+
+  // Anything an opening cuts nearer the walls' joints than the margin leaves
+  // a thin strip there. A set size is not changed for it, since the openings
+  // are cut to fit a duct or a fan; it is said, and sizes left at 0 keep it.
+  // In the bottom the front chamber already keeps it front to back. An
+  // opening already cut down or moved to fit has had its warning.
+  const clearOf = ([cx, cy]: [number, number], op: Opening, w: number, h: number, alongToo: boolean) => {
+    const [hx, hy] = cutHalf(op);
+    const sides = [cx - hx, w - cx - hx, ...(alongToo ? [cy - hy, h - cy - hy] : [])];
+    return Math.min(...sides) >= margin - 1e-6;
+  };
+  const sizeKey = (op: Opening, round: string, rect: string) => (op.shape === 'round' ? round : op.shape === 'rect' ? rect : 'fan_size');
+  const strip = `which leaves less than ${Math.round(margin * 10) / 10} mm between it and the walls' joints. Make the box bigger, or leave a size at 0 to have it sized.`;
+  if (portShape === o.port && !portMoved && !clearOf(port, portShape, xi, hi, !bottom)) {
+    warn(`The opening comes too near the walls, ${strip}`, sizeKey(portShape, 'duct_d', 'port_w'));
+  }
+  if (vent === o.vent && !ventMoved && !clearOf(ventAt, vent, xi, hi, true)) {
+    warn(`The ${o.lightTrap ? 'case opening' : 'vent'} comes too near the walls, ${strip}`, sizeKey(vent, 'vent_d', 'vent_w'));
+  }
 
   // Seen from the side, every opening and gap is a window a straight ray has
   // to pass; the baffles span the width, so nothing gets round them sideways.
@@ -763,9 +800,9 @@ class BaffleBox extends Boxes {
     const bolted = o.assembly === 'bolts';
     // Bolted, the back's corner screws stay past the reach of its T-slots.
     const slotReach = bolted ? this.bedBoltSettings[3]! + this.bedBoltSettings[1]! : 0;
-    // An opening in the bottom keeps a thickness from the front panel, or,
+    // An opening in the bottom keeps the margin from the front panel, and,
     // wedged, clears the front's wedges lying across the bottom's underside.
-    const frontClear = wedged ? Math.max(t, ws.wedge_length / 2 - t / 2 + 1) : t;
+    const frontClear = Math.max(o.openingMargin * t, wedged ? ws.wedge_length / 2 - t / 2 + 1 : 0);
     // Wedged, two baffles' wedges across the chamber between them must not meet.
     const minPitch = wedged ? ws.wedge_length - t + 1 : t;
     // Bolted, sizing keeps the openings past the T-slots' reach, and every
@@ -1090,6 +1127,19 @@ const BAFFLE_PARAMS: ParamSpec[] = [
   },
 ];
 
+const MARGIN_PARAM: ParamSpec = {
+  key: 'opening_margin',
+  kind: 'number',
+  label: 'Opening margin',
+  unit: '× thickness',
+  default: 2,
+  min: 0.5,
+  max: 10,
+  step: 0.5,
+  group: 'advanced',
+  help: 'The least material between an opening and the joints round its panel. Sizes left at 0 keep to it; a size you set warns when an opening comes nearer.',
+};
+
 const MOUNT_PARAMS: ParamSpec[] = [
   {
     key: 'flange',
@@ -1201,6 +1251,7 @@ function common(v: ParamValues) {
     minPitch: 0,
     boltReach: 0,
     minBolted: 0,
+    openingMargin: n(v, 'opening_margin', 2),
   };
 }
 
@@ -1238,6 +1289,7 @@ export const baffleBox: GeneratorDef = {
     { key: 'gate', kind: 'bool', label: 'Blast gate', default: true, group: 'dimensions' },
     { key: 'gate_rail', kind: 'length', label: 'Gate rails', unit: 'mm', default: 15, min: 10, max: 50, step: 0.5, group: 'dimensions', help: 'Width of the gate\'s frame beside and below its channel.', showIf: (v) => v.gate === true },
     { key: 'gate_bolt_d', kind: 'length', label: 'Gate bolt holes', unit: 'mm', default: 4, min: 2, max: 6, step: 0.1, group: 'dimensions', showIf: (v) => v.gate === true },
+    MARGIN_PARAM,
     { key: 'gate_play', kind: 'length', label: 'Gate slider play', unit: 'mm', default: 0.5, min: 0, max: 3, step: 0.05, group: 'advanced', help: 'Clearance either side of the slider in its channel.', showIf: (v) => v.gate === true },
     ...ASSEMBLY_PARAMS,
   ],
@@ -1315,6 +1367,7 @@ export const lightTrapVent: GeneratorDef = {
     ...portOffsetParams('Opening'),
     ...adapt(BAFFLE_PARAMS, { baffles: { default: 3 }, baffle_gap: { default: 50 } }),
     ...MOUNT_PARAMS,
+    MARGIN_PARAM,
     ...ASSEMBLY_PARAMS,
   ],
   create: (v: ParamValues, config: BoxesConfig) => {

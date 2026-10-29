@@ -851,6 +851,13 @@ it, is a note under its field: `Boxes.note`, carried as `Drawing.notes` and
 shown plainly by the panel, since it is not a warning. Tests hold each auto
 size to working, and, but for bolted boxes, to failing a millimetre less.
 
+Every opening keeps `opening_margin` (two thicknesses by default) between
+anything it cuts, a fan's screw holes included, and the joints round its
+panel, so no thin strip is left between it and the finger slots; in the
+bottom, from the front panel and the first baffle's slots too. Sizes left at
+0 keep to it. A set size is not shrunk for it, since the openings are cut to
+fit a duct or a fan; it warns instead.
+
 Both offer wedges and bolts. Either needs room on the far side of the panel
 a joint passes through, which on the flanged back is against the wall, so
 knocked down the back sits inside the walls with no flange, is screwed up
