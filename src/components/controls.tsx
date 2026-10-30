@@ -122,7 +122,12 @@ function ChoiceHelp({ spec, value }: { spec: Extract<ParamSpec, { kind: 'enum' }
 
 /* ------------------------------------------------------------------ number */
 
-/** A number box that clamps to the parameter's range as you type. */
+/**
+ * A number box that takes in-range values as you type and clamps on leaving.
+ *
+ * Clamping per keystroke rewrote the box mid-number: with a minimum of 20,
+ * the "2" of "210" became 20, and the next keys made it "2010".
+ */
 export function NumberInput({
   spec,
   value,
@@ -133,14 +138,27 @@ export function NumberInput({
   onChange: (v: ParamValue) => void;
 }) {
   // The text box holds its own string so a partially typed number
-  // (like "1." or "-") is not rewritten under the cursor.
+  // (like "1." or "-") is not rewritten under the cursor. A value change from
+  // elsewhere replaces it; the echo of what was just typed does not.
   const [text, setText] = useState(String(value));
-  useEffect(() => setText(String(value)), [value]);
+  useEffect(() => setText((t) => (t.trim() !== '' && Number(t) === value ? t : String(value))), [value]);
+
+  const parse = (raw: string) => {
+    const n = Number(raw);
+    return raw.trim() !== '' && Number.isFinite(n) ? n : null;
+  };
 
   const commit = (raw: string) => {
     setText(raw);
-    const n = Number(raw);
-    if (raw.trim() !== '' && Number.isFinite(n)) onChange(clamp(n, spec.min, spec.max));
+    const n = parse(raw);
+    if (n !== null && n >= spec.min && n <= spec.max) onChange(n);
+  };
+
+  const settle = () => {
+    const n = parse(text);
+    const v = n === null ? value : clamp(n, spec.min, spec.max);
+    if (v !== value) onChange(v);
+    setText(String(v));
   };
 
   return (
@@ -153,7 +171,7 @@ export function NumberInput({
       value={text}
       autocomplete="off"
       onInput={(e) => commit((e.target as HTMLInputElement).value)}
-      onBlur={() => setText(String(value))}
+      onBlur={settle}
     />
   );
 }
