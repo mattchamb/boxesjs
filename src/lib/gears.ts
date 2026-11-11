@@ -9,7 +9,8 @@
  *
  * Not ported, because no generator reaches them: the rack (`drawrack`),
  * whose `sizes()` branch upstream reads names it never defines; the text
- * annotation and the undercut warnings that only feed it; the centre cross
+ * annotation and the undercut warnings that only feed it (`digsInto` is
+ * the check the generators warn with instead); the centre cross
  * and pitch-circle guides; and the CP/DP unit systems' annotation text.
  */
 import type { Boxes, Callback } from './boxes';
@@ -120,6 +121,88 @@ function gearCalculations(
   const toothThickness = (Math.PI * pitchDiameter) / (2.0 * numTeeth);
 
   return { pitchRadius, baseRadius, addendum, dedendum, outerRadius, rootRadius, toothThickness };
+}
+
+/** What two meshing spur gears share. Both use the 'MM' system. */
+export interface MeshSpec {
+  /** Module, mm. */
+  dimension: number;
+  /** Pressure angle, degrees. */
+  angle: number;
+  /** Percent of the module, as `GearOptions.profile_shift`. */
+  profile_shift: number;
+}
+
+/**
+ * Whether gear B's tips reach below where gear A's tooth curve starts, when
+ * the two mesh at the sum of their pitch radii. Contact runs along the line
+ * of action, which touches A's base circle at the last point A has an
+ * involute; B's tips must turn inside that point, at
+ * √(rb_B² + (a·sin α)²) from B's centre, or they dig into A's flank and the
+ * pair binds.
+ *
+ * boxes.py has an undercut check of its own, but only for its annotation,
+ * and it tests each gear against a rack with a full-module addendum, so it
+ * ignores both the mate and the profile shift. This tests the actual pair.
+ * Ring gears are not covered.
+ */
+export function digsInto(teethA: number, teethB: number, spec: MeshSpec): boolean {
+  const pitch = Math.PI * spec.dimension;
+  const shift = spec.profile_shift * 0.01;
+  const a = gearCalculations(teethA, pitch, spec.angle, 0, false, shift);
+  const b = gearCalculations(teethB, pitch, spec.angle, 0, false, shift);
+  const centres = a.pitchRadius + b.pitchRadius;
+  const limit = Math.hypot(b.baseRadius, centres * Math.sin(spec.angle * DEG));
+  // A hair of tolerance, so a pair that only just clears is not flagged.
+  return b.outerRadius > limit + 1e-9;
+}
+
+/** The fewest teeth gear A needs to clear gear B's tips, up to `max`. */
+export function teethToClear(teethA: number, teethB: number, spec: MeshSpec, max = 300): number | null {
+  for (let n = teethA + 1; n <= max; n++) if (!digsInto(n, teethB, spec)) return n;
+  return null;
+}
+
+/**
+ * The warning for gear A (`name`) when `mate`'s tips dig into it, with the
+ * nearest fixes, or null when the pair meshes cleanly. Pressure angle and
+ * profile shift are offered only where the generator lets the user set them,
+ * up to the limits given.
+ */
+export function meshWarning(
+  name: string,
+  mate: string,
+  teethA: number,
+  teethB: number,
+  spec: MeshSpec,
+  tunable?: { maxShift: number; maxAngle: number },
+): string | null {
+  if (!digsInto(teethA, teethB, spec)) return null;
+
+  const fixes: string[] = [];
+  const teeth = teethToClear(teethA, teethB, spec);
+  if (teeth !== null) fixes.push(`give ${name} at least ${teeth} teeth`);
+  if (tunable) {
+    for (let s = Math.floor(spec.profile_shift) + 1; s <= tunable.maxShift; s++) {
+      if (!digsInto(teethA, teethB, { ...spec, profile_shift: s })) {
+        fixes.push(`raise the profile shift to ${s}%`);
+        break;
+      }
+    }
+    for (let a = Math.floor(spec.angle * 2) / 2 + 0.5; a <= tunable.maxAngle; a += 0.5) {
+      if (!digsInto(teethA, teethB, { ...spec, angle: a })) {
+        fixes.push(`raise the pressure angle to ${a}°`);
+        break;
+      }
+    }
+  }
+
+  let message = `The tips of ${mate} reach too deep into ${name}, below the curved part of the teeth, so the pair will bind.`;
+  if (fixes.length) {
+    const list = fixes.length > 1 ? `${fixes.slice(0, -1).join(', ')} or ${fixes[fixes.length - 1]}` : fixes[0]!;
+    message += ` To clear it, ${list}.`;
+  }
+  return message;
 }
 
 /** The closed outline of a spur gear, tooth by tooth, as points. */

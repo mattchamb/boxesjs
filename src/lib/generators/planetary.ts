@@ -8,6 +8,7 @@
  */
 import { Boxes, type BoxesConfig } from '../boxes';
 import type { ParamValues } from '../params/schema';
+import { meshWarning } from '../gears';
 import { n, type GeneratorDef } from './types';
 
 interface PlanetaryOptions {
@@ -64,6 +65,13 @@ class Planetary extends Boxes {
 
     const profileShift = 20;
     const pressureAngle = 20;
+
+    // Sun against planet; the planets' mesh with the ring is not checked.
+    const mesh = { dimension: modulus, angle: pressureAngle, profile_shift: profileShift };
+    const sunWarn = meshWarning('the sun', 'the planets', sunteeth, planetteeth, mesh);
+    if (sunWarn) this.warn(sunWarn, 'sunteeth');
+    const planetWarn = meshWarning('the planets', 'the sun', planetteeth, sunteeth, mesh);
+    if (planetWarn) this.warn(planetWarn, 'planetteeth');
 
     this.parts.disc(size3, { callback: () => this.hole(0, 0, (shaft + play) / 2), move: 'up', label: 'base' });
     this.gears.draw({
@@ -133,7 +141,9 @@ export const planetary: GeneratorDef = {
       'A planetary gear set: a sun gear, as many planet gears as fit round it, an internal ring gear and a carrier that holds the planets on pins. A second ring with a few teeth fewer gives a very large reduction between the two rings.',
   },
   params: [
-    { key: 'sunteeth', kind: 'number', label: 'Teeth, sun', default: 8, min: 4, max: 200, step: 1, integer: true, group: 'dimensions' },
+    // boxes.py starts at 8, which binds against 20-tooth planets (see
+    // `meshWarning`); 12 is the fewest that clears.
+    { key: 'sunteeth', kind: 'number', label: 'Teeth, sun', default: 12, min: 4, max: 200, step: 1, integer: true, group: 'dimensions' },
     { key: 'planetteeth', kind: 'number', label: 'Teeth, planets', default: 20, min: 4, max: 200, step: 1, integer: true, group: 'dimensions' },
     {
       key: 'maxplanets',
@@ -188,7 +198,7 @@ export const planetary: GeneratorDef = {
   create: (v: ParamValues, config: BoxesConfig) =>
     new Planetary(
       {
-        sunteeth: n(v, 'sunteeth', 8),
+        sunteeth: n(v, 'sunteeth', 12),
         planetteeth: n(v, 'planetteeth', 20),
         maxplanets: n(v, 'maxplanets', 0),
         deltateeth: n(v, 'deltateeth', 0),

@@ -7,6 +7,7 @@
  */
 import { Boxes, type BoxesConfig } from '../boxes';
 import type { ParamValues } from '../params/schema';
+import { meshWarning } from '../gears';
 import { n, type GeneratorDef } from './types';
 
 interface GearBoxOptions {
@@ -32,6 +33,12 @@ class GearBox extends Boxes {
 
     const [pitch1, size1] = this.gears.sizes({ teeth: teeth1, dimension: modulus });
     const [pitch2, size2] = this.gears.sizes({ teeth: teeth2, dimension: modulus });
+
+    // boxes.py fixes the pressure angle and profile shift here, so only the
+    // tooth count is offered as a fix. Swapped above, so teeth1 is the smaller.
+    const mesh = { dimension: modulus, angle: 20, profile_shift: 20 };
+    const warn = meshWarning('the small gears', 'the large gears', teeth1, teeth2, mesh);
+    if (warn) this.warn(warn, this.o.teeth1 <= this.o.teeth2 ? 'teeth1' : 'teeth2');
 
     const t = this.thickness;
     const x = 1.1 * t * stages;
@@ -91,7 +98,9 @@ export const gearBox: GeneratorDef = {
       'An open-topped case holding two shafts, with a small and a large gear per stage. Glue each small gear to a large one so every stage drives the next: the reduction is the tooth ratio raised to the number of stages.',
   },
   params: [
-    { key: 'teeth1', kind: 'number', label: 'Teeth, small gears', default: 8, min: 4, max: 200, step: 1, integer: true, group: 'dimensions', help: 'On the ingoing shaft.' },
+    // boxes.py starts at 8, which binds against 20 teeth (see `meshWarning`);
+    // 12 is the fewest that clears.
+    { key: 'teeth1', kind: 'number', label: 'Teeth, small gears', default: 12, min: 4, max: 200, step: 1, integer: true, group: 'dimensions', help: 'On the ingoing shaft.' },
     { key: 'teeth2', kind: 'number', label: 'Teeth, large gears', default: 20, min: 4, max: 200, step: 1, integer: true, group: 'dimensions', help: 'On the outgoing shaft.' },
     {
       key: 'modulus',
@@ -111,7 +120,7 @@ export const gearBox: GeneratorDef = {
   create: (v: ParamValues, config: BoxesConfig) =>
     new GearBox(
       {
-        teeth1: n(v, 'teeth1', 8),
+        teeth1: n(v, 'teeth1', 12),
         teeth2: n(v, 'teeth2', 20),
         modulus: n(v, 'modulus', 3),
         shaft: n(v, 'shaft', 6),

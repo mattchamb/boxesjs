@@ -7,7 +7,12 @@
  */
 import { Boxes, type BoxesConfig } from '../boxes';
 import type { ParamValues } from '../params/schema';
+import { meshWarning } from '../gears';
 import { n, type GeneratorDef } from './types';
+
+/** The fields' upper limits, which the warning's suggestions stay within. */
+const MAX_SHIFT = 50;
+const MAX_ANGLE = 35;
 
 interface GearsOptions {
   teeth1: number;
@@ -41,6 +46,12 @@ class Gears extends Boxes {
     const dpercentage2 = this.o.dpercentage2 || dpercentage1;
 
     const common = { dimension: modulus, angle: pressureAngle, profile_shift: profileShift };
+
+    const tunable = { maxShift: MAX_SHIFT, maxAngle: MAX_ANGLE };
+    const warn1 = meshWarning('gear 1', 'gear 2', teeth1, teeth2, common, tunable);
+    if (warn1) this.warn(warn1, 'teeth1');
+    const warn2 = meshWarning('gear 2', 'gear 1', teeth2, teeth1, common, tunable);
+    if (warn2) this.warn(warn2, 'teeth2');
 
     this.gears.draw({
       teeth: teeth2,
@@ -150,7 +161,7 @@ export const gears: GeneratorDef = {
       unit: '°',
       default: 20,
       min: 10,
-      max: 35,
+      max: MAX_ANGLE,
       step: 0.5,
       group: 'advanced',
       help: 'Angle at which the teeth push on each other. 20° is standard; both gears must match.',
@@ -162,7 +173,7 @@ export const gears: GeneratorDef = {
       unit: '%',
       default: 20,
       min: -50,
-      max: 50,
+      max: MAX_SHIFT,
       step: 1,
       group: 'advanced',
       help: 'Of the module. Moves the teeth outwards, which strengthens gears with few teeth.',
