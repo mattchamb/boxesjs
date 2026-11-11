@@ -5842,5 +5842,151 @@
       "bottom_edge": "s",
       "edge_types": "ZeZe"
     }
+  },
+  {
+    "name": "ref_gears",
+    "generator": "gears",
+    "pythonClass": "Gears",
+    "pythonModule": "gear",
+    "params": {
+      "teeth1": 12,
+      "teeth2": 32,
+      "shaft1": 6,
+      "dpercentage1": 75,
+      "shaft2": 0,
+      "dpercentage2": 0,
+      "modulus": 2,
+      "pressure_angle": 20,
+      "profile_shift": 20,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_gears_round",
+    "generator": "gears",
+    "pythonClass": "Gears",
+    "pythonModule": "gear",
+    "params": {
+      "teeth1": 7,
+      "teeth2": 45,
+      "shaft1": 5,
+      "dpercentage1": 100,
+      "shaft2": 8,
+      "dpercentage2": 60,
+      "modulus": 1.5,
+      "pressure_angle": 25,
+      "profile_shift": 0,
+      "thickness": 4,
+      "burn": 0.05
+    }
+  },
+  {
+    "name": "ref_gears_labels",
+    "generator": "gears",
+    "pythonClass": "Gears",
+    "pythonModule": "gear",
+    "params": {
+      "teeth1": 15,
+      "teeth2": 24,
+      "shaft1": 6,
+      "dpercentage1": 75,
+      "modulus": 2.5,
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_gearbox",
+    "generator": "gearbox",
+    "pythonClass": "GearBox",
+    "params": {
+      "teeth1": 8,
+      "teeth2": 20,
+      "modulus": 3,
+      "shaft": 6,
+      "stages": 4,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_gearbox_1stage",
+    "generator": "gearbox",
+    "pythonClass": "GearBox",
+    "params": {
+      "teeth1": 24,
+      "teeth2": 12,
+      "modulus": 2,
+      "shaft": 5,
+      "stages": 1,
+      "thickness": 4,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_gearbox_labels",
+    "generator": "gearbox",
+    "pythonClass": "GearBox",
+    "params": {
+      "teeth1": 10,
+      "teeth2": 30,
+      "modulus": 2,
+      "shaft": 6,
+      "stages": 5,
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_planetary",
+    "generator": "planetary",
+    "pythonClass": "Planetary",
+    "params": {
+      "sunteeth": 8,
+      "planetteeth": 20,
+      "maxplanets": 0,
+      "deltateeth": 0,
+      "modulus": 3,
+      "shaft": 6,
+      "play": 0.05,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_planetary_delta",
+    "generator": "planetary",
+    "pythonClass": "Planetary",
+    "params": {
+      "sunteeth": 11,
+      "planetteeth": 13,
+      "maxplanets": 0,
+      "deltateeth": 3,
+      "modulus": 2,
+      "shaft": 5,
+      "play": 0.1,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_planetary_labels",
+    "generator": "planetary",
+    "pythonClass": "Planetary",
+    "params": {
+      "sunteeth": 12,
+      "planetteeth": 18,
+      "maxplanets": 3,
+      "deltateeth": 0,
+      "modulus": 2,
+      "shaft": 6,
+      "play": 0.05,
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
   }
 ]

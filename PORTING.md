@@ -537,8 +537,12 @@ decoration with no parameters of its own. `smallpartstray2` and `ubox` need `_To
    dicebox, integratedhingebox, piratechest and others, and hinged top-edge
    choices on the boxes already ported.
 2. `SlideOnLid`: royalgame, kamishibai, and slide-on top edges likewise.
-3. NEMA, gears, pulleys, servos, `fillHoles`, `hexHolesPlate`, and the two that
+3. NEMA, pulleys, servos, `fillHoles`, `hexHolesPlate`, and the two that
    import shapely/numpy (sphere, stevensonscreenbox).
+
+The gears are ported (Gears, GearBox, Planetary). Planetary2 is left out: it is
+in boxes.py's "Unstable" group, and its own description says the middle stage
+cannot mesh properly.
 
 A generator referencing `edges.BaseEdge` is *not* blocked — that is the
 generator-local edge pattern of §7, which already works.
@@ -556,6 +560,9 @@ section is a record of what the engine now has and where the sharp edges were.
 | `regularPolygonAt` | `__init__.py:1041` | `boxes.ts` — RegularBox `angled hole` / `angled lid2` |
 | `regularPolygonWall`, `regularPolygon` | `__init__.py:1019` | `boxes.ts` |
 | `parts.disc` | `parts.py:34` | `src/lib/parts.ts` — RegularBox `round lid`, every BayonetBox part |
+| `Gears` (`self.gears`) | `gears.py` | `src/lib/gears.ts` — Gears, GearBox, Planetary. Spur and ring gears, `sizes()`, `gearCarrier()`; boxes.py's argparse round-trip of the keyword options becomes a typed `GearOptions`. The rack, annotations, undercut warnings and the centre-cross/pitch-circle guides are not ported: nothing calls them, and upstream's rack branch of `sizes()` reads names it never defines. `generate_spokes` grows every mount support by 1.2 mm because its first angle difference wraps to −2π; kept for parity |
+| `drawPoints`, `kerf` | `__init__.py:1712`, `vectors.py:94` | `boxes.ts`, `src/lib/geom/vectors.ts` — gear outlines. Point lists are offset along each vertex's bisector, not through the turtle's corner arcs |
+| `dHole` | `__init__.py:1453` | `boxes.ts` — Gears' shaft holes. `@restore` and `@holeCol`, like `hole` |
 | `BayonetBox` lug geometry | `generators/bayonetbox.py` | `src/lib/bayonet.ts` — BayonetBox, RegularBox `bayonet mount` |
 | `Settings.clone()` | `copy.deepcopy` | `src/lib/edges/settings.ts` — RegularBox |
 | `hexHolesRectangle`, `HexHolesSettings` | | `src/lib/hexholes.ts` — PaintStorage |
@@ -1044,7 +1051,7 @@ conditional are truthy. The float is discarded. The port passes a literal `true`
 ### Not ported, and nothing above needs it
 
 `CabinetHinge`, `ChestHinge`, `Click`, `SlideOnLid`,
-`Grooved`, gears, pulleys, servos, QR codes, `fillHoles`, DXF and PostScript output.
+`Grooved`, pulleys, servos, QR codes, `fillHoles`, DXF and PostScript output.
 
 `roundedPlate`'s `holesMargin`/`holesSettings` are not ported; they fill the
 plate through `hexHolesPlate`.

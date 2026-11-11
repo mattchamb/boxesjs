@@ -27,6 +27,8 @@ import { MountingSettings } from './edges/mounting';
 import { Lid, LidSettings } from './lids';
 import { HexHolesSettings, type HexHoleSkip } from './hexholes';
 import { Parts } from './parts';
+import { Gears } from './gears';
+import { kerf, type Vec } from './geom/vectors';
 import type { SettingsOverrides } from './edges/settings';
 
 const DEG = Math.PI / 180;
@@ -108,6 +110,8 @@ export abstract class Boxes {
   wedgedTenonSettings!: WedgedTenonSettings;
   /** Standalone part shapes; boxes.py hangs these off the box the same way. */
   parts: Parts = new Parts(this);
+  /** Involute gears, likewise hung off the box as `self.gears` in boxes.py. */
+  gears: Gears = new Gears(this);
 
   /** [d, d_nut, h_nut, l, l1] */
   bedBoltSettings: readonly number[] = [3, 5.5, 2, 20, 15];
@@ -669,6 +673,57 @@ export abstract class Boxes {
         this.corner(-360, r, tabs);
       }),
     );
+  }
+
+  /**
+   * Hole for a shaft with a flat side. `w` is the width across the flat in
+   * mm; otherwise `relW` gives it as a fraction of the diameter. A flat that
+   * would not cut the circle leaves a plain round hole.
+   */
+  dHole(
+    x: number,
+    y: number,
+    opts: { r?: number; d?: number; w?: number; relW?: number; angle?: number },
+  ): void {
+    this.withRestore(() =>
+      this.withHoleColor(undefined, () => {
+        const { relW = 0.75, angle = 0 } = opts;
+        let { r, w } = opts;
+        if (r === undefined && opts.d === undefined) throw new Error('You must specify either r or d.');
+        if (r === undefined) r = opts.d! / 2.0;
+        if (w === undefined) w = 2.0 * r * relW;
+        w -= r;
+        if (r <= 0.0) return;
+        if (Math.abs(w) > r) {
+          this.hole(x, y, r);
+          return;
+        }
+        const a = Math.acos(w / r) / DEG;
+        this.moveTo(x, y, angle - a);
+        this.moveTo(r - this.burn, 0, -90);
+        this.corner(-360 + 2 * a, r);
+        this.corner(-a);
+        this.edge(2 * r * Math.sin(a * DEG));
+      }),
+    );
+  }
+
+  /**
+   * Draw a polyline given as points in the current coordinate system,
+   * offset by the kerf. `kerfdir` 0 draws it as given (guide lines); the
+   * offset comes from `kerf()` rather than the turtle, since these are not
+   * built from edges and corners.
+   */
+  drawPoints(lines: readonly Vec[], kerfdir = 1, close = true): void {
+    if (!lines.length) return;
+    let pts: readonly Vec[] = lines;
+    if (kerfdir !== 0) pts = kerf(lines, this.burn * kerfdir, close);
+
+    this.savedContext(() => {
+      this.ctx.moveTo(pts[0]![0], pts[0]![1]);
+      for (const [x, y] of pts.slice(1)) this.ctx.lineTo(x, y);
+      if (close) this.ctx.lineTo(pts[0]![0], pts[0]![1]);
+    });
   }
 
   rectangularHole(

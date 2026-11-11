@@ -575,6 +575,27 @@
       ],
       "sha": "84e392b39191"
     },
+    "gears": {
+      "files": [
+        "boxes/generators/gear.py",
+        "boxes/gears.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "gearbox": {
+      "files": [
+        "boxes/generators/gearbox.py",
+        "boxes/gears.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "planetary": {
+      "files": [
+        "boxes/generators/planetary.py",
+        "boxes/gears.py"
+      ],
+      "sha": "84e392b39191"
+    },
     "fanhole": {
       "files": [
         "boxes/generators/fanhole.py"
