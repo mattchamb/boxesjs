@@ -16,6 +16,11 @@ export interface GoldenCase {
   pythonClass: string;
   /** Module name, when it differs from the lowercased class name. */
   pythonModule?: string;
+  /**
+   * The Python class is in `scripts/golden-fixtures/<module>.py`, not boxes.py:
+   * a generator boxes.py lacks, drawn with boxes.py's engine.
+   */
+  pythonFixture?: boolean;
   params: Record<string, number | string | boolean>;
 }
 

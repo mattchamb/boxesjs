@@ -7,8 +7,10 @@
  * typed object with the same defaults. Like `Parts`, it hangs off the box as
  * `gears`, so generator code translates line for line.
  *
- * Not ported, because no generator reaches them: the rack (`drawrack`),
- * whose `sizes()` branch upstream reads names it never defines; the text
+ * The rack is `rack()` rather than an option of `draw()`. Its `sizes()`
+ * branch is not ported: upstream it reads names it never defines.
+ *
+ * Not ported, because no generator reaches them: the text
  * annotation and the undercut warnings that only feed it (`digsInto` is
  * the check the generators warn with instead); the centre cross
  * and pitch-circle guides; and the CP/DP unit systems' annotation text.
@@ -133,6 +135,9 @@ export interface MeshSpec {
   profile_shift: number;
 }
 
+/** Stands for a rack, an infinitely large gear, in the mesh checks. */
+export const RACK = Infinity;
+
 /**
  * Whether gear B's tips reach below where gear A's tooth curve starts, when
  * the two mesh at the sum of their pitch radii. Contact runs along the line
@@ -145,10 +150,20 @@ export interface MeshSpec {
  * and it tests each gear against a rack with a full-module addendum, so it
  * ignores both the mate and the profile shift. This tests the actual pair.
  * Ring gears are not covered.
+ *
+ * Either gear can be the `RACK`. A rack's straight flanks run its whole
+ * depth, so nothing digs into it; a rack's tips dig into the gear when they
+ * stand further above the pitch line than the interference point, which is
+ * r·sin²α from it.
  */
 export function digsInto(teethA: number, teethB: number, spec: MeshSpec): boolean {
   const pitch = Math.PI * spec.dimension;
   const shift = spec.profile_shift * 0.01;
+  if (teethA === RACK) return false;
+  if (teethB === RACK) {
+    const a = gearCalculations(teethA, pitch, spec.angle, 0, false, shift);
+    return a.addendum > a.pitchRadius * Math.sin(spec.angle * DEG) ** 2 + 1e-9;
+  }
   const a = gearCalculations(teethA, pitch, spec.angle, 0, false, shift);
   const b = gearCalculations(teethB, pitch, spec.angle, 0, false, shift);
   const centres = a.pitchRadius + b.pitchRadius;
@@ -203,6 +218,54 @@ export function meshWarning(
     message += ` To clear it, ${list}.`;
   }
   return message;
+}
+
+/**
+ * A rack's outline, `generate_rack_points` in boxes.py, with the pitch line
+ * on y = 0, the tips at y = -addendum and the base below them reaching down
+ * to y = addendum + clearance + baseHeight; a tab of plain base at each end.
+ * The path is left open; the caller closes it.
+ */
+function generateRackPoints(
+  toothCount: number,
+  pitch: number,
+  addendum: number,
+  pressureAngle: number,
+  baseHeight: number,
+  tabLength: number,
+  clearance = 0,
+): Vec[] {
+  // Rolling one pitch on the gear advances the rack one pitch: half tooth,
+  // half gap at the pitch line.
+  const spacing = 0.5 * pitch;
+
+  if (tabLength <= 0.0) tabLength = 1e-8;
+
+  const tas = Math.tan(pressureAngle * DEG) * addendum;
+  const tasc = Math.tan(pressureAngle * DEG) * (addendum + clearance);
+  const baseTop = addendum + clearance;
+  const baseBot = addendum + clearance + baseHeight;
+
+  const xLhs = -pitch * 0.5 * toothCount - tabLength;
+  const points: Vec[] = [
+    [xLhs, baseBot],
+    [xLhs, baseTop],
+  ];
+  let x = xLhs + tabLength + tasc;
+
+  // An involute on a circle of infinite radius is a straight line.
+  for (let i = 0; i < toothCount; i++) {
+    points.push([x - tasc, baseTop]);
+    points.push([x + tas, -addendum]);
+    points.push([x + spacing - tas, -addendum]);
+    points.push([x + spacing + tasc, baseTop]);
+    x += pitch;
+  }
+
+  const xRhs = x - tasc + tabLength;
+  points.push([xRhs, baseTop]);
+  points.push([xRhs, baseBot]);
+  return points;
 }
 
 /** The closed outline of a spur gear, tooth by tooth, as points. */
@@ -418,6 +481,55 @@ export class Gears {
       b.corner(360, r + 0.5 * spokeWidth);
     });
     b.move(width, width, move, false, label);
+  }
+
+  /**
+   * `[width, height]` of the rack `rack()` would make: the teeth and both
+   * tabs, by the base and the teeth.
+   */
+  rackSize(kw: GearOptions & { teethLength?: number; baseHeight?: number; baseTab?: number }): [number, number] {
+    const { teethLength = 12, baseHeight = 8, baseTab = 14, ...rest } = kw;
+    const o = resolve(rest);
+    const pitch = this.calcCircularPitch(o);
+    const g = gearCalculations(o.teeth, pitch, o.angle, o.clearance, o.internal_ring, o.profile_shift * 0.01);
+    return [Math.trunc(teethLength) * pitch + 2 * baseTab, baseHeight + 2 * g.addendum];
+  }
+
+  /**
+   * Draw a rack with `teethLength` teeth: the `draw_rack` branch of
+   * boxes.py's `Gears.__call__`. It meshes with a spur gear of the same
+   * module, pressure angle and profile shift. Upright, the base runs along
+   * the bottom of the part and the teeth point up.
+   *
+   * A negative `baseHeight` cuts only the toothed edge, as an open line.
+   */
+  rack(
+    kw: GearOptions & {
+      teethLength?: number;
+      baseHeight?: number;
+      baseTab?: number;
+      move?: string | null;
+      callback?: Callback;
+      label?: string;
+    },
+  ): void {
+    const { teethLength = 12, baseHeight = 8, baseTab = 14, move = '', callback, label = '', ...rest } = kw;
+    const o = resolve(rest);
+    const b = this.boxes;
+
+    const pitch = this.calcCircularPitch(o);
+    const g = gearCalculations(o.teeth, pitch, o.angle, o.clearance, o.internal_ring, o.profile_shift * 0.01);
+    const toothCount = Math.trunc(teethLength);
+    let points = generateRackPoints(toothCount, pitch, g.addendum, o.angle, baseHeight, baseTab, o.clearance);
+    const width = toothCount * pitch + 2 * baseTab;
+    const height = baseHeight + 2 * g.addendum;
+    if (b.move(width, height, move, true, label)) return;
+
+    b.cc(callback, 0);
+    b.moveTo(width / 2.0, baseHeight + g.addendum, -180);
+    if (baseHeight < 0) points = points.slice(1, -1);
+    b.drawPoints(points, 1, baseHeight >= 0);
+    b.move(width, height, move, false, label);
   }
 
   /**

@@ -40,6 +40,7 @@ import { cam } from './cam';
 import { gears } from './gears';
 import { gearBox } from './gearbox';
 import { planetary } from './planetary';
+import { rackGear } from './rackgear';
 import { laserHoldfast } from './laserholdfast';
 import { laserClamp } from './laserclamp';
 import { bookHolder } from './bookholder';
@@ -233,6 +234,7 @@ const DEFS: GeneratorDef[] = [
   gears,
   gearBox,
   planetary,
+  rackGear,
   automaton,
   fanHole,
   bottleTag,

@@ -4,7 +4,7 @@
  * actually clear it.
  */
 import { describe, expect, it } from 'vitest';
-import { digsInto, teethToClear } from '~/lib/gears';
+import { digsInto, RACK, teethToClear } from '~/lib/gears';
 import { defaultsFor } from '~/lib/generators/registry';
 import { buildDrawing } from '~/lib/preview';
 import type { ParamValues } from '~/lib/params/schema';
@@ -92,5 +92,54 @@ describe('Planetary', () => {
 
   it('warns on the planets when they are the small gears', () => {
     expect(warnings('planetary', { sunteeth: 30, planetteeth: 8 }).map((x) => x.param)).toEqual(['planetteeth']);
+  });
+});
+
+describe('a rack', () => {
+  it('digs into a pinion whose interference point sits below its tips, never the other way', () => {
+    // r·sin²α against an addendum of (1 − shift)·m: 13 teeth give
+    // 6.5 · 0.117 = 0.760 < 0.8 and bind, 14 give 7 · 0.117 = 0.819 and clear.
+    expect(digsInto(13, RACK, STD)).toBe(true);
+    expect(digsInto(14, RACK, STD)).toBe(false);
+    expect(digsInto(RACK, 8, STD)).toBe(false);
+    expect(teethToClear(8, RACK, STD)).toBe(14);
+  });
+
+  it('binds harder than any gear the same pinion could mesh with', () => {
+    for (const z of [8, 12, 20]) {
+      if (digsInto(z, 300, STD)) expect(digsInto(z, RACK, STD)).toBe(true);
+    }
+  });
+});
+
+describe('Rack and Pinion', () => {
+  it('meshes cleanly at the defaults', () => {
+    expect(warnings('rackgear')).toEqual([]);
+  });
+
+  it('warns on a pinion the rack binds, and each suggested fix clears it', () => {
+    const w = warnings('rackgear', { pinion_teeth: 10 });
+    expect(w.map((x) => x.param)).toEqual(['pinion_teeth']);
+    const msg = w[0]!.message;
+    const teeth = Number(/at least (\d+) teeth/.exec(msg)![1]);
+    const shift = Number(/profile shift to (\d+)%/.exec(msg)![1]);
+    const angle = Number(/pressure angle to ([\d.]+)°/.exec(msg)![1]);
+    expect(warnings('rackgear', { pinion_teeth: teeth })).toEqual([]);
+    expect(warnings('rackgear', { pinion_teeth: 10, profile_shift: shift })).toEqual([]);
+    expect(warnings('rackgear', { pinion_teeth: 10, pressure_angle: angle })).toEqual([]);
+  });
+
+  it('does not check the mesh when there is no pinion', () => {
+    expect(warnings('rackgear', { pinion_teeth: 0, profile_shift: -50 })).toEqual([]);
+  });
+
+  it('leaves out screw holes that would break out of the tabs, and says so', () => {
+    const v = { ...defaultsFor('rackgear'), base_tab: 4 };
+    const d = buildDrawing('rackgear', v);
+    expect(d.warnings.map((x) => x.param)).toEqual(['screw_hole']);
+    const holes = (values: ParamValues) =>
+      buildDrawing('rackgear', values).parts.find((p) => p.name === 'rack')!.paths.filter((p) => p.layer !== 'cut').length;
+    expect(holes(v)).toBe(0);
+    expect(holes(defaultsFor('rackgear'))).toBe(2);
   });
 });

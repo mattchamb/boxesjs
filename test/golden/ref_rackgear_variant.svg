@@ -1,0 +1,24 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg height="39.30mm" viewBox="0.0 0.0 107.27 39.30" width="107.27mm" xmlns="http://www.w3.org/2000/svg" xmlns:cc="http://creativecommons.org/ns#" xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#" xmlns:svg="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<!--
+RackGear - Rack and pinion
+
+Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
+Command line (remove spaces between dashes): boxes RackGear - -rack_teeth - -pinion_teeth - -modulus - -base_height - -base_tab - -screw_hole - -pressure_angle - -profile_shift - -thickness - -burn - -reference - -labels
+-->
+<title>RackGear</title>
+<metadata>
+<rdf:RDF><cc:Work>
+<dc:title>Misc - RackGear</dc:title>
+<dc:source>boxes RackGear --rack_teeth 7 --pinion_teeth 0 --modulus 3.5 --base_height 12 --base_tab 5 --screw_hole 4 --pressure_angle 25 --profile_shift 0 --thickness 4 --burn 0.15 --reference 0 --labels 0</dc:source>
+<dc:description>Rack and pinion
+
+Created with Boxes.py (https://boxes.hackerspace-bamberg.de/)
+Command line: boxes RackGear --rack_teeth 7 --pinion_teeth 0 --modulus 3.5 --base_height 12 --base_tab 5 --screw_hole 4 --pressure_angle 25 --profile_shift 0 --thickness 4 --burn 0.15 --reference 0 --labels 0
+Command line short: boxes RackGear --rack_teeth --pinion_teeth --modulus --base_height --base_tab --screw_hole --pressure_angle --profile_shift --thickness --burn --reference --labels
+</dc:description>
+</cc:Work></rdf:RDF></metadata>
+<g id="p-0" style="fill:none;stroke-linecap:round;stroke-linejoin:round;">
+  <path d="M 97.269 29.300 V 17.000 H 92.215 L 88.950 10.000 H 86.526 L 83.262 17.000 H 81.219 L 77.955 10.000 H 75.530 L 72.266 17.000 H 70.223 L 66.959 10.000 H 64.535 L 61.270 17.000 H 59.228 L 55.964 10.000 H 53.539 L 50.275 17.000 H 48.232 L 44.968 10.000 H 42.543 L 39.279 17.000 H 37.237 L 33.973 10.000 H 31.548 L 28.284 17.000 H 26.241 L 22.977 10.000 H 20.552 L 17.288 17.000 H 10.000 V 29.300 H 97.269 Z" stroke="rgb(0,0,0)" stroke-width="0.30" />
+</g>
+</svg>

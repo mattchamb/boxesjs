@@ -5988,5 +5988,67 @@
       "burn": 0.1,
       "labels": true
     }
+  },
+  {
+    "name": "ref_rackgear",
+    "generator": "rackgear",
+    "pythonClass": "RackGear",
+    "pythonModule": "rackgear",
+    "pythonFixture": true,
+    "params": {
+      "rack_teeth": 20,
+      "pinion_teeth": 16,
+      "modulus": 2,
+      "shaft": 6,
+      "dpercentage": 75,
+      "base_height": 8,
+      "base_tab": 14,
+      "screw_hole": 3,
+      "pressure_angle": 20,
+      "profile_shift": 20,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_rackgear_variant",
+    "generator": "rackgear",
+    "pythonClass": "RackGear",
+    "pythonModule": "rackgear",
+    "pythonFixture": true,
+    "params": {
+      "rack_teeth": 7,
+      "pinion_teeth": 0,
+      "modulus": 3.5,
+      "base_height": 12,
+      "base_tab": 5,
+      "screw_hole": 4,
+      "pressure_angle": 25,
+      "profile_shift": 0,
+      "thickness": 4,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_rackgear_labels",
+    "generator": "rackgear",
+    "pythonClass": "RackGear",
+    "pythonModule": "rackgear",
+    "pythonFixture": true,
+    "params": {
+      "rack_teeth": 15,
+      "pinion_teeth": 20,
+      "modulus": 1.5,
+      "shaft": 5,
+      "dpercentage": 100,
+      "base_height": 6,
+      "base_tab": 0,
+      "screw_hole": 0,
+      "pressure_angle": 14.5,
+      "profile_shift": -10,
+      "thickness": 3,
+      "burn": 0.1,
+      "labels": true
+    }
   }
 ]

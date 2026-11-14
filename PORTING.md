@@ -70,6 +70,11 @@ read this one file:
 - `pythonClass` — class name in boxes.py.
 - `pythonModule` — only when the module name is not the lowercased class name
   (e.g. `RectangularWall` lives in `rectangularWall.py`).
+- `pythonFixture` — the class is in `scripts/golden-fixtures/<module>.py`
+  instead of boxes.py. For a generator of the port's own that boxes.py's
+  engine can still draw: Rack and Pinion uses the engine's `draw_rack`, which
+  no boxes.py generator calls. The fixture makes the same engine calls as the
+  TypeScript generator, so the two have to be kept in step by hand.
 
 Then `./scripts/gen-golden.sh && npx vitest run test/golden.test.ts`.
 
@@ -560,7 +565,7 @@ section is a record of what the engine now has and where the sharp edges were.
 | `regularPolygonAt` | `__init__.py:1041` | `boxes.ts` — RegularBox `angled hole` / `angled lid2` |
 | `regularPolygonWall`, `regularPolygon` | `__init__.py:1019` | `boxes.ts` |
 | `parts.disc` | `parts.py:34` | `src/lib/parts.ts` — RegularBox `round lid`, every BayonetBox part |
-| `Gears` (`self.gears`) | `gears.py` | `src/lib/gears.ts` — Gears, GearBox, Planetary. Spur and ring gears, `sizes()`, `gearCarrier()`; boxes.py's argparse round-trip of the keyword options becomes a typed `GearOptions`. The rack, annotations, undercut warnings and the centre-cross/pitch-circle guides are not ported: nothing calls them, and upstream's rack branch of `sizes()` reads names it never defines. `generate_spokes` grows every mount support by 1.2 mm because its first angle difference wraps to −2π; kept for parity |
+| `Gears` (`self.gears`) | `gears.py` | `src/lib/gears.ts` — Gears, GearBox, Planetary. Spur and ring gears, `sizes()`, `gearCarrier()`; boxes.py's argparse round-trip of the keyword options becomes a typed `GearOptions`. The rack is `rack()` and `rackSize()` (Rack and Pinion, against a fixture); upstream's rack branch of `sizes()` reads names it never defines, so is not ported. Annotations, undercut warnings and the centre-cross/pitch-circle guides are not ported: nothing calls them; `digsInto` is the mesh check the generators warn with. `generate_spokes` grows every mount support by 1.2 mm because its first angle difference wraps to −2π; kept for parity |
 | `drawPoints`, `kerf` | `__init__.py:1712`, `vectors.py:94` | `boxes.ts`, `src/lib/geom/vectors.ts` — gear outlines. Point lists are offset along each vertex's bisector, not through the turtle's corner arcs |
 | `dHole` | `__init__.py:1453` | `boxes.ts` — Gears' shaft holes. `@restore` and `@holeCol`, like `hole` |
 | `BayonetBox` lug geometry | `generators/bayonetbox.py` | `src/lib/bayonet.ts` — BayonetBox, RegularBox `bayonet mount` |

@@ -596,6 +596,12 @@
       ],
       "sha": "84e392b39191"
     },
+    "rackgear": {
+      "files": [
+        "boxes/gears.py"
+      ],
+      "sha": "84e392b39191"
+    },
     "fanhole": {
       "files": [
         "boxes/generators/fanhole.py"

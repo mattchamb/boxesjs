@@ -14,6 +14,7 @@ Requires a checkout of boxes.py; point BOXES_PY at it if it is not ~/src/boxes.
 from __future__ import annotations
 
 import importlib
+import importlib.util
 import json
 import os
 import sys
@@ -24,6 +25,9 @@ ROOT = Path(__file__).resolve().parent.parent
 BOXES_PY = Path(os.environ.get("BOXES_PY", Path.home() / "src" / "boxes"))
 CASES = ROOT / "test" / "golden.cases.json"
 OUT_DIR = ROOT / "test" / "golden"
+# Generators of the port's own that boxes.py lacks, written against
+# boxes.py's engine so their geometry still has a boxes.py reference.
+FIXTURES = ROOT / "scripts" / "golden-fixtures"
 
 
 # What boxes.py writes to switch its bolts off, in every generator that wires
@@ -35,7 +39,13 @@ BOLTS_OFF = "d2 = d3 = None"
 PORT_ONLY = ("assembly", "bolts", "bolt_")
 
 
-def load_generator(module_name: str, cls_name: str, bolted: bool):
+def load_generator(module_name: str, cls_name: str, bolted: bool, fixture: bool = False):
+    if fixture:
+        path = FIXTURES / f"{module_name}.py"
+        spec = importlib.util.spec_from_file_location(f"golden_fixtures.{module_name}", path)
+        module = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(module)
+        return getattr(module, cls_name)
     module = importlib.import_module(f"boxes.generators.{module_name}")
     if bolted:
         source = Path(module.__file__).read_text()
@@ -63,7 +73,7 @@ def main() -> int:
         cls_name = case["pythonClass"]
         module_name = case.get("pythonModule", cls_name.lower())
         bolted = case["params"].get("assembly") == "bolts"
-        box = load_generator(module_name, cls_name, bolted)()
+        box = load_generator(module_name, cls_name, bolted, case.get("pythonFixture", False))()
 
         argv: list[str] = []
         for key, value in case["params"].items():
