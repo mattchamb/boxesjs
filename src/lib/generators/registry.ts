@@ -37,6 +37,7 @@ import { fanHole } from './fanhole';
 import { linkage } from './linkage';
 import { automaton } from './automaton';
 import { cam } from './cam';
+import { pantograph } from './pantograph';
 import { gears } from './gears';
 import { gearBox } from './gearbox';
 import { planetary } from './planetary';
@@ -231,6 +232,7 @@ const DEFS: GeneratorDef[] = [
   slimLightTrapVent,
   linkage,
   cam,
+  pantograph,
   gears,
   gearBox,
   planetary,

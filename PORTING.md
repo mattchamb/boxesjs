@@ -906,6 +906,21 @@ assembly's parameters, the opening helpers and `PanelBox` (row layout,
 rays through its parts against the sight check and holds its auto sizes to
 the least that works.
 
+**Pantograph** (`generators/pantograph.ts`) is a drawing pantograph: four
+arms bolted into a parallelogram A–C–E–D, the pivot on the first long arm
+past C, the pen at the end of the second, the tracer on the short arm C–E.
+With the pivot x from A and the tracer t from C, the pen moves k times the
+tracer whenever x = a·k/(k − 1) and t = L/k, at any arm angle, so each ratio
+is one hole in each of two rows and changing scale moves only two pins. The
+user sets the reach L and the ratios; `a` puts the smallest ratio's pivot at
+L, so both long arms match, and `b` puts E a hole and a web past its tracer
+hole. Holes crowd as 1/k² at high ratios, so `pantographLayout` reports
+ratios whose holes (or the joints among them) come closer than a hole and a
+web, warned on `ratios`. Labels are etched with their top edge as anchor,
+since text hangs below its anchor here as in boxes.py's SVG.
+`test/pantograph.test.ts` checks Q − O = k·(P − O) over a sweep of arm angles
+for every ratio.
+
 ### Adding wedges or bolts to a generator
 
 Everything above as a checklist. Do it in a commit of its own, after the
