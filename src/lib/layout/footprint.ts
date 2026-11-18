@@ -280,12 +280,33 @@ const shoelace = (r: Pt[]) => {
   return Math.abs(a) / 2;
 };
 
+/** What `materialArea` reads of a part. */
+export type Measured = Pick<DrawingPart, 'bbox' | 'area'> & { paths: Pick<DrawingPart['paths'][number], 'layer' | 'cmds'>[] };
+
 /**
  * Material a piece is cut from: its outlines' area less its holes'. A ring
  * inside an odd number of others is a hole. With no closed cut at all, the
- * piece's box stands in for it.
+ * piece's box stands in for it. A part that carries its own area, measured
+ * before its outlines were opened up, counts that instead.
  */
-export function materialArea(parts: DrawingPart[]): number {
+export function materialArea(all: Measured[]): number {
+  const known = all.reduce((s, p) => s + (p.area ?? 0), 0);
+  const parts = all.filter((p) => p.area === undefined);
+  if (parts.length === 0) return known;
+  return known + (ringArea(parts) ?? parts.reduce((s, p) => s + p.bbox.width * p.bbox.height, 0));
+}
+
+/**
+ * The area inside the parts' closed cuts, holes taken out; null when nothing
+ * is closed.
+ *
+ * `edgeToEdge` is for outlines laid edge to edge, which start on each other's
+ * edge, so the point test alone would count one as a hole in the next: it
+ * also asks a hole's box to lie inside its outline's, as a real hole's does.
+ * It is off by default because it is not a no-op elsewhere: it changes what
+ * some other generators' parts measure, and their areas are left as they were.
+ */
+export function ringArea(parts: Pick<Measured, 'paths'>[], edgeToEdge = false): number | null {
   const rings = parts
     .flatMap((p) => p.paths.filter((x) => x.layer === 'cut' || x.layer === 'inner'))
     .flatMap((x) => flatten(x.cmds, Affine.identity(), 0.05))
@@ -298,9 +319,7 @@ export function materialArea(parts: DrawingPart[]): number {
       return { r, area: shoelace(r), box: [x0, y0, x1, y1] as const };
     });
 
-  if (rings.length === 0) {
-    return parts.reduce((s, p) => s + p.bbox.width * p.bbox.height, 0);
-  }
+  if (rings.length === 0) return null;
   let total = 0;
   for (const a of rings) {
     const p = a.r[0]!;
@@ -309,6 +328,10 @@ export function materialArea(parts: DrawingPart[]): number {
       if (b === a || b.area <= a.area) continue;
       const [x0, y0, x1, y1] = b.box;
       if (p[0] < x0 || p[0] > x1 || p[1] < y0 || p[1] > y1) continue;
+      if (edgeToEdge) {
+        const [ax0, ay0, ax1, ay1] = a.box;
+        if (ax0 < x0 - 1e-6 || ay0 < y0 - 1e-6 || ax1 > x1 + 1e-6 || ay1 > y1 + 1e-6) continue;
+      }
       if (insideRing(p, b.r)) depth++;
     }
     total += depth % 2 ? -a.area : a.area;

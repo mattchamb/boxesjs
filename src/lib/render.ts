@@ -10,6 +10,8 @@ import type { ChartData } from './chart';
 import { LAYERS, layerForRGB, type Layer } from './geom/colors';
 import { EPS, Path, pointsEqual, type PathCmd, type TextParams } from './geom/context';
 import { Affine } from './geom/affine';
+import { dropSharedRuns } from './geom/shared';
+import { ringArea } from './layout/footprint';
 
 export interface BBox {
   x: number;
@@ -40,6 +42,11 @@ export interface DrawingPart {
   bbox: BBox;
   paths: DrawingPath[];
   texts: DrawingText[];
+  /**
+   * Material the part is cut from, when its paths no longer say: a part
+   * whose shared edges are cut once has open outlines, which enclose nothing.
+   */
+  area?: number;
 }
 
 export interface DrawingStats {
@@ -195,6 +202,26 @@ export function renderBox(box: Boxes): Drawing {
         trimmed.push({ layer: layerForRGB(p.params.rgb), cmds: probe.path.filter((c) => c.c !== 'T') });
       }
       p.fasterEdges(box.innerCorners);
+    }
+
+    // Shared runs are matched after the inner-corner cleanup, which moves
+    // where they end: before it, a run overshoots its corner by a kerf. The
+    // part's material is measured first, while its outlines are still closed.
+    let area: number | undefined;
+    if (part.cutSharedOnce) {
+      const strokes = part.pathes.map((p) => ({
+        layer: layerForRGB(p.params.rgb),
+        cmds: p.path.filter((c) => c.c !== 'T'),
+      }));
+      // Holding tabs leave nothing closed to measure; the part's box stands
+      // in then, as it does for any tabbed part.
+      area = ringArea([{ paths: strokes }], true) ?? undefined;
+      dropSharedRuns(part.pathes.map((p) => ({ layer: layerForRGB(p.params.rgb), cmds: p.path }))).forEach(
+        (cmds, i) => (part.pathes[i]!.path = cmds),
+      );
+    }
+
+    for (const p of part.pathes) {
       const layer = layerForRGB(p.params.rgb);
 
       const geometry = p.path.filter((c) => c.c !== 'T');
@@ -245,6 +272,7 @@ export function renderBox(box: Boxes): Drawing {
       },
       paths,
       texts,
+      ...(area !== undefined ? { area } : {}),
     });
   }
 

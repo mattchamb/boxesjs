@@ -317,6 +317,7 @@ export function transformPart(part: DrawingPart, m: Affine): DrawingPart {
     bbox: (!square && drawnBBox(paths)) || mapBBox(part.bbox, m),
     paths,
     texts: part.texts.map((t) => ({ ...t, matrix: m.mul(t.matrix) })),
+    ...(part.area !== undefined ? { area: part.area } : {}),
   };
 }
 

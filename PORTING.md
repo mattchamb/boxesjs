@@ -584,6 +584,7 @@ section is a record of what the engine now has and where the sharp edges were.
 | `FLEX_PARAMS` | | `params/common.ts` — the living-hinge fields the chest lid already had, for generators that bend walls (RoundedTrapezoidBox, RoundedRegularBox, HeartBox) |
 | `MOUNTING_PARAMS` (`mount_*`) | `MountingSettings` | `params/common.ts` — the `G` edge's keyhole options, first offered by HalfBox, then KeyHolder and WallRack. `side` is the separate `MOUNTING_SIDE_PARAM`, since only `topEdges` reads it |
 | `ctx.joinPartsFrom`, `ctx.nextPartIndex` | | `geom/context.ts` — JointPanel. Folds pieces drawn abutting as one sheet into a single part, so their shared seams are not read as parts lying on each other. boxes.py has no parts to fold |
+| `ctx.cutSharedOnce`, `dropSharedRuns` | | `geom/context.ts`, `geom/shared.ts` — Gridfinity Strip Grid's shared cuts. Marks the current part; `renderBox` then removes, after `fasterEdges`, every axis-aligned straight run another path of that part on the same layer already cuts, and records the part's `area` while its outlines are still closed. Parts that do not ask are untouched. boxes.py has no shared cuts |
 | DrillStand's part methods | `generators/drillstand.py` | `drillstand.ts`, as a mixin over `Boxes` (DrillStand) or `WallMountedBox` (WallDrillBox), standing in for boxes.py's multiple inheritance |
 | `GroovedSettings`, `GroovedEdge` (`z`, `Z`) | `edges.py:544` | `src/lib/edges/grooved.ts` — CardHolder, SlidingDrawer, UnevenHeightBox. `gr_*` in the form, from `groovedParams()`, which takes the condition the block shows under: UnevenHeightBox picks its grooves in a string, not an `_edge` field. The only family whose booleans (`inverse`, `interleave`) reach its settings |
 | `HandleEdge`, `HandleHoleEdge` (`y`, `Y`) | `edges.py:2611` | `src/lib/edges/handle.ts` — DividerTray's bottom-panel handle; not offered as a top edge |
@@ -945,6 +946,36 @@ or else the strips just run on to the wall. The longest-strip limit allows for
 the border, so every piece still fits the bed.
 `test/gridfinitystripgrid.test.ts` checks coverage, one break per crossing,
 no full seams and bond continuity over a sweep of sizes, M and offsets.
+
+*Shared cuts* (`shared_cuts`, `stack_size`) cut strips edge to edge. The
+strips, still longest first, go into stacks of `stack_size` (0: one stack),
+bottom up with their left ends level, each stack one part named `strips N`.
+Every strip is traced exactly as on its own, and the next one up sits
+h + 2·burn higher, so the lower strip's compensated top runs along the upper
+one's compensated bottom and a single kerf there clears both nominal edges.
+The stack's part is marked with `ctx.cutSharedOnce()`, and `renderBox` runs
+`dropSharedRuns` (`geom/shared.ts`) on it: an axis-aligned straight run that
+an earlier path of the part on the same layer already cuts, collinear to
+1e-6 mm, is taken out of the later path, which becomes open subpaths; a gap
+in the middle of an outline rejoins the pieces either side, so it is still
+one cut. Only straight runs are compared — the corner arcs curve apart — and
+it has to run after `fasterEdges`, because before it a run overshoots an
+inner corner by a kerf, and the overshoot lies over the other strip's slot,
+where that strip's edge still needs cutting. Measured like that it is
+correct for all three inner-corner styles; the tests sweep them. Since
+open outlines enclose nothing, the part's material `area` is measured before
+the runs come out (`ringArea(…, edgeToEdge)`, which also asks a hole's box to
+lie in its outline's, as touching outlines start on each other's edges).
+Cut order is the drawing order, and both writers keep it: SVG concatenates
+each part's paths in order, and `.lbrn2` writes one shape per subpath, in
+order. Strips are drawn bottom up and the earlier path keeps a shared line,
+so each strip's path is its whole outline, the line above it included, less
+what the strip below already cut: it is finished before the one above is
+cut free. LightBurn's own optimisation can reorder that, which the help
+says. Holding tabs (`tabs`) go on strip ends only, in either layout: ends
+are never shared, so they never interfere with the matching.
+`dropSharedRuns` is the building block for merging coincident lines between
+any parts on a packed sheet, which is not done.
 
 ### Adding wedges or bolts to a generator
 

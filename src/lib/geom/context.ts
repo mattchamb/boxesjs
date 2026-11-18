@@ -211,6 +211,13 @@ export class Part {
    * and not the bolts' doing.
    */
   boltCuts: [number, number][][] = [];
+  /**
+   * Cut each straight run this part's paths share only once, keeping it on
+   * the path drawn first (`dropSharedRuns`). Applied by `renderBox` after the
+   * inner-corner cleanup, since that moves where runs end; off for every part
+   * that does not ask, so nothing else's output can change.
+   */
+  cutSharedOnce = false;
 
   constructor(name: string) {
     this.name = name;
@@ -319,6 +326,7 @@ export class Surface {
       joined.pathes.push(...p.pathes);
       joined.path.push(...p.path);
       joined.boltCuts.push(...p.boltCuts);
+      joined.cutSharedOnce ||= p.cutSharedOnce;
     }
     joined.name = name;
     this.parts.push(joined);
@@ -600,6 +608,11 @@ export class Context {
 
   joinPartsFrom(start: number, name: string): void {
     this.dwg.joinPartsFrom(start, name);
+  }
+
+  /** Have the current part's shared straight runs cut once: see `Part.cutSharedOnce`. */
+  cutSharedOnce(): void {
+    this.dwg.currentPart.cutSharedOnce = true;
   }
 
   /** Record a bolt's cut, a polygon in user coordinates, on the current part. */

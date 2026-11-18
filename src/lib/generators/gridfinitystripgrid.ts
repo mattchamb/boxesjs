@@ -323,6 +323,8 @@ interface GridfinityStripGridOptions {
   slotFit: number;
   maxLength: number;
   etchIds: boolean;
+  sharedCuts: boolean;
+  stackSize: number;
   originX: number;
   originY: number;
 }
@@ -367,10 +369,41 @@ class GridfinityStripGrid extends Boxes {
     return a;
   }
 
-  /** Draw one strip from its nominal outline, the way rectangularWall traces with kerf. */
+  /** One strip as a part of its own. */
   private strip(length: number, h: number, outline: [number, number][], label: string, id: string): void {
     if (this.move(length, h, 'up', true)) return;
+    this.traceStrip(length, h, outline, id);
+    this.move(length, h, 'up', false, label);
+  }
 
+  /**
+   * Strips cut edge to edge as one part, the first at the bottom. Each is
+   * kerf-compensated on its own, so with their nominal edges two kerfs apart
+   * the lower one's outline runs along the upper one's, and that line is cut
+   * once, with the strip below: every strip is finished, the line above it
+   * included, before the next one up is cut free.
+   */
+  private stack(strips: { length: number; outline: [number, number][]; id: string; idAt: number }[], h: number, label: string): void {
+    const width = Math.max(...strips.map((st) => st.length));
+    const pitch = h + 2 * this.burn;
+    const height = strips.length * pitch - 2 * this.burn;
+    if (this.move(width, height, 'up', true)) return;
+    strips.forEach((st, k) => {
+      this.savedContext(() => {
+        this.moveTo(0, k * pitch);
+        this.idAt = st.idAt;
+        this.traceStrip(st.length, h, st.outline, st.id);
+      });
+      // Its own path, so the next strip's outline is not appended to it and
+      // the two can be told apart.
+      this.ctx.stroke();
+    });
+    this.ctx.cutSharedOnce();
+    this.move(width, height, 'up', false, label);
+  }
+
+  /** Draw a strip at the origin from its nominal outline, the way rectangularWall traces with kerf. */
+  private traceStrip(length: number, h: number, outline: [number, number][], id: string): void {
     // The outline starts at its lowest-left vertex, heading along +x: always a
     // convex corner, as rectangularWall's own start is.
     let s = 0;
@@ -381,11 +414,15 @@ class GridfinityStripGrid extends Boxes {
     const pts = [...outline.slice(s), ...outline.slice(0, s)];
     const [x0, y0] = pts[0]!;
     this.moveTo(x0, y0);
+    const atEnd = (p: [number, number]) => Math.abs(p[0]) < 1e-9 || Math.abs(p[0] - length) < 1e-9;
     for (let i = 0; i < pts.length; i++) {
       const a = pts[i]!;
       const bb = pts[(i + 1) % pts.length]!;
       const c = pts[(i + 2) % pts.length]!;
-      this.edge(Math.hypot(bb[0] - a[0], bb[1] - a[1]));
+      // Holding tabs go on the ends only. With shared cuts a long edge is
+      // also the next strip's, which would cut the tab's gap from its side.
+      const end = atEnd(a) && atEnd(bb) && Math.abs(a[0] - bb[0]) < 1e-9;
+      this.edge(Math.hypot(bb[0] - a[0], bb[1] - a[1]), end ? 1 : 0);
       const cross = (bb[0] - a[0]) * (c[1] - bb[1]) - (bb[1] - a[1]) * (c[0] - bb[0]);
       this.corner(cross > 0 ? 90 : -90);
     }
@@ -402,8 +439,6 @@ class GridfinityStripGrid extends Boxes {
       });
       this.ctx.moveTo(0, 0);
     }
-
-    this.move(length, h, 'up', false, label);
   }
 
   /** Where the current strip's id goes: the middle of its first cell. */
@@ -457,12 +492,28 @@ class GridfinityStripGrid extends Boxes {
       .map(({ p, run }) => ({ p, run, g: pieceGeometry(p, t, w, run) }))
       .sort((a, b) => b.g.length - a.g.length || (a.p.axis < b.p.axis ? -1 : a.p.axis > b.p.axis ? 1 : 0));
 
-    for (const { p, run, g } of drawn) {
+    const strips = drawn.map(({ p, run, g }) => {
       const across = p.axis === 'x' ? ay : ax;
       const name = pieceName(p, count.get(`${p.axis}${p.line}`)!, across.bays[0] ? -1 : 0);
-      this.idAt = linePos(run, p.from, t) + PITCH / 2 - g.start;
-      const outline = stripOutline(g.length, h, g.notches, p.axis === 'x');
-      this.strip(g.length, h, outline, name, this.o.etchIds ? name : '');
+      return {
+        name,
+        length: g.length,
+        idAt: linePos(run, p.from, t) + PITCH / 2 - g.start,
+        outline: stripOutline(g.length, h, g.notches, p.axis === 'x'),
+        id: this.o.etchIds ? name : '',
+      };
+    });
+
+    if (this.o.sharedCuts) {
+      const size = this.o.stackSize > 0 ? this.o.stackSize : strips.length;
+      for (let k = 0; k * size < strips.length; k++) {
+        this.stack(strips.slice(k * size, (k + 1) * size), h, `strips ${k + 1}`);
+      }
+      return;
+    }
+    for (const st of strips) {
+      this.idAt = st.idAt;
+      this.strip(st.length, h, st.outline, st.name, st.id);
     }
   }
 }
@@ -576,6 +627,31 @@ export const gridfinityStripGrid: GeneratorDef = {
       group: 'joints',
       help: 'Added to the material thickness for each slot. Raise it for a looser fit; kerf is already allowed for.',
     },
+    {
+      key: 'shared_cuts',
+      kind: 'bool',
+      label: 'Shared cuts',
+      default: false,
+      group: 'joints',
+      help:
+        'Lay the strips edge to edge and cut each line between two strips once: half the cutting on the long edges, and less heat in narrow strips. ' +
+        'Each strip is finished, the line above it included, before the next one up is cut free, so keep the cuts in file order: ' +
+        'LightBurn’s cut optimisation can reorder them, and its overlapping-line removal is not needed. ' +
+        'Holding tabs, when set, go on the strips’ ends.',
+    },
+    {
+      key: 'stack_size',
+      kind: 'number',
+      label: 'Strips per stack',
+      default: 0,
+      min: 0,
+      max: 100,
+      step: 1,
+      integer: true,
+      group: 'joints',
+      help: '0 puts every strip in one stack. Keep a stack within your sheet’s height.',
+      showIf: (v) => v['shared_cuts'] === true,
+    },
     { key: 'etch_ids', kind: 'bool', label: 'Etch strip ids', default: true, group: 'dimensions', help: 'X1 runs along the front, Y1 up the left; letters number the pieces of a broken strip from the start.' },
     {
       key: 'origin_x',
@@ -615,6 +691,8 @@ export const gridfinityStripGrid: GeneratorDef = {
         slotFit: n(v, 'slot_fit', 0),
         maxLength: n(v, 'max_length', 300),
         etchIds: b(v, 'etch_ids', true),
+        sharedCuts: b(v, 'shared_cuts', false),
+        stackSize: n(v, 'stack_size', 0),
         originX: n(v, 'origin_x', 0),
         originY: n(v, 'origin_y', 0),
       },
