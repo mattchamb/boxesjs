@@ -337,7 +337,11 @@ export default function App({ generator, name, summary, description, initial }: 
   const generalWarnings = data?.warnings.filter((w) => !w.param || !shown.has(w.param)) ?? [];
   const warned = (items: ParamSpec[]) => items.some((s) => warningFor(s.key));
 
-  const layerChips = LAYERS.filter((l) => data?.layers[l] || l === 'annotate');
+  // A layer can hold only text, such as etched ids with no etched lines, so
+  // texts count as content as much as paths do.
+  const layerChips = LAYERS.filter(
+    (l) => data?.layers[l] || data?.texts.some((t) => t.layer === l) || l === 'annotate',
+  );
   // Downloads carry only the layers shown, so a layer hidden to tidy the view
   // is missing from the file too; say so where the file is made.
   const leftOut = layerChips.filter((l) => !visibleLayers.has(l)).map((l) => LAYER_INFO[l].name);
