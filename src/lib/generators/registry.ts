@@ -65,6 +65,8 @@ import { keyHolder } from './keyholder';
 import { rollHolder } from './rollholder';
 import { wallRack } from './wallrack';
 import { gridfinityBase } from './gridfinitybase';
+import { gridfinityTrayLayout } from './gridfinitytraylayout';
+import { gridfinityDrillBox } from './gridfinitydrillbox';
 import { penHolderBox } from './penholderbox';
 import { smallPartsTray } from './smallpartstray';
 import { halfBox } from './halfbox';
@@ -206,6 +208,8 @@ const DEFS: GeneratorDef[] = [
   smallPartsTray,
   penHolderBox,
   gridfinityBase,
+  gridfinityTrayLayout,
+  gridfinityDrillBox,
   wallRack,
   rollHolder,
   keyHolder,

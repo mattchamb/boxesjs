@@ -70,13 +70,27 @@ export function defaultLayout(sx: number[], sy: number[]): string {
   return lines.join('\n') + '\n';
 }
 
-class TrayLayout extends Boxes {
-  private h: number;
-  private hi: number;
+/**
+ * The command line boxes.py stores in its SVGs writes the sketch's newlines as
+ * a literal \\n; decode those so a pasted one works, as boxes.py's own
+ * prepare() does.
+ */
+export function decodeLayout(layout: string): string {
+  if (!layout.includes('\n') && layout.includes('\\n')) return layout.replaceAll('\\n', '\n');
+  return layout;
+}
+
+// Exported, with its sizes and part methods protected, because
+// GridfinityTrayLayout subclasses it as boxes.py does: it works out h and hi
+// itself before prepare(), and draws the base plate with its own etching and
+// moves.
+export class TrayLayout extends Boxes {
+  protected h: number;
+  protected hi: number;
 
   /** Compartment widths and depths, read out of the layout text. */
-  private x: number[] = [];
-  private y: number[] = [];
+  protected x: number[] = [];
+  protected y: number[] = [];
   /** `hwalls[row][col]`: is there a wall running along x here? */
   private hwalls: boolean[][] = [];
   /** `vwalls[row][col]`: is there a wall running along y here? */
@@ -253,7 +267,7 @@ class TrayLayout extends Boxes {
     });
   }
 
-  private prepare(): void {
+  protected prepare(): void {
     this.parse(this.o.layout.split('\n'));
 
     if (this.o.outside) {
@@ -298,7 +312,7 @@ class TrayLayout extends Boxes {
   // Parts
   // ==========================================================================
 
-  private walls(): void {
+  protected walls(): void {
     const lx = this.x.length;
     const ly = this.y.length;
     const t = this.thickness;
@@ -499,7 +513,7 @@ class TrayLayout extends Boxes {
    * The floor. Only compartments that keep their floor are drawn, so the plate
    * is traced border by border rather than as a rectangle with slots in it.
    */
-  private basePlate(opts: { callback?: Callback; move?: string; label?: string } = {}): void {
+  protected basePlate(opts: { callback?: Callback; move?: string; label?: string } = {}): void {
     const { callback = null, move, label = '' } = opts;
     const lx = this.x.length;
     const ly = this.y.length;
@@ -708,11 +722,7 @@ export const trayLayout: GeneratorDef = {
     const sx = parseSections(s(v, 'sx', '50*3'));
     const sy = parseSections(s(v, 'sy', '50*3'));
     // Not trimmed: every size line in the sketch starts with a space.
-    let layout = s(v, 'layout', '');
-    // The command line boxes.py stores in its SVGs writes the sketch's
-    // newlines as a literal \n; decode those so a pasted one works, as
-    // boxes.py's own prepare() does.
-    if (!layout.includes('\n') && layout.includes('\\n')) layout = layout.replaceAll('\\n', '\n');
+    const layout = decodeLayout(s(v, 'layout', ''));
     return new TrayLayout(
       {
         h: n(v, 'h', 100),

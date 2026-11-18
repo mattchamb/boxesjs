@@ -497,7 +497,8 @@ AngledBox, Crate, SpicesRack, SlantedTray), and every `polygonWalls` user
 and the flex boxes (FlexBox 1–5, RoundedBox, DoubleFlexDoorBox, BreadBox,
 ShutterBox, FlexBook, Folder), and the Shelf group (WineRack, BinTray,
 SBCMicroRack, DiscRack, StackableBin), HalfBox, and the Tray group
-(SmallPartsTray, PenHolderBox, GridfinityBase), and the remaining
+(SmallPartsTray, PenHolderBox, GridfinityBase, GridfinityTrayLayout,
+GridfinityDrillBox), and the remaining
 wall-mounted ones (WallRack, RollHolder, KeyHolder, SkadisBoard,
 SkadisStand), and the rest of the Box group (RackBox, Rack19HalfWidth,
 EuroRackSkiff, RegularStarBox, ElectronicsBox, DisplayCase, BrickSorter),
@@ -1032,11 +1033,13 @@ golden and the invariant tests are the only cover.
 - **FlexBox5 with diameters too different for its length.** The straight runs'
   tilt is `asin` of a ratio that can pass 1, and boxes.py raises
   `ValueError`. The port warns on `x` and draws nothing.
-- **DiscRack, WallRack, GridfinityBase, RegularStarBox and Desksign settings
-  boxes.py rejects.** DiscRack's support checks end in `argparser.error`; WallRack's
-  shelf spacing check, GridfinityBase's missing size, RegularStarBox's
-  too-small slots and Desksign's angle in `ValueError`. The port warns on the
-  field (`disc_outset`, `sh`, `x`/`y`, `radius`, `angle`) and draws nothing.
+- **DiscRack, WallRack, GridfinityBase, GridfinityTrayLayout, RegularStarBox
+  and Desksign settings boxes.py rejects.** DiscRack's support checks end in
+  `argparser.error`; WallRack's shelf spacing check, GridfinityBase's missing
+  size, GridfinityTrayLayout's height that is neither whole mm nor `<n>u`,
+  RegularStarBox's too-small slots and Desksign's angle in `ValueError`. The
+  port warns on the field (`disc_outset`, `sh`, `x`/`y`, `h`, `radius`,
+  `angle`) and draws nothing.
 - **A mounting edge whose screw head is no wider than its shaft.** boxes.py's
   `MountingEdge` raises `ValueError`. Both sizes are form fields since
   `MOUNTING_PARAMS`, so the port warns on `mount_d_head` and draws the edge

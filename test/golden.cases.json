@@ -4263,6 +4263,119 @@
     }
   },
   {
+    "name": "ref_gridfinitytraylayout_default",
+    "generator": "gridfinitytraylayout",
+    "pythonClass": "GridfinityTrayLayout",
+    "params": {}
+  },
+  {
+    "name": "ref_gridfinitytraylayout_units_stacking",
+    "generator": "gridfinitytraylayout",
+    "pythonClass": "GridfinityTrayLayout",
+    "params": {
+      "h": "6u",
+      "stacking": true,
+      "thickness": 3,
+      "burn": 0.1
+    }
+  },
+  {
+    "name": "ref_gridfinitytraylayout_single",
+    "generator": "gridfinitytraylayout",
+    "pythonClass": "GridfinityTrayLayout",
+    "params": {
+      "nx": 1,
+      "ny": 1,
+      "countx": 2,
+      "county": 1,
+      "h": "30"
+    }
+  },
+  {
+    "name": "ref_gridfinitytraylayout_per_cell",
+    "generator": "gridfinitytraylayout",
+    "pythonClass": "GridfinityTrayLayout",
+    "params": {
+      "nx": 2,
+      "ny": 3,
+      "countx": 0,
+      "county": 0,
+      "h": "3u",
+      "base_thickness": 4.65,
+      "hi": 20
+    }
+  },
+  {
+    "name": "ref_gridfinitytraylayout_nopads",
+    "generator": "gridfinitytraylayout",
+    "pythonClass": "GridfinityTrayLayout",
+    "params": {
+      "gen_pads": false,
+      "cut_pads_mag_diameter": 0,
+      "h": "40"
+    }
+  },
+  {
+    "name": "ref_gridfinitytraylayout_layout",
+    "generator": "gridfinitytraylayout",
+    "pythonClass": "GridfinityTrayLayout",
+    "params": {
+      "nx": 3,
+      "ny": 2,
+      "h": "40",
+      "layout": " ,> 41.5mm\n | ,> 41.5mm\n | | ,> 42.25mm\n+-+-+-+\n| | |X|41.625mm\n+-+ +-+\n| | | |41.625mm\n+-+-+-+\n"
+    }
+  },
+  {
+    "name": "ref_gridfinitytraylayout_labels",
+    "generator": "gridfinitytraylayout",
+    "pythonClass": "GridfinityTrayLayout",
+    "params": {
+      "nx": 2,
+      "ny": 2,
+      "countx": 2,
+      "county": 2,
+      "h": "40",
+      "labels": true
+    }
+  },
+  {
+    "name": "ref_gridfinitydrillbox_default",
+    "generator": "gridfinitydrillbox",
+    "pythonClass": "GridfinityDrillBox",
+    "params": {}
+  },
+  {
+    "name": "ref_gridfinitydrillbox_stackable",
+    "generator": "gridfinitydrillbox",
+    "pythonClass": "GridfinityDrillBox",
+    "params": {
+      "top_edge": "S",
+      "thickness": 4,
+      "burn": 0.15
+    }
+  },
+  {
+    "name": "ref_gridfinitydrillbox_narrow",
+    "generator": "gridfinitydrillbox",
+    "pythonClass": "GridfinityDrillBox",
+    "params": {
+      "nx": 1,
+      "ny": 3,
+      "sh": "5:20:20:10"
+    }
+  },
+  {
+    "name": "ref_gridfinitydrillbox_labels",
+    "generator": "gridfinitydrillbox",
+    "pythonClass": "GridfinityDrillBox",
+    "params": {
+      "nx": 2,
+      "ny": 2,
+      "labels": true
+    }
+  },
+  {
     "name": "ref_wallrack_default",
     "generator": "wallrack",
     "pythonClass": "WallRack",

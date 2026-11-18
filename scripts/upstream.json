@@ -437,6 +437,21 @@
       ],
       "sha": "84e392b39191"
     },
+    "gridfinitytraylayout": {
+      "files": [
+        "boxes/generators/gridfinitytraylayout.py",
+        "boxes/generators/traylayout.py"
+      ],
+      "sha": "84e392b39191"
+    },
+    "gridfinitydrillbox": {
+      "files": [
+        "boxes/generators/gridfinitydrillbox.py",
+        "boxes/generators/gridfinitytraylayout.py",
+        "boxes/lids.py"
+      ],
+      "sha": "84e392b39191"
+    },
     "wallrack": {
       "files": [
         "boxes/generators/wallrack.py"
