@@ -922,6 +922,30 @@ since text hangs below its anchor here as in boxes.py's SVG.
 `test/pantograph.test.ts` checks Q − O = k·(P − O) over a sweep of arm angles
 for every ratio.
 
+**Gridfinity Strip Grid** (`generators/gridfinitystripgrid.ts`) is a
+Gridfinity baseplate as an egg-crate of strips on edge, half-lapped on the
+42 mm pitch: X strips slotted from the top, Y strips from the bottom, the grid
+n·42 + t across. A strip cannot carry the socket chamfer, so the bin's foot
+seats on the strips' top corners, `seatDepth(t)` = (t − 0.5)/2 down its 45°
+chamfer for usual thicknesses; the default strip height is the lowest that
+keeps the foot clear of the floor, and the generator warns outside
+1.5–4.8 mm. Strips along an axis longer than M cells (from `max_length`) are
+broken in a bond defined in global cells: X on line J breaks at I ≡ J, Y on
+line I at J ≡ I − ⌊M/2⌋ (mod M). That can never break both strips at one
+crossing, and puts only one strip in M on any line. A half bond was rejected:
+it stacks half the breaks on one line, and for M = 4 no offset keeps X and Y
+breaks apart. A break sits at the slot face beside its crossing, so one piece
+ends square and the next starts with a whole slot-width tab, never a sliver.
+`origin_x`/`origin_y` place the grid in a larger one so the bond continues.
+Sized by overall size, the grid fills it exactly (`axisSpec`): the leftover
+past the last whole cell goes to both sides or one, and each side becomes a
+border bay with its own strip at the wall (line −1 or n + 1, never broken
+across, and numbered so the bond continues) when that leaves `MIN_BAY` clear,
+or else the strips just run on to the wall. The longest-strip limit allows for
+the border, so every piece still fits the bed.
+`test/gridfinitystripgrid.test.ts` checks coverage, one break per crossing,
+no full seams and bond continuity over a sweep of sizes, M and offsets.
+
 ### Adding wedges or bolts to a generator
 
 Everything above as a checklist. Do it in a commit of its own, after the
